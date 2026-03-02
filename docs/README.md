@@ -29,11 +29,11 @@
 ## Team Information
 | Name                      | GitHub Username | Roll Num   |
 |-------------------------  |-----------------|------------|
-| <Muhammad Ammar Anees>    | Omore03         | 27100077   |
-| <Muhammad Hussain Baqar>  | husssainbaqar   | <roll_num> |
-| <Muhammad Yahya Rahim>    | 27100218        | 27100218   |
-| <Saad Jamshaid Khan>      | <SJK159>        | <roll_num> |
-| <Nausherwan Khan>         | <Nausherwan51>  | <roll_num> |
+| Muhammad Ammar Anees      | Omore03         | 27100077   |
+| Muhammad Hussain Baqar    | husssainbaqar   | <roll_num> |
+| Muhammad Yahya Rahim      | 27100218        | 27100218   |
+| Saad Jamshaid Khan        | SJK159>         | <roll_num> |
+| Nausherwan Khan           | Nausherwan51    | <roll_num> |
 
 ---
 
