@@ -40,12 +40,19 @@
 ## Product Backlog
 ### Story Point Scale
 We use Fibonacci-style story points: **1, 2, 3, 5, 8, 13**.
+
 **1**  : Very Small
+
 **2**  : Small/Simple
+
 **3**  : Moderate
+
 **5**  : Medium/Complex
+
 **8**  : Large/Complex
+
 **13** : Very Large/Risk
+
 
 
 ### Backlog Summary Table
