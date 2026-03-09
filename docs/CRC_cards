@@ -1,0 +1,112 @@
++------------------------------------------------------+
+|                      USER                            |
++---------------------------+--------------------------+
+| Responsibilities          | Collaborators            |
++---------------------------+--------------------------+
+| Browse upcoming events    | Event                    |
+| Request event search      | EventRepository          |
+| Request event filtering   | SearchFilter             |
+| View event details        | BookmarkManager          |
+| Request bookmarking       | NotificationManager      |
+| of events                 |                          |
+| View saved/bookmarked     |                          |
+| events                    |                          |
+| Receive event reminders   |                          |
+| and notifications         |                          |
++---------------------------+--------------------------+
+
+
++------------------------------------------------------+
+|                      EVENT                           |
++---------------------------+--------------------------+
+| Responsibilities          | Collaborators            |
++---------------------------+--------------------------+
+| Maintain event            | Category                 |
+| information               | Venue                    |
+| Provide title,            | EventRepository          |
+| description, date, time   | BookmarkManager          |
+| Provide category info     | NotificationManager      |
+| Provide venue/location    |                          |
+| information               |                          |
+| Provide full event        |                          |
+| details for display       |                          |
+| Indicate whether event    |                          |
+| is upcoming               |                          |
++---------------------------+--------------------------+
+
+
++------------------------------------------------------+
+|                 EVENT REPOSITORY                     |
++---------------------------+--------------------------+
+| Responsibilities          | Collaborators            |
++---------------------------+--------------------------+
+| Store and retrieve        | Event                    |
+| event data                | Category                 |
+| Retrieve upcoming events  | Venue                    |
+| Sort events by date/time  | SearchFilter             |
+| Fetch event details       |                          |
+| Provide event lists       |                          |
+| Return filtered/searched  |                          |
+| event data                |                          |
+| Handle missing/unavailable|                          |
+| event data gracefully     |                          |
++---------------------------+--------------------------+
+
+
++------------------------------------------------------+
+|                     CATEGORY                         |
++---------------------------+--------------------------+
+| Responsibilities          | Collaborators            |
++---------------------------+--------------------------+
+| Maintain category         | Event                    |
+| information               | EventRepository          |
+| Classify events by type   | SearchFilter             |
+| Support category-based    |                          |
+| filtering                 |                          |
+| Organize events into      |                          |
+| groups for browsing       |                          |
++---------------------------+--------------------------+
+
+
++------------------------------------------------------+
+|                 BOOKMARK MANAGER                     |
++---------------------------+--------------------------+
+| Responsibilities          | Collaborators            |
++---------------------------+--------------------------+
+| Add events to bookmarks   | User                     |
+| Remove events from        | Event                    |
+| bookmarks                 |                          |
+| Retrieve bookmarked       |                          |
+| events                    |                          |
+| Maintain user's saved     |                          |
+| events list               |                          |
++---------------------------+--------------------------+
+
+
++------------------------------------------------------+
+|               NOTIFICATION MANAGER                   |
++---------------------------+--------------------------+
+| Responsibilities          | Collaborators            |
++---------------------------+--------------------------+
+| Schedule event reminders  | User                     |
+| Send event notifications  | Event                    |
+| Manage notification       |                          |
+| settings                  |                          |
+| Trigger reminders before  |                          |
+| event time                |                          |
++---------------------------+--------------------------+
+
+
++------------------------------------------------------+
+|                       VENUE                          |
++---------------------------+--------------------------+
+| Responsibilities          | Collaborators            |
++---------------------------+--------------------------+
+| Maintain venue/location   | Event                    |
+| information               | EventRepository          |
+| Provide venue name        | SearchFilter             |
+| and details               |                          |
+| Link events to locations  |                          |
+| Support venue/location    |                          |
+| based filtering           |                          |
++---------------------------+--------------------------+
