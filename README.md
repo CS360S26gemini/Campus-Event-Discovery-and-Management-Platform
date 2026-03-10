@@ -1,9 +1,9 @@
 
 
 ## Quick Links
-- **Repository:** <PASTE_REPO_LINK>
-- **GitHub Project Board:** <PASTE_PROJECT_LINK>
-- **Figma Wireframes:** <PASTE_FIGMA_LINK>
+- **Repository:** [<REPO_LINK>](https://github.com/CS360S26gemini/Campus-Event-Discovery-and-Management-Platform)
+- **GitHub Project Board:** [<PROJECT_LINK>](https://github.com/CS360S26gemini/Campus-Event-Discovery-and-Management-Platform/projects?query=is%3Aopen)
+- **Figma Wireframes:** [<FIGMA_LINK>](https://www.figma.com/design/sfGIqbeoa6RM4zd8J4XmN1/App-Design?node-id=0-1&t=YQVGRicy31ela19x-1)
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
