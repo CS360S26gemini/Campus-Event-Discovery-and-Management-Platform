@@ -30,10 +30,10 @@
 | Name                      | GitHub Username | Roll Num   |
 |-------------------------  |-----------------|------------|
 | Muhammad Ammar Anees      | Omore03         | 27100077   |
-| Muhammad Hussain Baqar    | husssainbaqar   | <roll_num> |
+| Muhammad Hussain Baqar    | husssainbaqar   | 27100127 |
 | Muhammad Yahya Rahim      | 27100218        | 27100218   |
 | Saad Jamshaid Khan        | SJK159          | 27100159   |
-| Nausherwan Khan           | Nausherwan51    | <roll_num> |
+| Nausherwan Khan           | Nausherwan51    | 27100384 |
 
 ---
 
@@ -95,7 +95,10 @@ We use Fibonacci-style story points: **1, 2, 3, 5, 8, 13**.
 ---
 
 ## UI Mockups & Storyboards
+To view our app design and flows in detail, open the following link:
+
 https://www.figma.com/design/sfGIqbeoa6RM4zd8J4XmN1/App-Design?node-id=1-11126&t=YQVGRicy31ela19x-1
+
 
 
 ## Main Screens
@@ -123,4 +126,10 @@ We document CRC cards in `docs/crc.md`.
 ## Meeting Minutes
 Meeting minutes are stored in `docs/meeting-minutes/`.
 
-- [Meeting 1](meeting-minutes/meeting-1.md)
+
+
+
+
+
+
+For any queries, reach out by shouting our name in class or simply via slack. 
