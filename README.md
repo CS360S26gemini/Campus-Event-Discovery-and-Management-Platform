@@ -89,7 +89,8 @@ We use Fibonacci-style story points: **1, 2, 3, 5, 8, 13**.
 ## GitHub Project Board
 ### Screenshots (Required)
 ![Project Board Overview](docs/images/project_board_overview.png)
-![Issues List](docs/images/issues_list.png)
+![Issues List](docs/images/open_issues.png)
+![Closed Issues](docs/images/closed_issues.png)
 
 ---
 
@@ -110,7 +111,7 @@ Event List → Event Details → Tap RSVP → Confirmation
 
 **Organizer Create Event Flow** (covers US-07):  
 Organizer Dashboard → Create Event Form → Publish → Event Appears in List
-![Organizer can create an event!](docs/images/Create_Event.png)
+![Organizer can create an event!](docs/images/create_event.png)
 
 ---
 
