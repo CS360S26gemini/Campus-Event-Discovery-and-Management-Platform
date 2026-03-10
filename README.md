@@ -1,4 +1,4 @@
-# Campus Event Discovery & Management (Android App)
+<img width="1058" height="537" alt="image" src="https://github.com/user-attachments/assets/7901180b-4376-4515-aa69-b90343d948f1" /># Campus Event Discovery & Management (Android App)
 
 ## Quick Links
 - **Repository:** <PASTE_REPO_LINK>
@@ -95,12 +95,12 @@ We use Fibonacci-style story points: **1, 2, 3, 5, 8, 13**.
 ---
 
 ## UI Mockups & Storyboards
-### Wireframes
-![Wireframes Overview](images/wireframes_overview.png)
+https://www.figma.com/design/sfGIqbeoa6RM4zd8J4XmN1/App-Design?node-id=1-11126&t=YQVGRicy31ela19x-1
 
 ### Storyboard Sequences
 **Student RSVP Flow** (covers US-01, US-04, US-05):  
 Event List → Event Details → Tap RSVP → Confirmation
+
 
 **Organizer Create Event Flow** (covers US-07):  
 Organizer Dashboard → Create Event Form → Publish → Event Appears in List
