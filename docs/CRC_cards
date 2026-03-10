@@ -1,3 +1,7 @@
+** User class represents the primary student interacting with the application. 
+It allows students to browse events, search and filter events, bookmark events, 
+and receive notifications. **
+
 +------------------------------------------------------+
 |                      USER                            |
 +---------------------------+--------------------------+
@@ -15,6 +19,10 @@
 | and notifications         |                          |
 +---------------------------+--------------------------+
 
+
+** Event class stores and provides event information created by 
+event organizers or administrators, including title, 
+description, date, category, and venue. **
 
 +------------------------------------------------------+
 |                      EVENT                           |
@@ -35,6 +43,9 @@
 +---------------------------+--------------------------+
 
 
+** EventRepository manages the storage and retrieval of event data 
+used by the system to present upcoming events to users. **
+
 +------------------------------------------------------+
 |                 EVENT REPOSITORY                     |
 +---------------------------+--------------------------+
@@ -53,6 +64,9 @@
 +---------------------------+--------------------------+
 
 
+** Category helps classify events (e.g., academic, social, sports)
+to improve browsing and filtering for users. **
+
 +------------------------------------------------------+
 |                     CATEGORY                         |
 +---------------------------+--------------------------+
@@ -67,6 +81,9 @@
 | groups for browsing       |                          |
 +---------------------------+--------------------------+
 
+
+** BookmarkManager allows users to save events they 
+are interested in for later viewing. ** 
 
 +------------------------------------------------------+
 |                 BOOKMARK MANAGER                     |
@@ -83,6 +100,9 @@
 +---------------------------+--------------------------+
 
 
+** NotificationManager sends reminders and notifications 
+to users about upcoming events. **
+
 +------------------------------------------------------+
 |               NOTIFICATION MANAGER                   |
 +---------------------------+--------------------------+
@@ -97,6 +117,9 @@
 +---------------------------+--------------------------+
 
 
+** Venue maintains location information so users can see 
+where events will take place. ** 
+
 +------------------------------------------------------+
 |                       VENUE                          |
 +---------------------------+--------------------------+
@@ -109,4 +132,20 @@
 | Link events to locations  |                          |
 | Support venue/location    |                          |
 | based filtering           |                          |
++---------------------------+--------------------------+
+
+** SearchFilter processes search queries and filters events by 
+category, date, or venue to help users find relevant events quickly. **
+
++------------------------------------------------------+
+|                   SEARCH FILTER                      |
++---------------------------+--------------------------+
+| Responsibilities          | Collaborators            |
++---------------------------+--------------------------+
+| Process search queries    | User                     |
+| Filter events by category | EventRepository          |
+| Filter events by date     | Event                    |
+| Filter events by venue    | Category                 |
+| Return matching event     | Venue                    |
+| results                   |                          |
 +---------------------------+--------------------------+
