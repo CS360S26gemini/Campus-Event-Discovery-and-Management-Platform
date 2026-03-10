@@ -97,9 +97,16 @@ We use Fibonacci-style story points: **1, 2, 3, 5, 8, 13**.
 ## UI Mockups & Storyboards
 https://www.figma.com/design/sfGIqbeoa6RM4zd8J4XmN1/App-Design?node-id=1-11126&t=YQVGRicy31ela19x-1
 
+
+## Main Screens
+![Main Screens](images/Screens(1).png)
+![Main Screens](images/Screens(2).png)
+![Main Screens](images/Screens(3).png)
+
 ### Storyboard Sequences
 **Student RSVP Flow** (covers US-01, US-04, US-05):  
 Event List → Event Details → Tap RSVP → Confirmation
+![RSVP](images/RSVP.png)
 
 
 **Organizer Create Event Flow** (covers US-07):  
