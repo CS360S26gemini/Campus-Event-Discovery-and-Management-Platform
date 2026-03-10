@@ -88,9 +88,8 @@ We use Fibonacci-style story points: **1, 2, 3, 5, 8, 13**.
 
 ## GitHub Project Board
 ### Screenshots (Required)
-![Project Board Overview](images/project_board_overview.png)
-![Backlog With Fields](images/project_board_fields.png)
-![Issues List](images/issues_list.png)
+![Project Board Overview](docs/images/project_board_overview.png)
+![Issues List](docs/images/issues_list.png)
 
 ---
 
@@ -99,18 +98,19 @@ https://www.figma.com/design/sfGIqbeoa6RM4zd8J4XmN1/App-Design?node-id=1-11126&t
 
 
 ## Main Screens
-![Main Screens](images/Screens(1).png)
-![Main Screens](images/Screens(2).png)
-![Main Screens](images/Screens(3).png)
+![Main Screens](docs/images/Screens(1).png)
+![Main Screens](docs/images/Screens(2).png)
+![Main Screens](docs/images/Screens(3).png)
 
 ### Storyboard Sequences
 **Student RSVP Flow** (covers US-01, US-04, US-05):  
 Event List → Event Details → Tap RSVP → Confirmation
-![RSVP](images/RSVP.png)
+![RSVP](docs/images/RSVP.png)
 
 
 **Organizer Create Event Flow** (covers US-07):  
 Organizer Dashboard → Create Event Form → Publish → Event Appears in List
+![Organizer can create an event!](docs/images/Create_Event.png)
 
 ---
 
