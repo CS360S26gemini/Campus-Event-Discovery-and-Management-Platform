@@ -57,18 +57,30 @@ We use Fibonacci-style story points: **1, 2, 3, 5, 8, 13**.
 
 ### Backlog Summary Table
 | ID | User Story Title | Points | Risk | Release |
-|----|------------------|--------|------|---------|
-| US-01 | Browse upcoming events | TBD | TBD | TBD |
-| US-02 | Search events | TBD | TBD | TBD |
-| US-03 | Filter events | TBD | TBD | TBD |
-| US-04 | View event details | TBD | TBD | TBD |
-| US-05 | RSVP to event | TBD | TBD | TBD |
-| US-06 | Cancel RSVP | TBD | TBD | TBD |
-| US-07 | Organizer creates event | TBD | TBD | TBD |
-| US-08 | Organizer edits event | TBD | TBD | TBD |
-| US-09 | Capacity tracking | TBD | TBD | TBD |
-| US-10 | Event update notifications | TBD | TBD | TBD |
-| US-11 | Calendar integration | TBD | TBD | TBD |
+| :--- | :--- | :--- | :--- | :--- |
+| US-01 | Browse upcoming events | 5 | Low | Halfway |
+| US-02 | Personalised suggestions | 8 | Medium | Final |
+| US-03 | Verifiability | 3 | Low | Halfway |
+| US-04 | Dark mode | 3 | Low | Halfway |
+| US-05 | Reminders | 3 | Low | Final |
+| US-06 | View a Calendar | 8 | Low | Halfway |
+| US-07 | Event proposals | 8 | Medium | Halfway |
+| US-08 | Approval of events | 5 | Low | Halfway |
+| US-09 | SOS button | 8 | Medium | Final |
+| US-10 | Sync calendar with google calendar | 8 | High | Final |
+| US-11 | Approval status | 3 | Low | Halfway |
+| US-12 | Event registeration | 5 | Medium | Halfway |
+| US-13 | Purchasing tickets | 13 | High | Final |
+| US-14 | Favourite an event | 3 | Low | Halfway |
+| US-15 | Signup | 5 | Low | Halfway |
+| US-16 | Edit profile settings | 5 | Low | Halfway |
+| US-17 | Logout | 2 | Low | Halfway |
+| US-18 | Unregister for an event | 5 | Medium | Halfway |
+| US-19 | View remaining event free spots | 3 | Low | Halfway |
+| US-20 | Organizer's Capacity tracking  | 5 | Medium | Halfway |
+| US-21 | Filter search results | 5 | Low | Halfway |
+| US-22 | Login | 3 | Low | Halfway |
+| US-23 | Search | 5 | Low | Halfway |
 
 > Full user story details are maintained as **GitHub Issues** and tracked on the GitHub Project Board.
 
