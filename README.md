@@ -92,6 +92,10 @@ We use Fibonacci-style story points: **1, 2, 3, 5, 8, 13**.
 ![Issues List](docs/images/open_issues.png)
 ![Closed Issues](docs/images/closed_issues.png)
 
+## User Stories Template
+![User Story Template](docs/images/Screenshot_2026-03-10_111125.png)
+
+
 ---
 
 ## UI Mockups & Storyboards
