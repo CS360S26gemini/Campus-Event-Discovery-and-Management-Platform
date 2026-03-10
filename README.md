@@ -1,4 +1,4 @@
-<img width="1058" height="537" alt="image" src="https://github.com/user-attachments/assets/7901180b-4376-4515-aa69-b90343d948f1" /># Campus Event Discovery & Management (Android App)
+
 
 ## Quick Links
 - **Repository:** <PASTE_REPO_LINK>
