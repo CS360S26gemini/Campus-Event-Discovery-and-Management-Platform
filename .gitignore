@@ -1,0 +1,10 @@
+@"
+.idea/
+*.iml
+.gradle/
+local.properties
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+"@ | Set-Content .gitignore
