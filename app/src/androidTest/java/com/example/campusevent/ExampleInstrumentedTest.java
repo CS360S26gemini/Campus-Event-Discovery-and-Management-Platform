@@ -1,4 +1,4 @@
-package com.example.CampusEventDiscovery;
+package com.example.campusevent;
 
 import android.content.Context;
 
