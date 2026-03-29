@@ -3,7 +3,7 @@
  *
  * Repository class responsible for all Firestore operations related to events.
  * Implements the Repository pattern to abstract data access from the UI layer.
- * All methods are asynchronous — results are delivered via callback interfaces.
+ * All methods are asynchronous results are delivered via callback interfaces.
  *
  */
 package com.example.CampusEventDiscovery.repository;
