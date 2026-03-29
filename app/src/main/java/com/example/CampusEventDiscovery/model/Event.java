@@ -5,7 +5,6 @@
  * Maps directly to documents in the 'events' collection.
  * Follows the Repository pattern — data access is handled by EventRepository.
  *
- * Outstanding issues: None.
  */
 package com.example.CampusEventDiscovery.model;
 

@@ -4,7 +4,6 @@
  * Callback interface for single Event Firestore operations.
  * Used by EventRepository to return asynchronous results to the UI layer.
  *
- * Outstanding issues: None.
  */
 package com.example.CampusEventDiscovery.repository;
 
