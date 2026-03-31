@@ -25,8 +25,11 @@ import com.example.campuseventdiscovery.adapter.EventAdapter;
 import com.example.campuseventdiscovery.model.Event;
 import com.example.campuseventdiscovery.repository.EventRepository;
 import com.example.campuseventdiscovery.ui.event.EventDetailActivity;
+import com.example.campuseventdiscovery.util.DevSessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -63,6 +66,7 @@ public class EventCalendarFragment extends Fragment {
 
     private Calendar currentMonthCalendar;
     private Calendar selectedDateCalendar;
+    private String currentUserId;
 
     public EventCalendarFragment() {
         // Required empty public constructor
@@ -81,6 +85,8 @@ public class EventCalendarFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         repository = new EventRepository();
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        currentUserId = currentUser != null ? currentUser.getUid() : DevSessionManager.getEffectiveUserId(requireContext());
 
         btnBackCalendar = view.findViewById(R.id.btnBackCalendar);
         tvMonthLabel = view.findViewById(R.id.tvMonthLabel);
@@ -319,6 +325,7 @@ public class EventCalendarFragment extends Fragment {
             }
 
             startActivity(intent);
+            repository.markRsvpAddedToCalendar(currentUserId, event.getEventId(), "");
         } catch (ActivityNotFoundException e) {
             Toast.makeText(requireContext(), getString(R.string.calendar_add_failed), Toast.LENGTH_SHORT).show();
         }

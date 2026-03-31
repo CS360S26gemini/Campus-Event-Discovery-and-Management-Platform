@@ -261,5 +261,12 @@
     <string name="total_registrations">Total Registrations</string>
     <string name="blacklist_selected">BlackList Selected</string>
     <string name="announcement">Announcement</string>
+    <string name="no_participants_yet">No attendees yet</string>
+    <string name="error_loading_participants">Failed to load attendees.</string>
+    <string name="blacklist_unavailable">Blacklist flow is not implemented yet.</string>
+    <string name="participant_name_fallback">Unnamed attendee</string>
+    <string name="participant_registered_status">Registered</string>
+    <string name="participant_checked_in_status">Checked in</string>
+    <string name="participant_checked_in_at">Checked in %1$s</string>
 
 </resources>

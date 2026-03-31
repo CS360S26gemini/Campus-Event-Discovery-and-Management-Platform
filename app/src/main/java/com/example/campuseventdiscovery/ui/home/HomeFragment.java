@@ -31,15 +31,12 @@ import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -65,7 +62,6 @@ public class HomeFragment extends Fragment {
     private TextView tvBannerVenue;
 
     private EventRepository repository;
-    private FirebaseFirestore db;
 
     private EventAdapter adapter;
     private final List<Event> eventList = new ArrayList<>();
@@ -92,7 +88,6 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         repository = new EventRepository();
-        db = FirebaseFirestore.getInstance();
 
         tvWelcome = view.findViewById(R.id.tvWelcome);
         btnSos = view.findViewById(R.id.btnSos);
@@ -239,36 +234,38 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadFeaturedEvent() {
-        db.collection("app_config")
-                .document("settings")
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    List<String> featuredIds = (List<String>) documentSnapshot.get("featuredEventIds");
+        repository.getFeaturedEventIds(new EventRepository.FeaturedEventIdsCallback() {
+            @Override
+            public void onSuccess(List<String> featuredIds) {
+                if (featuredIds == null || featuredIds.isEmpty()) {
+                    featuredCardContainer.setVisibility(View.GONE);
+                    return;
+                }
 
-                    if (featuredIds == null || featuredIds.isEmpty()) {
-                        featuredCardContainer.setVisibility(View.GONE);
-                        return;
+                repository.getFeaturedEvents(featuredIds, new EventRepository.EventListCallback() {
+                    @Override
+                    public void onSuccess(List<Event> events) {
+                        if (events == null || events.isEmpty()) {
+                            featuredCardContainer.setVisibility(View.GONE);
+                            return;
+                        }
+
+                        featuredEvent = events.get(0);
+                        bindFeaturedEvent(featuredEvent);
                     }
 
-                    repository.getFeaturedEvents(featuredIds, new EventRepository.EventListCallback() {
-                        @Override
-                        public void onSuccess(List<Event> events) {
-                            if (events == null || events.isEmpty()) {
-                                featuredCardContainer.setVisibility(View.GONE);
-                                return;
-                            }
+                    @Override
+                    public void onError(Exception e) {
+                        featuredCardContainer.setVisibility(View.GONE);
+                    }
+                });
+            }
 
-                            featuredEvent = events.get(0);
-                            bindFeaturedEvent(featuredEvent);
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            featuredCardContainer.setVisibility(View.GONE);
-                        }
-                    });
-                })
-                .addOnFailureListener(e -> featuredCardContainer.setVisibility(View.GONE));
+            @Override
+            public void onError(Exception e) {
+                featuredCardContainer.setVisibility(View.GONE);
+            }
+        });
     }
 
     private void bindFeaturedEvent(Event event) {
@@ -368,20 +365,24 @@ public class HomeFragment extends Fragment {
     }
 
     private void sendSos() {
-        Map<String, Object> reportData = new HashMap<>();
-        reportData.put("reporterId", currentUserId);
-        reportData.put("reporterName", currentUser != null ? currentUser.getFullName() : "");
-        reportData.put("isAnonymous", false);
-        reportData.put("description", "SOS triggered");
-        reportData.put("status", "open");
-        reportData.put("submittedAt", Timestamp.now());
+        repository.sendSosReport(
+                currentUserId,
+                currentUser != null ? currentUser.getFullName() : "",
+                "SOS triggered",
+                0.0,
+                0.0,
+                new EventRepository.ActionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        Toast.makeText(requireContext(), getString(R.string.sos_sent), Toast.LENGTH_SHORT).show();
+                    }
 
-        db.collection("reports")
-                .add(reportData)
-                .addOnSuccessListener(documentReference ->
-                        Toast.makeText(requireContext(), getString(R.string.sos_sent), Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), "Failed to send SOS.", Toast.LENGTH_SHORT).show());
+                    @Override
+                    public void onError(Exception e) {
+                        Toast.makeText(requireContext(), "Failed to send SOS.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
     }
 
     private void updateEventList(List<Event> events) {

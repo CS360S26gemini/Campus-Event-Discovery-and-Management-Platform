@@ -14,7 +14,6 @@ import com.example.campuseventdiscovery.R;
 import com.example.campuseventdiscovery.model.EventProposal;
 import com.example.campuseventdiscovery.repository.EventRepository;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -80,7 +79,7 @@ public class EventApprovalActivity extends AppCompatActivity {
 
         btnReject.setOnClickListener(v -> {
             if (currentProposal == null) return;
-            repository.rejectProposal(proposalId, "Rejected by admin", new EventRepository.ActionCallback() {
+            repository.rejectProposal(proposalId, currentProposal, "Rejected by admin", new EventRepository.ActionCallback() {
                 @Override
                 public void onSuccess() {
                     Toast.makeText(EventApprovalActivity.this, "Proposal Rejected", Toast.LENGTH_SHORT).show();
@@ -101,21 +100,23 @@ public class EventApprovalActivity extends AppCompatActivity {
             return;
         }
 
-        FirebaseFirestore.getInstance().collection("event_proposals").document(proposalId).get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    currentProposal = documentSnapshot.toObject(EventProposal.class);
-                    if (currentProposal != null) {
-                        tvTitle.setText(currentProposal.getTitle());
-                        tvDateTime.setText(formatDateTime(currentProposal.getDate()));
-                        tvVenue.setText(currentProposal.getLocation());
-                        tvDescription.setText(currentProposal.getDescription());
-                        ivBanner.setImageResource(R.drawable.bg_placeholder_image);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error loading proposal", Toast.LENGTH_SHORT).show();
-                    finish();
-                });
+        repository.getProposalById(proposalId, new EventRepository.ProposalCallback() {
+            @Override
+            public void onSuccess(EventProposal proposal) {
+                currentProposal = proposal;
+                tvTitle.setText(currentProposal.getTitle());
+                tvDateTime.setText(formatDateTime(currentProposal.getDate()));
+                tvVenue.setText(currentProposal.getLocation());
+                tvDescription.setText(currentProposal.getDescription());
+                ivBanner.setImageResource(R.drawable.bg_placeholder_image);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(EventApprovalActivity.this, "Error loading proposal", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        });
     }
 
     private String formatDateTime(Timestamp timestamp) {

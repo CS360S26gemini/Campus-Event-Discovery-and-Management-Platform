@@ -1,8 +1,10 @@
 package com.example.campuseventdiscovery.repository;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.example.campuseventdiscovery.model.Event;
+import com.example.campuseventdiscovery.model.EventAttendee;
 import com.example.campuseventdiscovery.model.EventProposal;
 import com.example.campuseventdiscovery.model.Notification;
 import com.example.campuseventdiscovery.model.User;
@@ -17,9 +19,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +44,7 @@ public class EventRepository {
     private static final String COLLECTION_EVENT_PROPOSALS = "event_proposals";
     private static final String COLLECTION_REPORTS = "reports";
     private static final String COLLECTION_NOTIFICATIONS = "notifications";
+    private static final String COLLECTION_APP_CONFIG = "app_config";
 
     private static final String SUBCOLLECTION_SAVED_EVENTS = "saved_events";
     private static final String SUBCOLLECTION_RSVPS = "rsvps";
@@ -46,6 +52,7 @@ public class EventRepository {
     private static final String SUBCOLLECTION_RATINGS = "ratings";
     private static final String SUBCOLLECTION_ATTENDEES = "attendees";
     private static final String SUBCOLLECTION_MESSAGES = "messages";
+    private static final String DOCUMENT_SETTINGS = "settings";
 
     private static final int FIRESTORE_WHERE_IN_LIMIT = 10;
 
@@ -66,6 +73,11 @@ public class EventRepository {
         void onError(Exception e);
     }
 
+    public interface ProposalCallback {
+        void onSuccess(EventProposal proposal);
+        void onError(Exception e);
+    }
+
     public interface UserCallback {
         void onSuccess(User user);
         void onError(Exception e);
@@ -76,8 +88,13 @@ public class EventRepository {
         void onError(Exception e);
     }
 
-    public interface ParticipantListCallback {
-        void onSuccess(List<Map<String, Object>> participants);
+    public interface AttendeeListCallback {
+        void onSuccess(List<EventAttendee> attendees);
+        void onError(Exception e);
+    }
+
+    public interface FeaturedEventIdsCallback {
+        void onSuccess(List<String> featuredIds);
         void onError(Exception e);
     }
 
@@ -114,6 +131,17 @@ public class EventRepository {
             return;
         }
         fetchEventsByIdsPreserveOrder(ids, null, cb);
+    }
+
+    public void getFeaturedEventIds(FeaturedEventIdsCallback cb) {
+        db.collection(COLLECTION_APP_CONFIG)
+                .document(DOCUMENT_SETTINGS)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    List<String> featuredIds = (List<String>) documentSnapshot.get("featuredEventIds");
+                    cb.onSuccess(featuredIds != null ? new ArrayList<>(featuredIds) : new ArrayList<>());
+                })
+                .addOnFailureListener(cb::onError);
     }
 
     public void getPersonalisedEvents(List<String> interests, EventListCallback cb) {
@@ -254,6 +282,16 @@ public class EventRepository {
             DocumentSnapshot eventSnap = transaction.get(eventRef);
             if (!eventSnap.exists()) throw new FirebaseFirestoreException("Event not found", FirebaseFirestoreException.Code.NOT_FOUND);
 
+            DocumentSnapshot existingRsvpSnap = transaction.get(userRsvpRef);
+            DocumentSnapshot existingAttendeeSnap = transaction.get(eventAttendeeRef);
+
+            boolean alreadyRegistered = existingAttendeeSnap.exists()
+                    || (existingRsvpSnap.exists()
+                    && !"cancelled".equalsIgnoreCase(existingRsvpSnap.getString("status")));
+            if (alreadyRegistered) {
+                throw new FirebaseFirestoreException("Already registered", FirebaseFirestoreException.Code.ABORTED);
+            }
+
             Long cap = eventSnap.getLong("capacity");
             long capacity = cap != null ? cap : 0L;
             Long rsvp = eventSnap.getLong("rsvpCount");
@@ -271,14 +309,16 @@ public class EventRepository {
             rsvpData.put("checkedIn", false);
             rsvpData.put("qrCodeToken", qrToken);
             rsvpData.put("addedToCalendar", false);
+            rsvpData.put("gcalEventId", "");
             rsvpData.put("rsvpAt", Timestamp.now());
             transaction.set(userRsvpRef, rsvpData);
 
             Map<String, Object> attendeeData = new HashMap<>();
             attendeeData.put("userId", userId);
-            attendeeData.put("fullName", fullName);
+            attendeeData.put("fullName", TextUtils.isEmpty(fullName) ? "Attendee" : fullName);
             attendeeData.put("qrToken", qrToken);
             attendeeData.put("checkedIn", false);
+            attendeeData.put("checkedInAt", null);
             transaction.set(eventAttendeeRef, attendeeData);
 
             transaction.update(eventRef, "rsvpCount", FieldValue.increment(1));
@@ -294,9 +334,31 @@ public class EventRepository {
         DocumentReference eventAttendeeRef = eventRef.collection(SUBCOLLECTION_ATTENDEES).document(userId);
 
         db.runTransaction(transaction -> {
-            transaction.delete(userRsvpRef);
-            transaction.delete(eventAttendeeRef);
-            transaction.update(eventRef, "rsvpCount", FieldValue.increment(-1));
+            DocumentSnapshot eventSnap = transaction.get(eventRef);
+            DocumentSnapshot userRsvpSnap = transaction.get(userRsvpRef);
+            DocumentSnapshot attendeeSnap = transaction.get(eventAttendeeRef);
+
+            boolean hadActiveRsvp = attendeeSnap.exists();
+            if (userRsvpSnap.exists()) {
+                String currentStatus = userRsvpSnap.getString("status");
+                hadActiveRsvp = hadActiveRsvp || !"cancelled".equalsIgnoreCase(currentStatus);
+
+                Map<String, Object> cancelledRsvpData = new HashMap<>();
+                cancelledRsvpData.put("status", "cancelled");
+                cancelledRsvpData.put("addedToCalendar", false);
+                cancelledRsvpData.put("gcalEventId", "");
+                transaction.set(userRsvpRef, cancelledRsvpData, SetOptions.merge());
+            }
+
+            if (attendeeSnap.exists()) {
+                transaction.delete(eventAttendeeRef);
+            }
+
+            if (hadActiveRsvp && eventSnap.exists()) {
+                Long currentCount = eventSnap.getLong("rsvpCount");
+                long safeCount = Math.max(0L, currentCount != null ? currentCount : 0L);
+                transaction.update(eventRef, "rsvpCount", Math.max(0L, safeCount - 1L));
+            }
             return null;
         }).addOnSuccessListener(unused -> runIfNotNull(onSuccess));
     }
@@ -346,15 +408,28 @@ public class EventRepository {
 
         db.runTransaction(transaction -> {
             DocumentSnapshot eventSnap = transaction.get(eventRef);
+            DocumentSnapshot existingRatingSnap = transaction.get(ratingRef);
             Long countL = eventSnap.getLong("ratingCount");
             long count = countL != null ? countL : 0L;
             Double avgD = eventSnap.getDouble("averageRating");
             double avg = avgD != null ? avgD : 0.0;
 
-            double newAvg = ((avg * count) + stars) / (count + 1);
+            boolean hasExistingRating = existingRatingSnap.exists();
+            long newCount = hasExistingRating ? Math.max(1L, count) : count + 1L;
+            long previousStars = 0L;
+            if (hasExistingRating) {
+                Long previousStarsLong = existingRatingSnap.getLong("stars");
+                previousStars = previousStarsLong != null ? previousStarsLong : 0L;
+            }
+
+            double totalStars = (avg * count) - previousStars + stars;
+            if (!hasExistingRating) {
+                totalStars = (avg * count) + stars;
+            }
+            double newAvg = newCount > 0 ? totalStars / newCount : 0.0;
 
             transaction.set(ratingRef, rating);
-            transaction.update(eventRef, "averageRating", newAvg, "ratingCount", count + 1);
+            transaction.update(eventRef, "averageRating", newAvg, "ratingCount", newCount);
             return null;
         });
     }
@@ -366,6 +441,26 @@ public class EventRepository {
                 .add(proposal)
                 .addOnSuccessListener(ref -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
+    public void getProposalById(String proposalId, ProposalCallback cb) {
+        db.collection(COLLECTION_EVENT_PROPOSALS)
+                .document(proposalId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (!documentSnapshot.exists()) {
+                        cb.onError(new Exception("Proposal not found."));
+                        return;
+                    }
+                    EventProposal proposal = documentSnapshot.toObject(EventProposal.class);
+                    if (proposal == null) {
+                        cb.onError(new Exception("Proposal not found."));
+                        return;
+                    }
+                    proposal.setProposalId(documentSnapshot.getId());
+                    cb.onSuccess(proposal);
+                })
+                .addOnFailureListener(cb::onError);
     }
 
     public void getOrganizerEvents(String organizerId, EventListCallback cb) {
@@ -426,46 +521,81 @@ public class EventRepository {
         WriteBatch batch = db.batch();
 
         DocumentReference proposalRef = db.collection(COLLECTION_EVENT_PROPOSALS).document(proposalId);
-        batch.update(proposalRef, "status", "approved", "reviewedAt", Timestamp.now());
-
         DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document();
-        Event event = new Event();
-        event.setTitle(proposal.getTitle());
-        event.setDescription(proposal.getDescription());
-        event.setCategory(proposal.getCategory());
-        event.setTags(proposal.getTags());
-        event.setDate(proposal.getDate());
-        event.setLocation(proposal.getLocation());
-        event.setCapacity(proposal.getCapacity());
-        event.setOrganizerId(proposal.getOrganizerId());
-        event.setOrganizerName(proposal.getOrganizerName());
-        event.setStatus("active");
-        event.setCreatedAt(Timestamp.now());
-        event.setThumbnailUrl("");
-        event.setTrailerUrl(proposal.getTrailerUrl());
-        
-        batch.set(eventRef, event);
+        Notification organizerNotification = buildNotification(
+                "Your event was approved",
+                proposal.getTitle() + " is now live.",
+                "event_approved",
+                eventRef.getId()
+        );
+
+        batch.update(proposalRef,
+                "status", "approved",
+                "adminNote", "",
+                "reviewedAt", Timestamp.now());
+        batch.set(eventRef, proposalToApprovedEvent(proposal));
+
+        if (!TextUtils.isEmpty(proposal.getOrganizerId())) {
+            DocumentReference notificationRef = db.collection(COLLECTION_NOTIFICATIONS)
+                    .document(proposal.getOrganizerId())
+                    .collection(SUBCOLLECTION_MESSAGES)
+                    .document();
+            batch.set(notificationRef, organizerNotification);
+        }
 
         batch.commit().addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
     public void rejectProposal(String proposalId, String note, ActionCallback cb) {
-        db.collection(COLLECTION_EVENT_PROPOSALS).document(proposalId)
-                .update("status", "rejected", "adminNote", note, "reviewedAt", Timestamp.now())
+        rejectProposal(proposalId, null, note, cb);
+    }
+
+    public void rejectProposal(String proposalId, EventProposal proposal, String note, ActionCallback cb) {
+        WriteBatch batch = db.batch();
+        DocumentReference proposalRef = db.collection(COLLECTION_EVENT_PROPOSALS).document(proposalId);
+
+        batch.update(proposalRef,
+                "status", "rejected",
+                "adminNote", note,
+                "reviewedAt", Timestamp.now());
+
+        if (proposal != null && !TextUtils.isEmpty(proposal.getOrganizerId())) {
+            DocumentReference notificationRef = db.collection(COLLECTION_NOTIFICATIONS)
+                    .document(proposal.getOrganizerId())
+                    .collection(SUBCOLLECTION_MESSAGES)
+                    .document();
+            batch.set(notificationRef, buildNotification(
+                    "Your event was rejected",
+                    proposal.getTitle() + " needs changes before it can go live.",
+                    "event_rejected",
+                    null
+            ));
+        }
+
+        batch.commit()
                 .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
-    public void getEventAttendees(String eventId, ParticipantListCallback cb) {
+    public void getEventAttendees(String eventId, AttendeeListCallback cb) {
         db.collection(COLLECTION_EVENTS).document(eventId)
                 .collection(SUBCOLLECTION_ATTENDEES)
                 .get()
                 .addOnSuccessListener(snaps -> {
-                    List<Map<String, Object>> list = new ArrayList<>();
+                    List<EventAttendee> list = new ArrayList<>();
                     for (DocumentSnapshot doc : snaps.getDocuments()) {
-                        list.add(doc.getData());
+                        EventAttendee attendee = doc.toObject(EventAttendee.class);
+                        if (attendee != null) {
+                            if (TextUtils.isEmpty(attendee.getUserId())) {
+                                attendee.setUserId(doc.getId());
+                            }
+                            list.add(attendee);
+                        }
                     }
+                    Collections.sort(list, Comparator.comparing(
+                            attendee -> attendee.getFullName() == null ? "" : attendee.getFullName().toLowerCase()
+                    ));
                     cb.onSuccess(list);
                 })
                 .addOnFailureListener(cb::onError);
@@ -474,10 +604,19 @@ public class EventRepository {
     // --- SOS REPORTS ---
 
     public void sendSosReport(String reporterId, String reporterName, String description, double lat, double lng) {
+        sendSosReport(reporterId, reporterName, description, lat, lng, null);
+    }
+
+    public void sendSosReport(String reporterId,
+                              String reporterName,
+                              String description,
+                              double lat,
+                              double lng,
+                              ActionCallback cb) {
         Map<String, Object> report = new HashMap<>();
         report.put("reporterId", reporterId);
         report.put("reporterName", reporterName);
-        report.put("isAnonymous", reporterId == null);
+        report.put("isAnonymous", TextUtils.isEmpty(reporterId));
         report.put("description", description);
         
         Map<String, Object> location = new HashMap<>();
@@ -486,9 +625,14 @@ public class EventRepository {
         report.put("location", location);
         
         report.put("status", "open");
+        report.put("adminNote", null);
         report.put("submittedAt", Timestamp.now());
+        report.put("resolvedAt", null);
 
-        db.collection(COLLECTION_REPORTS).add(report);
+        db.collection(COLLECTION_REPORTS)
+                .add(report)
+                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
     // --- NOTIFICATIONS ---
@@ -530,11 +674,52 @@ public class EventRepository {
         db.collection(COLLECTION_USERS).document(userId).update("darkMode", darkMode);
     }
 
+    public void updateUserProfile(String userId,
+                                  String fullName,
+                                  String university,
+                                  String location,
+                                  ActionCallback cb) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("fullName", fullName);
+        updates.put("university", university);
+        updates.put("location", location);
+
+        db.collection(COLLECTION_USERS).document(userId)
+                .update(updates)
+                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
     public void updateProfilePic(String userId, String url, ActionCallback cb) {
         db.collection(COLLECTION_USERS).document(userId)
                 .update("profilePicUrl", url)
                 .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
+    public void markRsvpAddedToCalendar(String userId, String eventId, String gcalEventId) {
+        if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(eventId)) {
+            return;
+        }
+
+        DocumentReference rsvpRef = db.collection(COLLECTION_USERS)
+                .document(userId)
+                .collection(SUBCOLLECTION_RSVPS)
+                .document(eventId);
+
+        rsvpRef.get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (!documentSnapshot.exists()) {
+                        return;
+                    }
+
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("addedToCalendar", true);
+                    updates.put("gcalEventId", gcalEventId == null ? "" : gcalEventId);
+                    rsvpRef.update(updates)
+                            .addOnFailureListener(e -> Log.w(TAG, "Failed to update RSVP calendar metadata", e));
+                })
+                .addOnFailureListener(e -> Log.w(TAG, "Failed to inspect RSVP before calendar update", e));
     }
 
     // --- HELPERS ---
@@ -555,6 +740,43 @@ public class EventRepository {
         event.setThumbnailUrl(doc.getString("thumbnailUrl"));
         event.setStatus("active");
         return event;
+    }
+
+    private Event proposalToApprovedEvent(EventProposal proposal) {
+        Event event = new Event();
+        event.setTitle(proposal.getTitle());
+        event.setDescription(proposal.getDescription());
+        event.setCategory(proposal.getCategory());
+        event.setTags(proposal.getTags() != null ? proposal.getTags() : new ArrayList<>());
+        event.setDate(proposal.getDate());
+        event.setEndTime(null);
+        event.setLocation(proposal.getLocation());
+        event.setCapacity(proposal.getCapacity());
+        event.setRsvpCount(0L);
+        event.setCheckedInCount(0L);
+        event.setThumbnailUrl("");
+        event.setTrailerUrl(proposal.getTrailerUrl());
+        event.setSponsors(proposal.getSponsors() != null ? proposal.getSponsors() : new ArrayList<>());
+        event.setFoodStalls(proposal.getFoodStalls() != null ? proposal.getFoodStalls() : new ArrayList<>());
+        event.setOrganizerId(proposal.getOrganizerId());
+        event.setOrganizerName(proposal.getOrganizerName());
+        event.setVerified(true);
+        event.setAverageRating(0.0);
+        event.setRatingCount(0L);
+        event.setStatus("active");
+        event.setCreatedAt(proposal.getSubmittedAt() != null ? proposal.getSubmittedAt() : Timestamp.now());
+        return event;
+    }
+
+    private Notification buildNotification(String title, String body, String type, String eventId) {
+        Notification notification = new Notification();
+        notification.setTitle(title);
+        notification.setBody(body);
+        notification.setType(type);
+        notification.setEventId(eventId);
+        notification.setRead(false);
+        notification.setCreatedAt(Timestamp.now());
+        return notification;
     }
 
     private void fetchEventsByIdsPreserveOrder(List<String> orderedIds, Map<String, Event> fallbacks, EventListCallback cb) {

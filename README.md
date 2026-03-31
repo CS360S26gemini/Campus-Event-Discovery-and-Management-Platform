@@ -134,6 +134,56 @@ Important local preference stores:
 - shared theme styles in `values/themes.xml` and `values-night/themes.xml`
 - shared motion via window animation style plus `NavigationTransitions`
 
+## How Classes Relate
+
+This project is easiest to understand as five layers:
+
+1. app startup and shell
+2. role-specific screens
+3. shared feature screens
+4. repository and model layer
+5. local utility/state helpers
+
+### Startup and shell relations
+
+- `CampusEventDiscoveryApp` initializes theme state before any screen is shown.
+- `SplashActivity` decides whether the app enters authenticated flow or local test flow.
+- `TempLoginActivity` writes the bypass identity through `DevSessionManager`.
+- `WelcomeActivity`, `SignInActivity`, and `SignUpActivity` are the real-auth entry points.
+- `MainActivity` is the runtime shell that decides which fragments exist for the current role and what the action tab should do.
+
+### Screen-to-repository relations
+
+- `HomeFragment`, `HomeOrganizerFragment`, `SearchFragment`, `FavouritesFragment`, `MyEventsFragment`, and `EventCalendarFragment` all read event data through `EventRepository`.
+- `EventDetailActivity` reads one event through `EventRepository`, updates save state through `EventRepository`, and launches the ticket flow.
+- `BuyTicketActivity` is mostly UI-only and launches `CheckoutActivity`.
+- `CheckoutActivity` performs the actual call to `EventRepository.rsvpEvent(...)`.
+- `CreateEventActivity` creates `EventProposal` objects and writes them through `EventRepository.proposeEvent(...)`.
+- `HomeAdminFragment` reads pending proposals through `EventRepository.getAllPendingProposals(...)`.
+- `EventApprovalActivity` reads one proposal through `EventRepository.getProposalById(...)` and resolves it through `approveProposal(...)` / `rejectProposal(...)`.
+- `WhoIsComingActivity` reads `events/{eventId}/attendees` through `EventRepository.getEventAttendees(...)`.
+- `ProfileFragment` and `AccountSettingsActivity` use `EventRepository` for user reads and profile updates.
+
+### Adapter-to-model relations
+
+- `EventAdapter` renders `Event` objects and is reused across home, search, favourites, my-events, and calendar flows.
+- `OrganizerPendingAdapter` renders `EventProposal` objects for admin pending-approval lists.
+- `TicketTierAdapter` renders its own local `TicketTier` model because ticket tiers are UI-defined, not Firestore-defined.
+- `AttendeeAdapter` renders `EventAttendee` objects for organizer attendee management.
+
+### Utility relations
+
+- `UserRoles` centralizes role strings and role checks and is used across `MainActivity`, `ProfileFragment`, `EventDetailActivity`, `BuyTicketActivity`, and `CheckoutActivity`.
+- `ThemeManager` is used by `CampusEventDiscoveryApp`, `ProfileFragment`, `SignInActivity`, and `SignUpActivity`.
+- `DevSessionManager` is used anywhere the app needs to behave like a signed-in user without Firebase Auth, especially `SplashActivity`, `TempLoginActivity`, `MainActivity`, `ProfileFragment`, and the registration flow.
+- `NavigationTransitions` is used where fragment replacements should feel visually consistent with shared activity animations.
+
+### Firebase ownership boundaries
+
+- `EventRepository` should be considered the owner of Firestore event/proposal/RSVP/attendee/report/notification operations.
+- `SignUpActivity` still creates the initial Firestore user document directly because it must create the Firebase Auth user first.
+- `ProfileFragment` owns the Firebase Storage upload for profile pictures, then delegates the Firestore `profilePicUrl` update back into `EventRepository`.
+
 ## Role-Based Behavior
 
 ### Attendee
@@ -170,15 +220,28 @@ The main collections are:
 - `notifications`
 - `app_config/settings`
 
-The code mostly follows this structure, especially for:
+The code now follows this structure closely for:
 
 - user profiles
 - event browsing
 - saved events
-- RSVPs
-- proposals
+- RSVPs and attendee documents
+- proposals and approval review metadata
+- reports
+- notifications
+- featured event configuration
 
-Not everything from the design is surfaced in UI yet. Notifications, memories, ratings, and organizer attendee-management are only partially implemented.
+Not everything from the design is fully surfaced in UI yet. The remaining gaps are mostly around backend-only behavior, Google Calendar token handling, maintenance mode, memories UI, and ratings UI.
+
+### Database Alignment Notes
+
+Some Firestore behavior in the app is intentionally pragmatic and should be understood before making backend changes:
+
+- proposal approval is still materialized on the client in `EventRepository.approveProposal(...)`; there is no Cloud Function in this repo
+- RSVP cancellation keeps the user RSVP document and changes its `status` to `cancelled` instead of deleting it
+- calendar integration updates `addedToCalendar`, but the current Android intent flow cannot provide a real Google Calendar event ID
+- SOS/report writes follow the expected map shape, but location values may be placeholders until a real location-permission flow exists
+- organizer approval/rejection notifications are written directly into Firestore under `notifications/{userId}/messages`
 
 ## Main User Flows
 
@@ -220,11 +283,20 @@ Not everything from the design is surfaced in UI yet. Notifications, memories, r
 
 `HomeAdminFragment` -> `EventApprovalActivity`
 
-- admin loads the proposal directly from Firestore
-- approve: repository marks proposal approved and creates a new `events` document on the client
-- reject: repository updates proposal status and admin note
+- admin loads the proposal through `EventRepository.getProposalById(...)`
+- approve: repository marks proposal approved, creates a new `events` document on the client, and writes an organizer notification
+- reject: repository updates proposal status/admin note and writes an organizer notification
 
-### 6. Profile/settings flow
+### 6. Organizer attendee-management flow
+
+`OrganizerEventDetailActivity` -> `WhoIsComingActivity`
+
+- organizer opens attendee management from an approved event
+- `WhoIsComingActivity` reads `events/{eventId}/attendees`
+- attendee rows are rendered by `AttendeeAdapter` using the `EventAttendee` model
+- blacklist selection is still a placeholder action; the attendee list itself is now live
+
+### 7. Profile/settings flow
 
 `ProfileFragment`
 
@@ -295,21 +367,22 @@ Not everything from the design is surfaced in UI yet. Notifications, memories, r
 
 Repository responsibilities by method group:
 
-- Event fetch: `getUpcomingEvents`, `getFeaturedEvents`, `getPersonalisedEvents`, `getEventById`, `searchEvents`
-- Save/RSVP: `saveEvent`, `unsaveEvent`, `getSavedEvents`, `rsvpEvent`, `cancelRsvp`, `getRsvps`
+- Event fetch: `getUpcomingEvents`, `getFeaturedEventIds`, `getFeaturedEvents`, `getPersonalisedEvents`, `getEventById`, `searchEvents`
+- Save/RSVP: `saveEvent`, `unsaveEvent`, `getSavedEvents`, `rsvpEvent`, `cancelRsvp`, `getRsvps`, `markRsvpAddedToCalendar`
 - Memories/ratings: `addMemory`, `addRating`
-- Organizer/admin: `proposeEvent`, `getOrganizerEvents`, `getOrganizerProposals`, `getAllPendingProposals`, `approveProposal`, `rejectProposal`, `getEventAttendees`
+- Organizer/admin: `proposeEvent`, `getProposalById`, `getOrganizerEvents`, `getOrganizerProposals`, `getAllPendingProposals`, `approveProposal`, `rejectProposal`, `getEventAttendees`
 - Reports/notifications: `sendSosReport`, `getNotifications`
-- User profile: `getUserData`, `updateDarkMode`, `updateProfilePic`
-- Internal helpers: document mapping, saved-event fallback mapping, ID chunking, ordered fetch reconstruction
+- User profile: `getUserData`, `updateDarkMode`, `updateUserProfile`, `updateProfilePic`
+- Internal helpers: document mapping, saved-event fallback mapping, ID chunking, ordered fetch reconstruction, and proposal-to-event conversion
 
-Important note: `approveProposal(...)` currently copies a proposal into `events` directly from the Android client instead of using a Cloud Function.
+Important note: `approveProposal(...)` currently copies a proposal into `events` directly from the Android client instead of using a Cloud Function. That matches current app behavior, but it is still an architectural limitation.
 
 ## Java Source: Models
 
 - `app/src/main/java/com/example/campuseventdiscovery/model/User.java`: Firestore user model; includes profile, role, interests, dark mode, FCM token, Google Calendar token, and created-at.
 - `app/src/main/java/com/example/campuseventdiscovery/model/Event.java`: Firestore event model; includes document ID helper, event metadata, capacity counts, organizer identity, verification, rating stats, and status.
 - `app/src/main/java/com/example/campuseventdiscovery/model/EventProposal.java`: Firestore event proposal model; used before admin approval.
+- `app/src/main/java/com/example/campuseventdiscovery/model/EventAttendee.java`: Firestore attendee model for `events/{eventId}/attendees/{userId}`.
 - `app/src/main/java/com/example/campuseventdiscovery/model/Memory.java`: model for post-event memories/photos and rating; repository support exists but no dedicated screen currently uses it.
 - `app/src/main/java/com/example/campuseventdiscovery/model/Notification.java`: model for per-user notifications; repository support exists but no notification UI is currently present.
 
@@ -325,6 +398,7 @@ Important note: `approveProposal(...)` currently copies a proposal into `events`
 - `app/src/main/java/com/example/campuseventdiscovery/adapter/EventAdapter.java`: generic event-card adapter used across home, search, favourites, calendar, and my-events screens. Also defines `OnEventClickListener` and `EventViewHolder`.
 - `app/src/main/java/com/example/campuseventdiscovery/adapter/OrganizerPendingAdapter.java`: simplified adapter for pending proposal cards used on the admin home screen. Also defines `OnPendingClickListener` and `PendingViewHolder`.
 - `app/src/main/java/com/example/campuseventdiscovery/adapter/TicketTierAdapter.java`: adapter for checkout tiers. Also defines `OnTotalChangedListener`, `TicketTier`, and `TierViewHolder`.
+- `app/src/main/java/com/example/campuseventdiscovery/adapter/AttendeeAdapter.java`: organizer attendee-list adapter with search/filter support and local selection state for future moderation actions.
 
 ## Java Source: Attendee and Shared UI
 
@@ -346,7 +420,7 @@ Important note: `approveProposal(...)` currently copies a proposal into `events`
 - `app/src/main/java/com/example/campuseventdiscovery/ui/home/HomeOrganizerFragment.java`: organizer home; mirrors attendee browsing behavior but adds a Create Event button.
 - `app/src/main/java/com/example/campuseventdiscovery/ui/organizer/CreateEventActivity.java`: organizer proposal form; creates pending `EventProposal` documents.
 - `app/src/main/java/com/example/campuseventdiscovery/ui/organizer/OrganizerEventDetailActivity.java`: organizer-facing event detail/management screen showing registration count and actions.
-- `app/src/main/java/com/example/campuseventdiscovery/ui/organizer/WhoIsComingActivity.java`: organizer attendee-list screen placeholder; UI exists but participant loading is not implemented.
+- `app/src/main/java/com/example/campuseventdiscovery/ui/organizer/WhoIsComingActivity.java`: organizer attendee-list screen; loads attendee documents, supports local search/filter, and exposes a placeholder selection-based moderation action.
 - `app/src/main/java/com/example/campuseventdiscovery/ui/organizer/ManageEventsActivity.java`: placeholder activity with toolbar/back handling only; currently not the main organizer management flow.
 
 ## Java Source: Admin UI
@@ -387,6 +461,7 @@ Important note: `approveProposal(...)` currently copies a proposal into `events`
 - `app/src/main/res/layout/item_event_card.xml`: standard event list card used by `EventAdapter` and `OrganizerPendingAdapter`.
 - `app/src/main/res/layout/item_event_card_large.xml`: featured event card layout used on home screens.
 - `app/src/main/res/layout/item_ticket_tier.xml`: row layout for ticket tiers in `BuyTicketActivity`.
+- `app/src/main/res/layout/item_attendee.xml`: attendee row layout used by `AttendeeAdapter`.
 
 ## Theme, String, Menu, and Shared Resource Files
 
@@ -526,27 +601,31 @@ The admin-specific stack is:
 - RSVP flow
 - organizer proposal submission
 - admin proposal approval/rejection
+- organizer attendee list loading
+- approval/rejection notification writes
+- schema-aligned report/attendee/RSVP writes
 - dark mode persistence
 - local test-mode role bypass
 
 ### Present in code but partial or placeholder
 
-- `WhoIsComingActivity`: UI only; attendee loading is not wired
 - `ManageEventsActivity`: placeholder only
 - `Memory` model and `addMemory(...)`: no screen uses them
 - `Notification` model and `getNotifications(...)`: no notification screen uses them
 - `addRating(...)`: no rating UI currently calls it
-- `sendSosReport(...)`: repository supports structured reports, but `HomeFragment` currently writes the SOS document directly instead
-- Google Calendar token handling exists in the schema/model but the UI currently relies on Android calendar intents
+- attendee moderation/blacklist action in `WhoIsComingActivity`: selection UI exists, but no real backend moderation flow is implemented
+- Google Calendar token handling exists in the schema/model, but the UI still relies on Android calendar intents rather than Google Calendar API integration
+- `app_config.settings.maintenanceMode`: documented in Firestore design but not consumed by the Android app yet
 
 ### Known rough edges
 
 - Firebase email/password auth may require Firebase console configuration before it works reliably on device
 - `SplashActivity` currently sends unauthenticated users to `TempLoginActivity`, not `WelcomeActivity`
 - `CheckoutActivity` simulates payment but only performs RSVP registration
-- `EventRepository.approveProposal(...)` performs event creation on the client rather than through backend automation
+- `EventRepository.approveProposal(...)` performs event creation and organizer notification writes on the client rather than through backend automation
 - the instrumented test package assertion is stale
 - some strings still refer to older phase/placeholder naming
+- `gcalEventId` is present in RSVP data, but current calendar integration cannot supply a real Google Calendar event ID
 
 ## Suggested Reading Order For New Developers
 

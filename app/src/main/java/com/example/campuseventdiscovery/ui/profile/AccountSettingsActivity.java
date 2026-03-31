@@ -21,10 +21,6 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * AccountSettingsActivity.java
@@ -42,7 +38,6 @@ public class AccountSettingsActivity extends AppCompatActivity {
     private ProgressBar progressBarSettings;
 
     private EventRepository repository;
-    private FirebaseFirestore db;
     private String currentUserId;
 
     @Override
@@ -51,7 +46,6 @@ public class AccountSettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_account_settings);
 
         repository = new EventRepository();
-        db = FirebaseFirestore.getInstance();
         
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         currentUserId = currentUser != null ? currentUser.getUid() : DevSessionManager.getEffectiveUserId(this);
@@ -146,23 +140,20 @@ public class AccountSettingsActivity extends AppCompatActivity {
         }
 
         showLoading(true);
-
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("fullName", fullName);
-        updates.put("university", university);
-        updates.put("location", location);
-
-        db.collection("users").document(currentUserId)
-                .update(updates)
-                .addOnSuccessListener(unused -> {
+        repository.updateUserProfile(currentUserId, fullName, university, location, new EventRepository.ActionCallback() {
+            @Override
+            public void onSuccess() {
                     showLoading(false);
                     Toast.makeText(AccountSettingsActivity.this, "Profile updated", Toast.LENGTH_SHORT).show();
                     navigateBackToProfile();
-                })
-                .addOnFailureListener(e -> {
+            }
+
+            @Override
+            public void onError(Exception e) {
                     showLoading(false);
                     Toast.makeText(AccountSettingsActivity.this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+            }
+        });
     }
 
     private void showLoading(boolean isLoading) {

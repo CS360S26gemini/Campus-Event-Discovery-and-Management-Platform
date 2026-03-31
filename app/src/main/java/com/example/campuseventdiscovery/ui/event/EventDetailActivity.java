@@ -316,6 +316,7 @@ public class EventDetailActivity extends AppCompatActivity {
             }
 
             startActivity(intent);
+            repository.markRsvpAddedToCalendar(currentUserId, currentEvent.getEventId(), "");
         } catch (ActivityNotFoundException e) {
             Toast.makeText(this, getString(R.string.calendar_add_failed), Toast.LENGTH_SHORT).show();
         }

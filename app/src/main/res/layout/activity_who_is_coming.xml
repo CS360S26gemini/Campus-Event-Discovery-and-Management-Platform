@@ -68,6 +68,19 @@
         app:layout_constraintBottom_toTopOf="@id/btnBlacklist"
         app:layout_constraintTop_toBottomOf="@id/header" />
 
+    <TextView
+        android:id="@+id/tvEmptyParticipants"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/no_participants_yet"
+        android:textColor="@color/colorSecondary"
+        android:textSize="16sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/btnBlacklist"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnBlacklist"
         style="@style/AppDangerButtonStyle"

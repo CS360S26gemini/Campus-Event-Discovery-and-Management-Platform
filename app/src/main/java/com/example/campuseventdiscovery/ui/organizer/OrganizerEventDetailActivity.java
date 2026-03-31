@@ -70,6 +70,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
         btnWhoIsComing.setOnClickListener(v -> {
             Intent intent = new Intent(this, WhoIsComingActivity.class);
             intent.putExtra("eventId", eventId);
+            intent.putExtra("eventTitle", currentEvent != null ? currentEvent.getTitle() : "");
             startActivity(intent);
         });
         btnAnnouncement.setOnClickListener(v -> 
