@@ -1,4 +1,4 @@
-package com.example.CampusEventDiscovery;
+package com.example.campuseventdiscovery;
 
 import android.os.Bundle;
 

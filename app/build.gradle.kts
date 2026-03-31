@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.CampusEventDiscovery"
+    namespace = "com.example.campuseventdiscovery"
     compileSdk {
         version = release(36)
     }
