@@ -9,6 +9,27 @@ This README is a developer guide for the entire repository. It is written for so
 
 The codebase is an Android app written in Java using classic Activities, Fragments, RecyclerView, Firebase Auth, Firestore, Firebase Storage, Material 3, and Glide. There is no backend service in this repository; the Android client talks directly to Firebase.
 
+## Remaining Work
+
+The core demo loop is implemented, but several features are still partial or missing. A new developer should know this before reading the rest of the guide.
+
+### App-side features still left
+
+- QR check-in is not finished. RSVP QR tokens exist, but there is no scanner/verification flow yet.
+- Notifications are only partially done. Approval/rejection writes exist, but there is no in-app notification center screen yet.
+- Memories/photos and ratings exist at the repository/model level, but not as full user-facing flows.
+- Organizer attendee management is only partly done. Attendee loading works, but blacklist/moderation is still a placeholder.
+- `ManageEventsActivity` is still basically a placeholder.
+- The organizer proposal form is still simplified and does not collect the full richer event metadata you may eventually want.
+- Payment is not real. The checkout flow simulates payment and then performs RSVP.
+
+### Backend and infrastructure work still left
+
+- Proposal approval is still client-driven, not Cloud-Function-driven.
+- Google Calendar integration is partial and currently uses Android calendar intents, not full Google OAuth/calendar sync.
+- `maintenanceMode` from `app_config/settings` is not enforced anywhere yet.
+- Real Firebase sign-in/up still depends on Firebase console configuration; the screens exist, but the easiest testing path is still the local bypass flow.
+
 ## Current Product Shape
 
 The app supports three roles:
