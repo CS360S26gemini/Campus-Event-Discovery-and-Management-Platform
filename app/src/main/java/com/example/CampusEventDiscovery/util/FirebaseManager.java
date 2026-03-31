@@ -5,7 +5,6 @@
  * to Firebase Authentication and Firestore instances throughout the app.
  * All Firebase access should go through this class.
  *
- * Outstanding issues: None.
  */
 package com.example.CampusEventDiscovery.util;
 
