@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:762166839009:android:8a593be1f7bd4f0bf1d9a0",
+        "mobilesdk_app_id": "1:762166839009:android:f27ad069f7d6c5ecf1d9a0",
         "android_client_info": {
-          "package_name": "com.example.CampusEventDiscovery"
+          "package_name": "com.example.campuseventdiscovery"
         }
       },
       "oauth_client": [],

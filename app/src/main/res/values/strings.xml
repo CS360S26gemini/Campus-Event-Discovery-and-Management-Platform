@@ -1,3 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">CampusEventDiscovery</string>
+    <string name="app_name">Campus Event Discovery</string>
+
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="action_sign_in">Sign In</string>
+    <string name="dev_login_note">Choose a temporary role to enter the app without Firebase sign-in.</string>
+    <string name="error_empty_fields">Please enter both email and password.</string>
+    <string name="sign_in_success">Sign in successful.</string>
+    <string name="sign_in_failed">Sign in failed: %1$s</string>
+
+    <string name="welcome_back">Welcome Back,</string>
+    <string name="sos">SOS</string>
+    <string name="popular_in_lums">Popular in LUMS</string>
+    <string name="more_like_this">More Like This</string>
+    <string name="new_badge">NEW</string>
+    <string name="verified">Verified</string>
+    <string name="no_events_found">No events found</string>
+
+    <string name="home">Home</string>
+    <string name="search">Search</string>
+    <string name="action">Action</string>
+    <string name="favourites">Favourites</string>
+    <string name="profile">Profile</string>
+    <string name="approvals">Approvals</string>
+
+    <string name="search_for">Search For...</string>
+    <string name="sort_by_relevant">Sort by relevant</string>
+    <string name="all">All</string>
+    <string name="music">Music</string>
+    <string name="sports">Sports</string>
+    <string name="career">Career</string>
+    <string name="academic">Academic</string>
+    <string name="arts">Arts</string>
+    <string name="business">Business</string>
+    <string name="food_bev">Food &amp; Bev</string>
+
+    <string name="events_count_label">%1$d Events</string>
+    <string name="search_placeholder_empty">Search results will appear here.</string>
+
+    <string name="add_to_calendar">Add to calendar</string>
+    <string name="view_on_map">View on map</string>
+    <string name="refund_policy">Refund Policy</string>
+    <string name="about">About</string>
+    <string name="tickets">Tickets</string>
+    <string name="sold_out">Sold Out</string>
+    <string name="spots_remaining">%1$d spots remaining</string>
+    <string name="spots_ratio">%1$d / %2$d spots</string>
+
+    <string name="buy">Buy</string>
+    <string name="secure_your_spot">Secure Your Spot</string>
+    <string name="contact_info">Contact Info</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="payment_methods">Payment Methods</string>
+    <string name="credit_card">Credit Card</string>
+    <string name="mastercard">MasterCard</string>
+    <string name="apple_pay">Apple Pay</string>
+    <string name="bitcoin">Bitcoin</string>
+    <string name="card_number">Card number</string>
+    <string name="terms_text">By continuing, you agree to the event terms and payment policy.</string>
+    <string name="total_price">Total: PKR %1$d</string>
+    <string name="please_select_ticket">Please select at least one ticket</string>
+    <string name="pay">Pay</string>
+
+    <string name="favourites_count">Favourites %1$d</string>
+    <string name="no_saved_events">You haven\'t saved any events yet</string>
+
+    <string name="my_events_count">My Events %1$d</string>
+    <string name="recently_viewed_events">Recently Viewed Events</string>
+    <string name="cancel_rsvp">Cancel RSVP?</string>
+    <string name="cancel_rsvp_message">Are you sure you want to cancel your RSVP?</string>
+
+    <string name="event_calendar">Event Calendar</string>
+    <string name="upcoming_events">Upcoming Events</string>
+    <string name="add_to_google_calendar">Add to Google Calendar</string>
+
+    <string name="create_event">Create Event</string>
+    <string name="approved_events">Approved Events</string>
+    <string name="pending_events">Pending Events</string>
+    <string name="pending">PENDING</string>
+
+    <string name="event_title">Event Title</string>
+    <string name="event_date">Event Date</string>
+    <string name="event_category">Event Category</string>
+    <string name="venue">Venue</string>
+    <string name="description">Description</string>
+    <string name="submit">Submit</string>
+    <string name="please_fill_all_fields">Please fill all fields</string>
+    <string name="submitted_title">Submitted! ✓</string>
+    <string name="submitted_message">Your event is under review. You\'ll be notified once it\'s approved.</string>
+
+    <string name="settings">Settings</string>
+    <string name="primary_campus">Primary Campus</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="manage_events">Manage Events</string>
+    <string name="view_event_calendar">View Event Calendar</string>
+    <string name="account_settings">Account Settings</string>
+    <string name="logout">Logout</string>
+
+    <string name="send_sos_title">Send SOS?</string>
+    <string name="send_sos_message">This will alert campus security.</string>
+    <string name="sos_sent">SOS sent</string>
+
+    <string name="you_are_in">You\'re in! 🎉</string>
+    <string name="spot_confirmed">Your spot is confirmed. See you there!</string>
+
+    <string name="early_bird">Early Bird</string>
+    <string name="vip">VIP</string>
+    <string name="general">General</string>
+
+    <string name="share">Share</string>
+    <string name="save">Save</string>
+    <string name="unsave">Unsave</string>
+    <string name="back">Back</string>
+
+    <string name="placeholder_price">PKR 0</string>
+    <string name="placeholder_date">Date TBD</string>
+    <string name="placeholder_venue">Venue TBD</string>
+    <string name="placeholder_description">Description coming soon.</string>
+
+    <string name="event_not_found">Event not found.</string>
+    <string name="failed_to_load_event">Failed to load event.</string>
+    <string name="refund_policy_body">Full fee is non-refundable after booking. Please review event guidelines before purchase.</string>
+    <string name="open_map_failed">No map app found.</string>
+    <string name="calendar_add_failed">No calendar app found.</string>
+    <string name="buy_tickets_coming_next">Buy Ticket screen placeholder - Phase 13 will replace this.</string>
+    <string name="event_detail_placeholder_title">Buy Ticket Placeholder</string>
+    <string name="view_on_map_inline">View on map</string>
+    <string name="add_to_calendar_inline">Add to calendar</string>
+    <string name="tickets_button">Tickets</string>
+    <string name="ticket_price_label">PKR 3000</string>
+    <string name="sold_out_toast">This event is sold out</string>
+
+    <string name="buy_ticket_title">Buy Tickets</string>
+    <string name="checkout_title">Checkout</string>
+    <string name="ticket_tier_early_bird">Early Bird</string>
+    <string name="ticket_tier_vip">VIP</string>
+    <string name="ticket_tier_general">General</string>
+    <string name="ticket_desc_early_bird">Discounted ticket for early registrations</string>
+    <string name="ticket_desc_vip">Premium seating and priority access</string>
+    <string name="ticket_desc_general">Standard event entry ticket</string>
+    <string name="ticket_date_range">Available now</string>
+    <string name="minus">-</string>
+    <string name="plus">+</string>
+    <string name="quantity_zero">0</string>
+    <string name="secure_your_spot_subtitle">Secure Your Spot</string>
+    <string name="please_select_payment_method">Please select a payment method</string>
+    <string name="login_required_for_checkout">Login required to complete checkout.</string>
+    <string name="sign_in_to_register">Sign in to register</string>
+    <string name="attendee_only_button">Attendee only</string>
+    <string name="attendee_only_registration_message">Only attendee accounts can register for events.</string>
+    <string name="proposal_pending_message">This proposal is still pending admin review.</string>
+    <string name="proposal_rejected_message">This proposal was rejected by admin.</string>
+    <string name="placeholder_first_name">First Name</string>
+    <string name="placeholder_last_name">Last Name</string>
+    <string name="checkout_success_title">You\'re in! 🎉</string>
+    <string name="checkout_success_message">Your spot is confirmed. See you there!</string>
+    <string name="payment_failed">Payment failed.</string>
+    <string name="total_label">Total: PKR %1$d</string>
+    <string name="event_summary_date">%1$s</string>
+    <string name="event_summary_venue">%1$s</string>
+
+    <string name="favourites_header">Favourites</string>
+    <string name="favourites_badge_count">%1$d</string>
+    <string name="no_saved_events_center">You haven\'t saved any events yet</string>
+
+    <string name="my_events_header">My Events</string>
+    <string name="my_events_badge_count">%1$d</string>
+    <string name="no_rsvps_yet">You have not RSVPed to any events yet</string>
+    <string name="no_recent_events">No recently viewed events yet</string>
+    <string name="my_events_section">My Events</string>
+    <string name="recently_viewed_section">Recently Viewed Events</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="rsvp_cancelled">RSVP cancelled</string>
+
+    <string name="calendar_header">Event Calendar</string>
+    <string name="dates_with_events">Dates with events: %1$s</string>
+    <string name="no_events_this_day">No events on this day</string>
+    <string name="month_previous"><![CDATA[<]]></string>
+    <string name="month_next"><![CDATA[>]]></string>
+    <string name="selected_day_events">Selected Day Events</string>
+    <string name="calendar_not_available">Calendar screen unavailable right now</string>
+
+    <string name="organizer_welcome_back">Welcome Back,</string>
+    <string name="approved_events_label">Approved Events</string>
+    <string name="pending_events_label">Pending Events</string>
+    <string name="rejected_proposals_label">Rejected Proposals</string>
+    <string name="no_approved_events">No approved events yet</string>
+    <string name="no_pending_events">No pending proposals yet</string>
+    <string name="no_rejected_proposals">No rejected proposals</string>
+    <string name="pending_badge">PENDING</string>
+    <string name="create_event_title">Create Event</string>
+    <string name="create_event_placeholder">Create Event placeholder - Phase 18 will replace this.</string>
+
+    <string name="create_event_header">Create Event</string>
+    <string name="event_title_hint">Event Title</string>
+    <string name="event_date_hint">Event Date</string>
+    <string name="event_category_hint">Event Category</string>
+    <string name="venue_hint">Venue</string>
+    <string name="description_hint">Description</string>
+    <string name="capacity_hint">Capacity</string>
+    <string name="trailer_url_hint">Trailer URL (optional)</string>
+    <string name="pick_date">Pick Date</string>
+    <string name="selected_date_label">%1$s</string>
+    <string name="invalid_capacity">Please enter a valid capacity</string>
+    <string name="submit_failed">Failed to submit proposal.</string>
+    <string name="ok">OK</string>
+
+    <string name="profile_header">Profile</string>
+    <string name="edit_photo">Edit Photo</string>
+    <string name="manage_events_placeholder">Manage Events placeholder</string>
+    <string name="account_settings_placeholder">Account Settings placeholder</string>
+    <string name="logout_confirm_title">Log out?</string>
+    <string name="logout_confirm_message">You will be returned to the login flow.</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="guest_user">Guest User</string>
+    <string name="unknown_email">No email available</string>
+    <string name="dark_mode_status_on">On</string>
+    <string name="dark_mode_status_off">Off</string>
+    <string name="manage_events_row">Manage Events</string>
+    <string name="view_event_calendar_row">View Event Calendar</string>
+    <string name="account_settings_row">Account Settings</string>
+    <string name="my_events_row">My Events</string>
+
+    <!-- New Auth Screens -->
+    <string name="welcome_title">Welcome!</string>
+    <string name="welcome_subtitle">Sign in or create a new account</string>
+    <string name="create_account_action">Create an Account</string>
+    <string name="test_mode_title">Test Mode</string>
+    <string name="test_mode_subtitle">Bypass sign in and launch the app as any role.</string>
+    <string name="continue_as_attendee">Continue as Attendee</string>
+    <string name="continue_as_organizer">Continue as Organizer</string>
+    <string name="continue_as_admin">Continue as Admin</string>
+    <string name="test_mode_enabled">%1$s mode enabled</string>
+    <string name="welcome_back_title">Welcome Back !</string>
+    <string name="email_address_label">Email address</string>
+    <string name="password_label">Password</string>
+    <string name="remember_me">Remember me</string>
+    <string name="create_account_title">Create Account</string>
+    <string name="full_name_label">Full Name</string>
+    <string name="confirm_password_label">Repeat password</string>
+    <string name="user_type_label">Type of User</string>
+    <string name="attendee">Attendee</string>
+    <string name="organizer">Organizer</string>
+    <string name="sign_up">Sign up</string>
+
+    <!-- Admin Screens -->
+    <string name="admin_header">Home Administrator</string>
+    <string name="events_to_be_approved">Events to be Approved</string>
+    <string name="no_pending_approvals">No pending approvals</string>
+    <string name="approve">Approve</string>
+    <string name="reject">Reject</string>
+    <string name="single_event_approval">Single Event Approval</string>
+
+    <!-- Organizer Registrations -->
+    <string name="who_is_coming">Who\'s Coming</string>
+    <string name="total_registrations">Total Registrations</string>
+    <string name="blacklist_selected">BlackList Selected</string>
+    <string name="announcement">Announcement</string>
+
 </resources>
