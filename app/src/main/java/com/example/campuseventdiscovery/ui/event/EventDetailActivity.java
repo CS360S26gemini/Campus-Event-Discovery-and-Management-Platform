@@ -305,14 +305,14 @@ public class EventDetailActivity extends AppCompatActivity {
                     .putExtra(CalendarContract.Events.EVENT_LOCATION, safeText(currentEvent.getLocation(), getString(R.string.placeholder_venue)));
 
             Timestamp start = currentEvent.getDate();
-            Timestamp end = currentEvent.getEndTime();
 
             if (start != null) {
                 intent.putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, start.toDate().getTime());
             }
 
-            if (end != null) {
-                intent.putExtra(CalendarContract.EXTRA_EVENT_END_TIME, end.toDate().getTime());
+            long endMillis = resolveEventEndMillis(currentEvent);
+            if (endMillis > 0L) {
+                intent.putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endMillis);
             }
 
             startActivity(intent);
@@ -411,5 +411,23 @@ public class EventDetailActivity extends AppCompatActivity {
         btnTickets.setEnabled(true);
         btnTickets.setAlpha(1f);
         btnTickets.setText(R.string.tickets_button);
+    }
+
+    private long resolveEventEndMillis(Event event) {
+        if (event == null) {
+            return 0L;
+        }
+
+        Timestamp end = event.getEndTime();
+        if (end != null) {
+            return end.toDate().getTime();
+        }
+
+        Timestamp start = event.getDate();
+        if (start == null) {
+            return 0L;
+        }
+
+        return start.toDate().getTime() + 2L * 60L * 60L * 1000L;
     }
 }

@@ -23,12 +23,12 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.campuseventdiscovery.R;
-import com.example.campuseventdiscovery.TempLoginActivity;
 import com.example.campuseventdiscovery.WelcomeActivity;
 import com.example.campuseventdiscovery.model.User;
 import com.example.campuseventdiscovery.repository.EventRepository;
 import com.example.campuseventdiscovery.ui.calendar.EventCalendarFragment;
 import com.example.campuseventdiscovery.ui.myevents.MyEventsFragment;
+import com.example.campuseventdiscovery.ui.organizer.ManageEventsActivity;
 import com.example.campuseventdiscovery.util.DevSessionManager;
 import com.example.campuseventdiscovery.util.NavigationTransitions;
 import com.example.campuseventdiscovery.util.ThemeManager;
@@ -57,8 +57,10 @@ public class ProfileFragment extends Fragment {
     private Switch switchDarkMode;
     private View cardDarkMode;
     private View rowMyEvents;
+    private View rowMemories;
     private View rowManageEvents;
     private View rowCalendar;
+    private View rowNotifications;
     private View rowAccountSettings;
     private MaterialButton btnLogout;
     private ProgressBar progressBarProfile;
@@ -120,8 +122,10 @@ public class ProfileFragment extends Fragment {
         switchDarkMode = view.findViewById(R.id.switchDarkMode);
         cardDarkMode = view.findViewById(R.id.cardDarkMode);
         rowMyEvents = view.findViewById(R.id.rowMyEvents);
+        rowMemories = view.findViewById(R.id.rowMemories);
         rowManageEvents = view.findViewById(R.id.rowManageEvents);
         rowCalendar = view.findViewById(R.id.rowCalendar);
+        rowNotifications = view.findViewById(R.id.rowNotifications);
         rowAccountSettings = view.findViewById(R.id.rowAccountSettings);
         btnLogout = view.findViewById(R.id.btnLogout);
         progressBarProfile = view.findViewById(R.id.progressBarProfile);
@@ -148,15 +152,15 @@ public class ProfileFragment extends Fragment {
                 )
         ));
 
-        rowManageEvents.setOnClickListener(v -> runAfterTouchFeedback(v, () ->
-                NavigationTransitions.replace(
-                        requireActivity().getSupportFragmentManager(),
-                        R.id.fragmentContainer,
-                        new MyEventsFragment(),
-                        true,
-                        true
-                )
-        ));
+        rowMemories.setOnClickListener(v -> runAfterTouchFeedback(v, () -> {
+            Intent intent = new Intent(requireContext(), MemoriesActivity.class);
+            startActivity(intent);
+        }));
+
+        rowManageEvents.setOnClickListener(v -> runAfterTouchFeedback(v, () -> {
+            Intent intent = new Intent(requireContext(), ManageEventsActivity.class);
+            startActivity(intent);
+        }));
 
         rowCalendar.setOnClickListener(v -> runAfterTouchFeedback(v, () ->
                 NavigationTransitions.replace(
@@ -167,6 +171,11 @@ public class ProfileFragment extends Fragment {
                         true
                 )
         ));
+
+        rowNotifications.setOnClickListener(v -> runAfterTouchFeedback(v, () -> {
+            Intent intent = new Intent(requireContext(), NotificationCenterActivity.class);
+            startActivity(intent);
+        }));
 
         rowAccountSettings.setOnClickListener(v -> runAfterTouchFeedback(v, () -> {
             Intent intent = new Intent(requireContext(), AccountSettingsActivity.class);
@@ -220,13 +229,17 @@ public class ProfileFragment extends Fragment {
 
     private void loadProfile() {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        boolean isDevBypass = firebaseUser == null && DevSessionManager.shouldUseBypass(requireContext());
 
-        if (firebaseUser == null && DevSessionManager.shouldUseBypass(requireContext())) {
+        if (isDevBypass) {
             currentRole = DevSessionManager.getBypassRole(requireContext());
             tvFullName.setText(DevSessionManager.getDisplayName(requireContext()));
             tvEmail.setText(DevSessionManager.getDisplayEmail(requireContext()));
+            switchDarkMode.setOnCheckedChangeListener(null);
             switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
+            bindDarkModeListener();
             rowMyEvents.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
+            rowMemories.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
             rowManageEvents.setVisibility(UserRoles.isOrganizer(currentRole) ? View.VISIBLE : View.GONE);
             ivProfile.setImageResource(android.R.drawable.sym_def_app_icon);
             tvEditPhoto.setEnabled(false);
@@ -239,6 +252,7 @@ public class ProfileFragment extends Fragment {
             tvEmail.setText(getString(R.string.unknown_email));
             switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
             rowMyEvents.setVisibility(View.GONE);
+            rowMemories.setVisibility(View.GONE);
             rowManageEvents.setVisibility(View.GONE);
             tvEditPhoto.setEnabled(false);
             tvEditPhoto.setAlpha(0.6f);
@@ -266,6 +280,7 @@ public class ProfileFragment extends Fragment {
                     String role = UserRoles.sanitize(user.getRole());
                     currentRole = role.isEmpty() ? UserRoles.ATTENDEE : role;
                     rowMyEvents.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
+                    rowMemories.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
                     rowManageEvents.setVisibility(UserRoles.isOrganizer(currentRole) ? View.VISIBLE : View.GONE);
 
                     switchDarkMode.setOnCheckedChangeListener(null);
@@ -295,6 +310,7 @@ public class ProfileFragment extends Fragment {
                     tvEmail.setText(getString(R.string.unknown_email));
                 }
                 rowMyEvents.setVisibility(View.GONE);
+                rowMemories.setVisibility(View.GONE);
                 rowManageEvents.setVisibility(View.GONE);
                 switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
                 tvEditPhoto.setEnabled(false);
@@ -329,16 +345,10 @@ public class ProfileFragment extends Fragment {
                 .setTitle(getString(R.string.logout_confirm_title))
                 .setMessage(getString(R.string.logout_confirm_message))
                 .setPositiveButton(getString(R.string.yes), (dialog, which) -> {
-                    boolean useBypass = DevSessionManager.shouldUseBypass(requireContext());
-                    if (useBypass) {
-                        DevSessionManager.clearBypass(requireContext());
-                    }
                     FirebaseAuth.getInstance().signOut();
+                    DevSessionManager.clearBypass(requireContext());
 
-                    Intent intent = new Intent(
-                            requireContext(),
-                            useBypass ? TempLoginActivity.class : WelcomeActivity.class
-                    );
+                    Intent intent = new Intent(requireContext(), WelcomeActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     requireActivity().finish();

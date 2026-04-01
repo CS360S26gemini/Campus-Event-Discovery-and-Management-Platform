@@ -22,6 +22,9 @@ import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * AccountSettingsActivity.java
  *
@@ -34,6 +37,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
     private TextView tvEmail;
     private EditText etUniversity;
     private EditText etLocation;
+    private EditText etInterests;
     private MaterialButton btnSaveSettings;
     private ProgressBar progressBarSettings;
 
@@ -56,13 +60,10 @@ public class AccountSettingsActivity extends AppCompatActivity {
         if (currentUser != null) {
             loadUserData();
         } else if (DevSessionManager.shouldUseBypass(this)) {
-            tvEmail.setText(DevSessionManager.getDisplayEmail(this));
-            etFullName.setText(DevSessionManager.getDisplayName(this));
-            btnSaveSettings.setEnabled(false);
-            Toast.makeText(this, "Test mode active - Save disabled", Toast.LENGTH_SHORT).show();
+            loadDevProfile();
         } else {
-            tvEmail.setText("dev.user@example.com");
-            etFullName.setText("Dev User");
+            tvEmail.setText(getString(R.string.unknown_email));
+            etFullName.setText(getString(R.string.guest_user));
             btnSaveSettings.setEnabled(false);
             Toast.makeText(this, "No user logged in", Toast.LENGTH_SHORT).show();
         }
@@ -76,6 +77,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
         tvEmail = findViewById(R.id.tvEmail);
         etUniversity = findViewById(R.id.etUniversity);
         etLocation = findViewById(R.id.etLocation);
+        etInterests = findViewById(R.id.etInterests);
         btnSaveSettings = findViewById(R.id.btnSaveSettings);
         progressBarSettings = findViewById(R.id.progressBarSettings);
     }
@@ -108,6 +110,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
                     tvEmail.setText(user.getEmail());
                     etUniversity.setText(user.getUniversity());
                     etLocation.setText(user.getLocation());
+                    etInterests.setText(joinInterests(user.getInterests()));
                 }
             }
 
@@ -117,6 +120,15 @@ public class AccountSettingsActivity extends AppCompatActivity {
                 Toast.makeText(AccountSettingsActivity.this, "Failed to load profile", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void loadDevProfile() {
+        etFullName.setText(DevSessionManager.getDisplayName(this));
+        tvEmail.setText(DevSessionManager.getDisplayEmail(this));
+        etUniversity.setText("");
+        etLocation.setText("");
+        etInterests.setText("");
+        btnSaveSettings.setEnabled(false);
     }
 
     private void setupSaveButton() {
@@ -133,6 +145,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
         String fullName = etFullName.getText().toString().trim();
         String university = etUniversity.getText().toString().trim();
         String location = etLocation.getText().toString().trim();
+        List<String> interests = parseInterests(etInterests.getText().toString());
 
         if (TextUtils.isEmpty(fullName)) {
             Toast.makeText(this, "Full Name is required", Toast.LENGTH_SHORT).show();
@@ -140,7 +153,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
         }
 
         showLoading(true);
-        repository.updateUserProfile(currentUserId, fullName, university, location, new EventRepository.ActionCallback() {
+        repository.updateUserProfile(currentUserId, fullName, university, location, interests, new EventRepository.ActionCallback() {
             @Override
             public void onSuccess() {
                     showLoading(false);
@@ -154,6 +167,29 @@ public class AccountSettingsActivity extends AppCompatActivity {
                     Toast.makeText(AccountSettingsActivity.this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private String joinInterests(List<String> interests) {
+        if (interests == null || interests.isEmpty()) {
+            return "";
+        }
+        return TextUtils.join(", ", interests);
+    }
+
+    private List<String> parseInterests(String raw) {
+        List<String> interests = new ArrayList<>();
+        if (TextUtils.isEmpty(raw)) {
+            return interests;
+        }
+
+        String[] tokens = raw.split(",");
+        for (String token : tokens) {
+            String value = token == null ? "" : token.trim();
+            if (!TextUtils.isEmpty(value) && !interests.contains(value)) {
+                interests.add(value);
+            }
+        }
+        return interests;
     }
 
     private void showLoading(boolean isLoading) {

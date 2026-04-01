@@ -1,7 +1,12 @@
 package com.example.campuseventdiscovery.ui.home;
 
+import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -12,8 +17,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -70,6 +78,28 @@ public class HomeFragment extends Fragment {
     private String currentUserId;
     private User currentUser;
     private Event featuredEvent;
+    private final ActivityResultLauncher<String[]> locationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                boolean granted = false;
+                if (result != null) {
+                    for (Boolean value : result.values()) {
+                        if (Boolean.TRUE.equals(value)) {
+                            granted = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!isAdded()) {
+                    return;
+                }
+
+                if (!granted) {
+                    Toast.makeText(requireContext(), getString(R.string.sos_location_unavailable), Toast.LENGTH_SHORT).show();
+                }
+
+                sendSosWithLocation();
+            });
 
     public HomeFragment() {
         // Required empty public constructor
@@ -105,9 +135,7 @@ public class HomeFragment extends Fragment {
         tvBannerVenue = featuredCardContainer.findViewById(R.id.tvBannerVenue);
 
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        currentUserId = firebaseUser != null
-                ? firebaseUser.getUid()
-                : DevSessionManager.getEffectiveUserId(requireContext());
+        currentUserId = firebaseUser != null ? firebaseUser.getUid() : DevSessionManager.getEffectiveUserId(requireContext());
 
         setupRecyclerView();
         setupSosButton();
@@ -146,12 +174,12 @@ public class HomeFragment extends Fragment {
         showLoading(true);
 
         if (currentUserId == null) {
-            tvWelcome.setText(getString(R.string.welcome_back) + "\nDev User");
+            tvWelcome.setText(getString(R.string.welcome_back));
             btnSos.setEnabled(false);
             featuredCardContainer.setVisibility(View.GONE);
             showLoading(false);
             updateEventList(new ArrayList<>());
-            tvEmpty.setText("Dev bypass active - no Firebase user signed in.");
+            tvEmpty.setText(getString(R.string.no_events_found));
             tvEmpty.setVisibility(View.VISIBLE);
             return;
         }
@@ -358,19 +386,35 @@ public class HomeFragment extends Fragment {
             new AlertDialog.Builder(requireContext())
                     .setTitle(getString(R.string.send_sos_title))
                     .setMessage(getString(R.string.send_sos_message))
-                    .setPositiveButton("Send", (dialog, which) -> sendSos())
-                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton(R.string.send, (dialog, which) -> requestLocationAndSendSos())
+                    .setNegativeButton(R.string.cancel, null)
                     .show();
         });
     }
 
-    private void sendSos() {
+    private void requestLocationAndSendSos() {
+        if (hasAnyLocationPermission()) {
+            sendSosWithLocation();
+            return;
+        }
+
+        locationPermissionLauncher.launch(new String[]{
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+        });
+    }
+
+    private void sendSosWithLocation() {
+        Location location = getBestLastKnownLocation();
+        double latitude = location != null ? location.getLatitude() : 0.0;
+        double longitude = location != null ? location.getLongitude() : 0.0;
+
         repository.sendSosReport(
                 currentUserId,
-                currentUser != null ? currentUser.getFullName() : "",
+                currentUser != null ? currentUser.getFullName() : DevSessionManager.getDisplayName(requireContext()),
                 "SOS triggered",
-                0.0,
-                0.0,
+                latitude,
+                longitude,
                 new EventRepository.ActionCallback() {
                     @Override
                     public void onSuccess() {
@@ -383,6 +427,43 @@ public class HomeFragment extends Fragment {
                     }
                 }
         );
+    }
+
+    private boolean hasAnyLocationPermission() {
+        Context context = requireContext();
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @Nullable
+    private Location getBestLastKnownLocation() {
+        if (!hasAnyLocationPermission()) {
+            return null;
+        }
+
+        LocationManager locationManager = (LocationManager) requireContext().getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager == null) {
+            return null;
+        }
+
+        Location bestLocation = null;
+        try {
+            List<String> providers = locationManager.getProviders(true);
+            for (String provider : providers) {
+                Location location = locationManager.getLastKnownLocation(provider);
+                if (location == null) {
+                    continue;
+                }
+
+                if (bestLocation == null || location.getAccuracy() < bestLocation.getAccuracy()) {
+                    bestLocation = location;
+                }
+            }
+        } catch (SecurityException ignored) {
+            return null;
+        }
+
+        return bestLocation;
     }
 
     private void updateEventList(List<Event> events) {
