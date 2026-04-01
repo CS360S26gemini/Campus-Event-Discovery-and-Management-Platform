@@ -117,6 +117,15 @@ public class SearchFragment extends Fragment {
         performSearch();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getView() != null) {
+            loadSavedEvents();
+            performSearch();
+        }
+    }
+
     private void setupRecyclerView() {
         adapter = new EventAdapter(
                 resultList,

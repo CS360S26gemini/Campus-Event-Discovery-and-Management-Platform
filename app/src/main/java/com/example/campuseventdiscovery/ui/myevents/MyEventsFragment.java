@@ -101,6 +101,14 @@ public class MyEventsFragment extends Fragment {
         loadUserRoleAndData();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getView() != null) {
+            loadUserRoleAndData();
+        }
+    }
+
     private void bindViews(View view) {
         toolbarMyEvents = view.findViewById(R.id.toolbarMyEvents);
         

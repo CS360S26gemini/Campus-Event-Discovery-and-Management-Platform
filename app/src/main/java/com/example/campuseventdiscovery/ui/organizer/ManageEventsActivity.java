@@ -74,6 +74,12 @@ public class ManageEventsActivity extends AppCompatActivity {
         loadData();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadData();
+    }
+
     private void bindViews() {
         toolbarManageEvents = findViewById(R.id.toolbarManageEvents);
         progressBarSection1 = findViewById(R.id.progressBarSection1);

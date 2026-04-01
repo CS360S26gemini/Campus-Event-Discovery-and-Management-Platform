@@ -127,20 +127,18 @@ public class EventRepository {
     public void getUpcomingEvents(EventListCallback cb) {
         db.collection(COLLECTION_EVENTS)
                 .whereEqualTo("status", "active")
-                .orderBy("date", Query.Direction.ASCENDING)
-                .addSnapshotListener((snapshots, error) -> {
-                    if (error != null) {
-                        Log.e(TAG, "getUpcomingEvents failed", error);
-                        cb.onError(error);
-                        return;
-                    }
+                .get()
+                .addOnSuccessListener(snapshots -> {
                     List<Event> events = new ArrayList<>();
-                    if (snapshots != null) {
-                        for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                            events.add(documentToEvent(doc));
-                        }
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        events.add(documentToEvent(doc));
                     }
+                    sortEventsByDateAscending(events);
                     cb.onSuccess(events);
+                })
+                .addOnFailureListener(error -> {
+                    Log.e(TAG, "getUpcomingEvents failed", error);
+                    cb.onError(error);
                 });
     }
 
@@ -186,13 +184,13 @@ public class EventRepository {
         db.collection(COLLECTION_EVENTS)
                 .whereEqualTo("status", "active")
                 .whereArrayContainsAny("tags", safeInterests)
-                .orderBy("date", Query.Direction.ASCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<Event> events = new ArrayList<>();
                     for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
                         events.add(documentToEvent(doc));
                     }
+                    sortEventsByDateAscending(events);
                     cb.onSuccess(events);
                 })
                 .addOnFailureListener(e -> {
@@ -224,7 +222,6 @@ public class EventRepository {
 
         db.collection(COLLECTION_EVENTS)
                 .whereEqualTo("status", "active")
-                .orderBy("date", Query.Direction.ASCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<Event> filtered = new ArrayList<>();
@@ -236,6 +233,7 @@ public class EventRepository {
                             filtered.add(event);
                         }
                     }
+                    sortEventsByDateAscending(filtered);
                     cb.onSuccess(filtered);
                 })
                 .addOnFailureListener(e -> {
@@ -578,13 +576,13 @@ public class EventRepository {
         db.collection(COLLECTION_EVENTS)
                 .whereEqualTo("organizerId", organizerId)
                 .whereEqualTo("status", "active")
-                .orderBy("date", Query.Direction.ASCENDING)
                 .get()
                 .addOnSuccessListener(snaps -> {
                     List<Event> events = new ArrayList<>();
                     for (DocumentSnapshot doc : snaps.getDocuments()) {
                         events.add(documentToEvent(doc));
                     }
+                    sortEventsByDateAscending(events);
                     cb.onSuccess(events);
                 })
                 .addOnFailureListener(cb::onError);
@@ -593,7 +591,6 @@ public class EventRepository {
     public void getOrganizerProposals(String organizerId, ProposalListCallback cb) {
         db.collection(COLLECTION_EVENT_PROPOSALS)
                 .whereEqualTo("organizerId", organizerId)
-                .orderBy("submittedAt", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(snaps -> {
                     List<EventProposal> proposals = new ArrayList<>();
@@ -604,6 +601,7 @@ public class EventRepository {
                             proposals.add(p);
                         }
                     }
+                    sortProposalsBySubmittedAtDescending(proposals);
                     cb.onSuccess(proposals);
                 })
                 .addOnFailureListener(cb::onError);
@@ -636,7 +634,6 @@ public class EventRepository {
     public void getAllPendingProposals(ProposalListCallback cb) {
         db.collection(COLLECTION_EVENT_PROPOSALS)
                 .whereEqualTo("status", "pending")
-                .orderBy("submittedAt", Query.Direction.ASCENDING)
                 .get()
                 .addOnSuccessListener(snaps -> {
                     List<EventProposal> proposals = new ArrayList<>();
@@ -647,6 +644,7 @@ public class EventRepository {
                             proposals.add(p);
                         }
                     }
+                    sortProposalsBySubmittedAtAscending(proposals);
                     cb.onSuccess(proposals);
                 })
                 .addOnFailureListener(cb::onError);
@@ -1156,6 +1154,27 @@ public class EventRepository {
             chunks.add(new ArrayList<>(source.subList(i, Math.min(source.size(), i + size))));
         }
         return chunks;
+    }
+
+    private void sortEventsByDateAscending(List<Event> events) {
+        Collections.sort(events, Comparator.comparing(
+                Event::getDate,
+                Comparator.nullsLast(Comparator.naturalOrder())
+        ));
+    }
+
+    private void sortProposalsBySubmittedAtDescending(List<EventProposal> proposals) {
+        Collections.sort(proposals, Comparator.comparing(
+                EventProposal::getSubmittedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())
+        ));
+    }
+
+    private void sortProposalsBySubmittedAtAscending(List<EventProposal> proposals) {
+        Collections.sort(proposals, Comparator.comparing(
+                EventProposal::getSubmittedAt,
+                Comparator.nullsLast(Comparator.naturalOrder())
+        ));
     }
 
     private void runIfNotNull(Runnable r) { if (r != null) r.run(); }

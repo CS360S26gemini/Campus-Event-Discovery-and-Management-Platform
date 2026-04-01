@@ -114,6 +114,14 @@ public class HomeOrganizerFragment extends Fragment {
         loadHomeData();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getView() != null) {
+            loadHomeData();
+        }
+    }
+
     private void setupRecyclerView() {
         adapter = new EventAdapter(
                 eventList,

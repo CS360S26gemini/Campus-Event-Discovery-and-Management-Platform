@@ -20,7 +20,6 @@ import com.example.campuseventdiscovery.model.Event;
 import com.example.campuseventdiscovery.model.EventProposal;
 import com.example.campuseventdiscovery.repository.EventRepository;
 import com.example.campuseventdiscovery.ui.event.EventApprovalActivity;
-import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +38,6 @@ public class HomeAdminFragment extends Fragment {
     private OrganizerPendingAdapter adapter;
     private EventRepository repository;
     private final List<Event> pendingEvents = new ArrayList<>();
-    private ListenerRegistration proposalListener;
 
     public HomeAdminFragment() {
         // Required empty public constructor
@@ -64,18 +62,9 @@ public class HomeAdminFragment extends Fragment {
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        observePendingProposals();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (proposalListener != null) {
-            proposalListener.remove();
-            proposalListener = null;
-        }
+    public void onResume() {
+        super.onResume();
+        loadPendingProposals();
     }
 
     private void setupRecyclerView() {
@@ -88,13 +77,10 @@ public class HomeAdminFragment extends Fragment {
         rvPendingApprovals.setAdapter(adapter);
     }
 
-    private void observePendingProposals() {
+    private void loadPendingProposals() {
         showLoading(true);
-        if (proposalListener != null) {
-            proposalListener.remove();
-        }
-        
-        proposalListener = repository.observeAllPendingProposals(new EventRepository.ProposalListCallback() {
+
+        repository.getAllPendingProposals(new EventRepository.ProposalListCallback() {
             @Override
             public void onSuccess(List<EventProposal> proposals) {
                 if (!isAdded()) return;
