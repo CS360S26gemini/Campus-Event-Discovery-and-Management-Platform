@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorBackground">#121212</color>
+    <color name="colorSurface">#1E1E1E</color>
+    <color name="colorSurfaceRaised">#2A2336</color>
+    <color name="colorPrimary">#7B2FBE</color>
+    <color name="colorPrimaryRipple">#557B2FBE</color>
+    <color name="colorOnBackground">#FFFFFF</color>
+    <color name="colorSecondary">#AAAAAA</color>
+    <color name="colorSOS">#D32F2F</color>
+    <color name="colorSosRipple">#55D32F2F</color>
+    <color name="colorVerified">#1DB954</color>
+    <color name="colorOnOverlay">#FFFFFF</color>
+    <color name="colorOnOverlaySecondary">#DADDE3</color>
+
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="transparent">#00000000</color>
+    <color name="chipStroke">#7B2FBE</color>
+    <color name="dividerColor">#2A2A2A</color>
+
+    <color name="nav_item_selected">#7B2FBE</color>
+    <color name="nav_item_unselected">#C7C7C7</color>
+</resources>
