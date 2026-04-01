@@ -1,7 +1,9 @@
 package com.example.campuseventdiscovery.ui.event;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -66,31 +68,21 @@ public class EventApprovalActivity extends AppCompatActivity {
             repository.approveProposal(proposalId, currentProposal, new EventRepository.ActionCallback() {
                 @Override
                 public void onSuccess() {
-                    Toast.makeText(EventApprovalActivity.this, "Event Approved and Created", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(EventApprovalActivity.this, getString(R.string.proposal_approved_success), Toast.LENGTH_SHORT).show();
                     finish();
                 }
 
                 @Override
                 public void onError(Exception e) {
-                    Toast.makeText(EventApprovalActivity.this, "Approval failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    String message = e.getMessage() == null ? getString(R.string.app_name) : e.getMessage();
+                    Toast.makeText(EventApprovalActivity.this, getString(R.string.approval_failed, message), Toast.LENGTH_SHORT).show();
                 }
             });
         });
 
         btnReject.setOnClickListener(v -> {
             if (currentProposal == null) return;
-            repository.rejectProposal(proposalId, currentProposal, "Rejected by admin", new EventRepository.ActionCallback() {
-                @Override
-                public void onSuccess() {
-                    Toast.makeText(EventApprovalActivity.this, "Proposal Rejected", Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    Toast.makeText(EventApprovalActivity.this, "Rejection failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
+            showRejectDialog();
         });
     }
 
@@ -113,10 +105,45 @@ public class EventApprovalActivity extends AppCompatActivity {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(EventApprovalActivity.this, "Error loading proposal", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EventApprovalActivity.this, getString(R.string.error_loading_proposal), Toast.LENGTH_SHORT).show();
                 finish();
             }
         });
+    }
+
+    private void showRejectDialog() {
+        EditText input = new EditText(this);
+        input.setHint(R.string.rejection_note_hint);
+        input.setMinLines(3);
+        input.setMaxLines(5);
+        input.setPadding(32, 24, 32, 24);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.rejection_note_title)
+                .setView(input)
+                .setPositiveButton(R.string.reject, (dialog, which) -> {
+                    String note = input.getText().toString().trim();
+                    if (TextUtils.isEmpty(note)) {
+                        Toast.makeText(this, getString(R.string.rejection_requires_note), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    repository.rejectProposal(proposalId, currentProposal, note, new EventRepository.ActionCallback() {
+                        @Override
+                        public void onSuccess() {
+                            Toast.makeText(EventApprovalActivity.this, getString(R.string.proposal_rejected_success), Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            String message = e.getMessage() == null ? getString(R.string.app_name) : e.getMessage();
+                            Toast.makeText(EventApprovalActivity.this, getString(R.string.rejection_failed, message), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     private String formatDateTime(Timestamp timestamp) {
