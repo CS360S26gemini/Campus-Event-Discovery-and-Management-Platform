@@ -1,12 +1,13 @@
 package com.example.campuseventdiscovery.ui.organizer;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,9 +25,7 @@ import com.google.android.material.button.MaterialButton;
 import java.util.List;
 
 /**
- * WhoIsComingActivity.java
- *
- * Screen for organizers to see the list of registered participants and take actions like blacklisting.
+ * Screen for organizers to view attendees, check them in, and blacklist them.
  */
 public class WhoIsComingActivity extends AppCompatActivity {
 
@@ -35,7 +34,9 @@ public class WhoIsComingActivity extends AppCompatActivity {
     private EditText etSearchParticipants;
     private RecyclerView rvParticipants;
     private TextView tvEmptyParticipants;
+    private MaterialButton btnCheckIn;
     private MaterialButton btnBlacklist;
+
     private EventRepository repository;
     private AttendeeAdapter adapter;
     private String eventId;
@@ -50,20 +51,25 @@ public class WhoIsComingActivity extends AppCompatActivity {
         eventId = getIntent().getStringExtra("eventId");
         eventTitle = getIntent().getStringExtra("eventTitle");
 
-        btnBack = findViewById(R.id.btnBack);
-        tvTitle = findViewById(R.id.tvTitle);
-        etSearchParticipants = findViewById(R.id.etSearchParticipants);
-        rvParticipants = findViewById(R.id.rvParticipants);
-        tvEmptyParticipants = findViewById(R.id.tvEmptyParticipants);
-        btnBlacklist = findViewById(R.id.btnBlacklist);
-
+        bindViews();
         btnBack.setOnClickListener(v -> finish());
         tvTitle.setText(TextUtils.isEmpty(eventTitle) ? getString(R.string.who_is_coming) : eventTitle);
 
         setupRecyclerView();
         setupSearch();
+        setupCheckInAction();
         setupBlacklistAction();
         loadParticipants();
+    }
+
+    private void bindViews() {
+        btnBack = findViewById(R.id.btnBack);
+        tvTitle = findViewById(R.id.tvTitle);
+        etSearchParticipants = findViewById(R.id.etSearchParticipants);
+        rvParticipants = findViewById(R.id.rvParticipants);
+        tvEmptyParticipants = findViewById(R.id.tvEmptyParticipants);
+        btnCheckIn = findViewById(R.id.btnCheckIn);
+        btnBlacklist = findViewById(R.id.btnBlacklist);
     }
 
     private void setupRecyclerView() {
@@ -93,12 +99,82 @@ public class WhoIsComingActivity extends AppCompatActivity {
         });
     }
 
+    private void setupCheckInAction() {
+        btnCheckIn.setOnClickListener(v -> {
+            EditText input = new EditText(this);
+            input.setHint(R.string.check_in_code_hint);
+            input.setPadding(32, 24, 32, 24);
+
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.check_in_title)
+                    .setView(input)
+                    .setPositiveButton(R.string.confirm, (dialog, which) -> {
+                        String code = input.getText().toString().trim();
+                        if (TextUtils.isEmpty(code)) {
+                            Toast.makeText(this, getString(R.string.check_in_requires_code), Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        repository.checkInAttendeeByQrToken(eventId, code, new EventRepository.ActionCallback() {
+                            @Override
+                            public void onSuccess() {
+                                Toast.makeText(
+                                        WhoIsComingActivity.this,
+                                        getString(R.string.check_in_success),
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                                loadParticipants();
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                Toast.makeText(
+                                        WhoIsComingActivity.this,
+                                        e.getMessage() == null ? getString(R.string.check_in_failed) : e.getMessage(),
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                            }
+                        });
+                    })
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
+        });
+    }
+
     private void setupBlacklistAction() {
-        btnBlacklist.setOnClickListener(v -> Toast.makeText(
-                this,
-                getString(R.string.blacklist_unavailable),
-                Toast.LENGTH_SHORT
-        ).show());
+        btnBlacklist.setOnClickListener(v -> {
+            List<EventAttendee> selectedAttendees = adapter.getSelectedAttendees();
+            if (selectedAttendees.isEmpty()) {
+                return;
+            }
+
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.blacklist_confirm_title)
+                    .setMessage(getString(R.string.blacklist_confirm_message, selectedAttendees.size()))
+                    .setPositiveButton(R.string.blacklist_selected, (dialog, which) ->
+                            repository.blacklistAttendees(eventId, selectedAttendees, new EventRepository.ActionCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    Toast.makeText(
+                                            WhoIsComingActivity.this,
+                                            getString(R.string.blacklist_success),
+                                            Toast.LENGTH_SHORT
+                                    ).show();
+                                    loadParticipants();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    Toast.makeText(
+                                            WhoIsComingActivity.this,
+                                            getString(R.string.blacklist_failed),
+                                            Toast.LENGTH_SHORT
+                                    ).show();
+                                }
+                            }))
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
+        });
     }
 
     private void loadParticipants() {
@@ -117,7 +193,11 @@ public class WhoIsComingActivity extends AppCompatActivity {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(WhoIsComingActivity.this, getString(R.string.error_loading_participants), Toast.LENGTH_SHORT).show();
+                Toast.makeText(
+                        WhoIsComingActivity.this,
+                        getString(R.string.error_loading_participants),
+                        Toast.LENGTH_SHORT
+                ).show();
                 adapter.updateData(null);
                 updateEmptyState();
             }

@@ -24,6 +24,8 @@ import com.example.campuseventdiscovery.model.EventProposal;
 import com.example.campuseventdiscovery.model.User;
 import com.example.campuseventdiscovery.repository.EventRepository;
 import com.example.campuseventdiscovery.ui.event.EventDetailActivity;
+import com.example.campuseventdiscovery.ui.event.EventFeedbackActivity;
+import com.example.campuseventdiscovery.ui.event.OrganizerProposalDetailActivity;
 import com.example.campuseventdiscovery.ui.organizer.OrganizerEventDetailActivity;
 import com.example.campuseventdiscovery.util.DevSessionManager;
 import com.example.campuseventdiscovery.util.UserRoles;
@@ -154,7 +156,7 @@ public class MyEventsFragment extends Fragment {
         return new EventAdapter(
                 list,
                 ids,
-                currentUserId,
+                null,
                 new EventAdapter.OnEventClickListener() {
                     @Override
                     public void onItemClick(Event event) {
@@ -169,7 +171,7 @@ public class MyEventsFragment extends Fragment {
                     @Override
                     public void onItemLongClick(Event event) {
                         if (allowLongClick && UserRoles.isAttendee(userRole)) {
-                            showCancelRsvpDialog(event);
+                            showAttendeeActionsDialog(event);
                         }
                     }
                 }
@@ -408,6 +410,59 @@ public class MyEventsFragment extends Fragment {
                 .show();
     }
 
+    private void showAttendeeActionsDialog(Event event) {
+        if (event == null || TextUtils.isEmpty(event.getEventId()) || TextUtils.isEmpty(currentUserId)) {
+            return;
+        }
+
+        List<String> options = new ArrayList<>();
+        options.add(getString(R.string.view_check_in_code));
+        if (isPastEvent(event)) {
+            options.add(getString(R.string.leave_feedback));
+        }
+        options.add(getString(R.string.cancel_rsvp));
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.attendee_actions_title)
+                .setItems(options.toArray(new String[0]), (dialog, which) -> {
+                    if (which == 0) {
+                        repository.getRsvpQrToken(currentUserId, event.getEventId(), new EventRepository.StringCallback() {
+                            @Override
+                            public void onSuccess(String value) {
+                                new AlertDialog.Builder(requireContext())
+                                        .setTitle(R.string.check_in_code_title)
+                                        .setMessage(getString(R.string.check_in_code_message, value))
+                                        .setPositiveButton(R.string.ok, null)
+                                        .show();
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                Toast.makeText(
+                                        requireContext(),
+                                        e.getMessage() == null ? getString(R.string.check_in_failed) : e.getMessage(),
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                            }
+                        });
+                    } else if (isPastEvent(event) && which == 1) {
+                        Intent intent = new Intent(requireContext(), EventFeedbackActivity.class);
+                        intent.putExtra("eventId", event.getEventId());
+                        intent.putExtra("eventTitle", event.getTitle());
+                        startActivity(intent);
+                    } else {
+                        showCancelRsvpDialog(event);
+                    }
+                })
+                .show();
+    }
+
+    private boolean isPastEvent(Event event) {
+        return event != null
+                && event.getDate() != null
+                && event.getDate().toDate().before(new java.util.Date());
+    }
+
     private void showLoading(ProgressBar pb, boolean isLoading) {
         if (pb != null) pb.setVisibility(isLoading ? View.VISIBLE : View.GONE);
     }
@@ -418,10 +473,9 @@ public class MyEventsFragment extends Fragment {
         if (UserRoles.isOrganizer(userRole)) {
             String status = event.getStatus() == null ? "" : event.getStatus().trim().toLowerCase();
             if (!"active".equals(status)) {
-                int messageRes = "rejected".equals(status)
-                        ? R.string.proposal_rejected_message
-                        : R.string.proposal_pending_message;
-                Toast.makeText(requireContext(), getString(messageRes), Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(requireContext(), OrganizerProposalDetailActivity.class);
+                intent.putExtra("proposalId", event.getEventId());
+                startActivity(intent);
                 return;
             }
 

@@ -1,8 +1,10 @@
 package com.example.campuseventdiscovery.ui.organizer;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -73,8 +75,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
             intent.putExtra("eventTitle", currentEvent != null ? currentEvent.getTitle() : "");
             startActivity(intent);
         });
-        btnAnnouncement.setOnClickListener(v -> 
-            Toast.makeText(this, "Announcement feature coming soon", Toast.LENGTH_SHORT).show());
+        btnAnnouncement.setOnClickListener(v -> showAnnouncementDialog());
     }
 
     private void loadEventDetails() {
@@ -112,6 +113,56 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
                 Toast.makeText(OrganizerEventDetailActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void showAnnouncementDialog() {
+        if (currentEvent == null || TextUtils.isEmpty(currentEvent.getEventId())) {
+            return;
+        }
+
+        EditText input = new EditText(this);
+        input.setHint(R.string.announcement_hint);
+        input.setMinLines(3);
+        input.setMaxLines(5);
+        input.setPadding(32, 24, 32, 24);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.announcement_title)
+                .setView(input)
+                .setPositiveButton(R.string.send, (dialog, which) -> {
+                    String message = input.getText().toString().trim();
+                    if (TextUtils.isEmpty(message)) {
+                        Toast.makeText(this, getString(R.string.announcement_requires_message), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    repository.sendAnnouncementToAttendees(
+                            currentEvent.getEventId(),
+                            currentEvent.getTitle(),
+                            message,
+                            new EventRepository.ActionCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    Toast.makeText(
+                                            OrganizerEventDetailActivity.this,
+                                            getString(R.string.announcement_sent),
+                                            Toast.LENGTH_SHORT
+                                    ).show();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    Toast.makeText(
+                                            OrganizerEventDetailActivity.this,
+                                            getString(R.string.announcement_failed),
+                                            Toast.LENGTH_SHORT
+                                    ).show();
+                                }
+                            }
+                    );
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     private String formatDateTime(Timestamp timestamp) {

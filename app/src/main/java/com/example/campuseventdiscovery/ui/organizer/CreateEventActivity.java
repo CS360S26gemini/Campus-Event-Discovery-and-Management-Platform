@@ -46,6 +46,9 @@ public class CreateEventActivity extends AppCompatActivity {
     private EditText etVenue;
     private EditText etDescription;
     private EditText etCapacity;
+    private EditText etTags;
+    private EditText etSponsors;
+    private EditText etFoodStalls;
     private EditText etTrailerUrl;
     private ProgressBar progressBarCreateEvent;
     private MaterialButton btnSubmitEvent;
@@ -86,6 +89,9 @@ public class CreateEventActivity extends AppCompatActivity {
         etVenue = findViewById(R.id.etVenue);
         etDescription = findViewById(R.id.etDescription);
         etCapacity = findViewById(R.id.etCapacity);
+        etTags = findViewById(R.id.etTags);
+        etSponsors = findViewById(R.id.etSponsors);
+        etFoodStalls = findViewById(R.id.etFoodStalls);
         etTrailerUrl = findViewById(R.id.etTrailerUrl);
         progressBarCreateEvent = findViewById(R.id.progressBarCreateEvent);
         btnSubmitEvent = findViewById(R.id.btnSubmitEvent);
@@ -181,6 +187,9 @@ public class CreateEventActivity extends AppCompatActivity {
         String venue = etVenue.getText().toString().trim();
         String description = etDescription.getText().toString().trim();
         String capacityText = etCapacity.getText().toString().trim();
+        String tagsText = etTags.getText().toString().trim();
+        String sponsorsText = etSponsors.getText().toString().trim();
+        String foodStallsText = etFoodStalls.getText().toString().trim();
         String trailerUrl = etTrailerUrl.getText().toString().trim();
 
         if (TextUtils.isEmpty(title)
@@ -210,8 +219,11 @@ public class CreateEventActivity extends AppCompatActivity {
             return;
         }
 
-        List<String> tags = new ArrayList<>();
-        tags.add(category.toLowerCase(Locale.getDefault()));
+        List<String> tags = parseCommaSeparated(tagsText, true);
+        String normalizedCategory = category.toLowerCase(Locale.getDefault());
+        if (!tags.contains(normalizedCategory)) {
+            tags.add(0, normalizedCategory);
+        }
 
         EventProposal proposal = new EventProposal();
         proposal.setTitle(title);
@@ -221,8 +233,8 @@ public class CreateEventActivity extends AppCompatActivity {
         proposal.setDate(selectedTimestamp);
         proposal.setLocation(venue);
         proposal.setCapacity(capacity);
-        proposal.setSponsors(new ArrayList<>());
-        proposal.setFoodStalls(new ArrayList<>());
+        proposal.setSponsors(parseCommaSeparated(sponsorsText, false));
+        proposal.setFoodStalls(parseCommaSeparated(foodStallsText, false));
         proposal.setTrailerUrl(trailerUrl);
         proposal.setOrganizerId(currentUserId);
         proposal.setOrganizerName(TextUtils.isEmpty(currentOrganizerName) ? "Organizer" : currentOrganizerName);
@@ -260,5 +272,29 @@ public class CreateEventActivity extends AppCompatActivity {
     private void showLoading(boolean isLoading) {
         progressBarCreateEvent.setVisibility(isLoading ? android.view.View.VISIBLE : android.view.View.GONE);
         btnSubmitEvent.setEnabled(!isLoading);
+    }
+
+    private List<String> parseCommaSeparated(String rawValue, boolean normalizeLowerCase) {
+        List<String> values = new ArrayList<>();
+        if (TextUtils.isEmpty(rawValue)) {
+            return values;
+        }
+
+        String[] split = rawValue.split(",");
+        for (String item : split) {
+            String value = item == null ? "" : item.trim();
+            if (TextUtils.isEmpty(value)) {
+                continue;
+            }
+
+            if (normalizeLowerCase) {
+                value = value.toLowerCase(Locale.getDefault());
+            }
+
+            if (!values.contains(value)) {
+                values.add(value);
+            }
+        }
+        return values;
     }
 }

@@ -107,9 +107,7 @@ public class HomeOrganizerFragment extends Fragment {
         tvBannerVenue = featuredCardContainer.findViewById(R.id.tvBannerVenue);
 
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        currentUserId = firebaseUser != null
-                ? firebaseUser.getUid()
-                : DevSessionManager.getEffectiveUserId(requireContext());
+        currentUserId = firebaseUser != null ? firebaseUser.getUid() : DevSessionManager.getEffectiveUserId(requireContext());
 
         setupRecyclerView();
         setupCreateEventButton();
@@ -155,7 +153,7 @@ public class HomeOrganizerFragment extends Fragment {
         showLoading(true);
 
         if (currentUserId == null) {
-            tvOrganizerWelcome.setText(getString(R.string.organizer_welcome_back) + "\nDev Organizer");
+            tvOrganizerWelcome.setText(getString(R.string.organizer_welcome_back));
             featuredCardContainer.setVisibility(View.GONE);
             showLoading(false);
             updateEventList(new ArrayList<>());

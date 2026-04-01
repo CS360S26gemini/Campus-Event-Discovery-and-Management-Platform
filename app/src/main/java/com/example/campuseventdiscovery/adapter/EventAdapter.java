@@ -90,6 +90,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
         boolean isSaved = event.getEventId() != null && savedEventIds.contains(event.getEventId());
         holder.ivHeart.setImageResource(isSaved ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+        holder.ivHeart.setVisibility(TextUtils.isEmpty(currentUserId) ? View.GONE : View.VISIBLE);
 
         String imageUrl = event.getThumbnailUrl();
         if (!TextUtils.isEmpty(imageUrl)) {
@@ -118,7 +119,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         });
 
         holder.ivHeart.setOnClickListener(v -> {
-            if (listener != null) {
+            if (!TextUtils.isEmpty(currentUserId) && listener != null) {
                 listener.onHeartClick(event, isSaved);
             }
         });
