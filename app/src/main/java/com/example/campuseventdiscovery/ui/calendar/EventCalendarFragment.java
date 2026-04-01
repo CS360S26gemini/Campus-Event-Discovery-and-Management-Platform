@@ -319,9 +319,9 @@ public class EventCalendarFragment extends Fragment {
                         event.getDate().toDate().getTime());
             }
 
-            if (event.getEndTime() != null) {
-                intent.putExtra(CalendarContract.EXTRA_EVENT_END_TIME,
-                        event.getEndTime().toDate().getTime());
+            long endMillis = resolveEventEndMillis(event);
+            if (endMillis > 0L) {
+                intent.putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endMillis);
             }
 
             startActivity(intent);
@@ -339,6 +339,24 @@ public class EventCalendarFragment extends Fragment {
         if (progressBarCalendar != null) {
             progressBarCalendar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         }
+    }
+
+    private long resolveEventEndMillis(Event event) {
+        if (event == null) {
+            return 0L;
+        }
+
+        Timestamp end = event.getEndTime();
+        if (end != null) {
+            return end.toDate().getTime();
+        }
+
+        Timestamp start = event.getDate();
+        if (start == null) {
+            return 0L;
+        }
+
+        return start.toDate().getTime() + 2L * 60L * 60L * 1000L;
     }
 
     @Override
