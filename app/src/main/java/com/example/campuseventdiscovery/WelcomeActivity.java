@@ -6,7 +6,9 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.campuseventdiscovery.util.DevBypassHelper;
 import com.google.android.material.button.MaterialButton;
+import com.example.campuseventdiscovery.util.DevSessionManager;
 
 /**
  * WelcomeActivity.java
@@ -22,15 +24,20 @@ public class WelcomeActivity extends AppCompatActivity {
 
         MaterialButton btnSignIn = findViewById(R.id.btnSignIn);
         MaterialButton btnCreateAccount = findViewById(R.id.btnCreateAccount);
+        MaterialButton btnDevBypass = findViewById(R.id.btnDevBypass);
 
         btnSignIn.setOnClickListener(v -> {
+            DevSessionManager.clearBypass(this);
             Intent intent = new Intent(WelcomeActivity.this, SignInActivity.class);
             startActivity(intent);
         });
 
         btnCreateAccount.setOnClickListener(v -> {
+            DevSessionManager.clearBypass(this);
             Intent intent = new Intent(WelcomeActivity.this, SignUpActivity.class);
             startActivity(intent);
         });
+
+        btnDevBypass.setOnClickListener(v -> DevBypassHelper.showRolePicker(this));
     }
 }

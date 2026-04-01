@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:name=".CampusEventDiscoveryApp"
@@ -11,6 +13,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CampusEventDiscovery">
 
+        <activity
+            android:name="com.example.campuseventdiscovery.MaintenanceActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.event.OrganizerProposalDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.profile.NotificationCenterActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.profile.MemoriesActivity"
+            android:exported="false" />
         <activity
             android:name="com.example.campuseventdiscovery.ui.organizer.WhoIsComingActivity"
             android:exported="false" />
@@ -46,6 +60,9 @@
         <activity
             android:name="com.example.campuseventdiscovery.ui.event.CheckoutActivity"
             android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.event.EventFeedbackActivity"
+            android:exported="false" />
 
         <activity
             android:name="com.example.campuseventdiscovery.ui.event.BuyTicketActivity"
@@ -57,10 +74,6 @@
 
         <activity
             android:name="com.example.campuseventdiscovery.MainActivity"
-            android:exported="false" />
-
-        <activity
-            android:name="com.example.campuseventdiscovery.TempLoginActivity"
             android:exported="false" />
 
         <activity

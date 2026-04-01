@@ -2,13 +2,11 @@ package com.example.campuseventdiscovery.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.text.TextUtils;
 
 import com.google.firebase.auth.FirebaseAuth;
 
 /**
- * Stores a local role-based bypass session so the app can be exercised
- * without Firebase Authentication during development.
+ * Stores a local-only developer bypass session used when no Firebase user is signed in.
  */
 public final class DevSessionManager {
 
@@ -20,8 +18,7 @@ public final class DevSessionManager {
     }
 
     public static void enableBypass(Context context, String role) {
-        SharedPreferences prefs = getPrefs(context);
-        prefs.edit()
+        getPrefs(context).edit()
                 .putBoolean(KEY_BYPASS_ENABLED, true)
                 .putString(KEY_ROLE, sanitizeRole(role))
                 .apply();
@@ -40,8 +37,7 @@ public final class DevSessionManager {
     }
 
     public static String getBypassRole(Context context) {
-        String role = getPrefs(context).getString(KEY_ROLE, UserRoles.ATTENDEE);
-        return sanitizeRole(role);
+        return sanitizeRole(getPrefs(context).getString(KEY_ROLE, UserRoles.ATTENDEE));
     }
 
     public static String getEffectiveUserId(Context context) {
@@ -49,38 +45,35 @@ public final class DevSessionManager {
             return null;
         }
 
-        if (UserRoles.isOrganizer(getBypassRole(context))) {
+        String role = getBypassRole(context);
+        if (UserRoles.isOrganizer(role)) {
             return "demo-organizer-user";
         }
-
-        if (UserRoles.isAdmin(getBypassRole(context))) {
+        if (UserRoles.isAdmin(role)) {
             return "demo-admin-user";
         }
-
         return "demo-attendee-user";
     }
 
     public static String getDisplayName(Context context) {
-        if (UserRoles.isOrganizer(getBypassRole(context))) {
+        String role = getBypassRole(context);
+        if (UserRoles.isOrganizer(role)) {
             return "Test Organizer";
         }
-
-        if (UserRoles.isAdmin(getBypassRole(context))) {
+        if (UserRoles.isAdmin(role)) {
             return "Test Admin";
         }
-
         return "Test Attendee";
     }
 
     public static String getDisplayEmail(Context context) {
-        if (UserRoles.isOrganizer(getBypassRole(context))) {
+        String role = getBypassRole(context);
+        if (UserRoles.isOrganizer(role)) {
             return "organizer@test.local";
         }
-
-        if (UserRoles.isAdmin(getBypassRole(context))) {
+        if (UserRoles.isAdmin(role)) {
             return "admin@test.local";
         }
-
         return "attendee@test.local";
     }
 
@@ -89,7 +82,7 @@ public final class DevSessionManager {
     }
 
     private static String sanitizeRole(String role) {
-        String safeRole = UserRoles.sanitize(role);
-        return TextUtils.isEmpty(safeRole) ? UserRoles.ATTENDEE : safeRole;
+        String sanitizedRole = UserRoles.sanitize(role);
+        return sanitizedRole.isEmpty() ? UserRoles.ATTENDEE : sanitizedRole;
     }
 }
