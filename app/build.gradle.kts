@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.campuseventdiscovery"
+    namespace = "com.example.CampusEventDiscovery"
     compileSdk = 36
 
     defaultConfig {
