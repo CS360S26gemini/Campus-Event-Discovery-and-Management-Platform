@@ -38,6 +38,42 @@ Some of the items below are direct code gaps, and some are production-readiness 
 
 #### Backend, security, and integration work still needed
 
+- Firestore rules still need to be written and hardened collection by collection:
+  `users/{userId}` should prevent self-role escalation and restrict profile-field updates;
+  `saved_events`, `rsvps`, and `memories` should be owner-only;
+  `notifications/{userId}/messages` should be readable only by the owner;
+  `event_proposals` should be writable by organizers for their own proposals but reviewable only by admins;
+  `events`, `attendees`, `blacklist`, aggregate counters, and verification fields should not be fully client-controlled.
+- Firestore indexes still need to be created for the current query patterns, especially:
+  `events(status, date)`,
+  `events(organizerId, status, date)`,
+  `event_proposals(status, submittedAt)`,
+  `event_proposals(organizerId, submittedAt)`,
+  `users/{uid}/saved_events(savedAt)`,
+  `users/{uid}/rsvps(rsvpAt)`,
+  `users/{uid}/memories(attendedAt)`,
+  and `notifications/{uid}/messages(createdAt)`.
+- The current event-approval flow should be moved out of the client. A trusted backend path should create live `events/{eventId}` documents from `event_proposals/{proposalId}` and write organizer notifications.
+- Firestore writes that update counts and state should be locked down or server-mediated, including:
+  `events.rsvpCount`,
+  `events.checkedInCount`,
+  `events.averageRating`,
+  `events.ratingCount`,
+  attendee check-in state,
+  blacklist entries,
+  and proposal review fields.
+- Notification schema needs to be finalized. The code currently reads `isRead` but `markNotificationRead()` updates both `read` and `isRead`, which implies schema drift that should be cleaned up in Firestore and in code.
+- `app_config/settings` needs proper admin ownership and tooling in Firestore for `maintenanceMode` and `featuredEventIds`, plus validation so bad config does not break startup or the featured-event carousel.
+- `users/{userId}` still has fields that exist in the model/schema but are not yet fully used by the product, especially `fcmToken` and `googleCalendarToken`. Those fields either need full production flows or should be removed from the final schema.
+- `users/{uid}/rsvps/{eventId}` still carries calendar metadata that is not fully implemented. `addedToCalendar` is updated, but `gcalEventId` is not populated by the current Android-intent flow.
+- `events/{eventId}` documents still need a complete media/data lifecycle. Approved events are created with empty `thumbnailUrl`, and there is no finalized Firestore path for organizer-managed event media updates after approval.
+- `events/{eventId}/ratings` and `users/{uid}/memories` need stronger Firestore-side policy decisions:
+  whether only attendees who actually attended can write them,
+  whether rating edits are allowed,
+  and whether memory uploads should be blocked after a time window.
+- `events/{eventId}/attendees` and `events/{eventId}/blacklist` need clearer production rules about who can read attendee names, who can check attendees in, and who can blacklist or un-blacklist users.
+- `reports/{reportId}` currently only supports write/read patterns implied by the prototype. A final Firestore design still needs report triage, admin review ownership, resolution metadata policy, and possibly stronger location/privacy handling.
+- The app currently mixes "active", "pending", "approved", "rejected", "cancelled", and "attended" state across different collections. Before release, those status fields should be normalized and documented as a final Firestore state machine.
 - Privileged operations should be moved behind strict Firebase Security Rules and/or Cloud Functions. Proposal approval, rejection, blacklist, announcements, and attendee check-in are currently initiated by the Android client.
 - Production Firestore indexes and security rules need to be defined, tested, and documented.
 - FCM token collection and a server-side notification pipeline still need to be added if real push notifications are required.
