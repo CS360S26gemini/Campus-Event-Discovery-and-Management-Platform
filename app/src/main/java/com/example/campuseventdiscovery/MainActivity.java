@@ -106,11 +106,12 @@ public class MainActivity extends AppCompatActivity {
                 currentRole = DevSessionManager.getBypassRole(this);
                 updateBottomNavMenu();
                 loadInitialFragment();
-            } else {
-                Intent intent = new Intent(MainActivity.this, TempLoginActivity.class);
-                startActivity(intent);
-                finish();
+                return;
             }
+
+            Intent intent = new Intent(MainActivity.this, WelcomeActivity.class);
+            startActivity(intent);
+            finish();
             return;
         }
 
