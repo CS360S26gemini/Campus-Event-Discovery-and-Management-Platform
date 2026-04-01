@@ -11,10 +11,13 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.campuseventdiscovery.model.User;
+import com.example.campuseventdiscovery.util.DevBypassHelper;
+import com.example.campuseventdiscovery.util.DevSessionManager;
 import com.example.campuseventdiscovery.util.ThemeManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -26,9 +29,9 @@ import java.util.ArrayList;
  */
 public class SignUpActivity extends AppCompatActivity {
 
-    private EditText etFullName, etEmail, etPassword, etRepeatPassword;
+    private EditText etFullName, etEmail, etPassword, etRepeatPassword, etInterests;
     private MaterialButtonToggleGroup toggleUserType;
-    private MaterialButton btnSignUp;
+    private MaterialButton btnSignUp, btnDevBypass;
     private ImageButton btnBack;
 
     private FirebaseAuth auth;
@@ -47,19 +50,24 @@ public class SignUpActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         etRepeatPassword = findViewById(R.id.etRepeatPassword);
+        etInterests = findViewById(R.id.etInterests);
         toggleUserType = findViewById(R.id.toggleUserType);
         btnSignUp = findViewById(R.id.btnSignUp);
+        btnDevBypass = findViewById(R.id.btnDevBypass);
 
         btnBack.setOnClickListener(v -> finish());
 
         btnSignUp.setOnClickListener(v -> signUpUser());
+        btnDevBypass.setOnClickListener(v -> DevBypassHelper.showRolePicker(this));
     }
 
     private void signUpUser() {
+        DevSessionManager.clearBypass(this);
         String fullName = etFullName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
         String repeatPassword = etRepeatPassword.getText().toString().trim();
+        String interestsRaw = etInterests.getText().toString().trim();
 
         if (TextUtils.isEmpty(fullName) || TextUtils.isEmpty(email) ||
                 TextUtils.isEmpty(password) || TextUtils.isEmpty(repeatPassword)) {
@@ -74,6 +82,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         String role = toggleUserType.getCheckedButtonId() == R.id.btnOrganizer ? "organizer" : "attendee";
         boolean darkMode = ThemeManager.isDarkModeEnabled(this);
+        ArrayList<String> interests = parseInterests(interestsRaw);
 
         btnSignUp.setEnabled(false);
 
@@ -87,7 +96,7 @@ public class SignUpActivity extends AppCompatActivity {
                             "", // university
                             "", // location
                             "", // profilePicUrl
-                            new ArrayList<>(),
+                            interests,
                             darkMode
                     );
 
@@ -107,7 +116,41 @@ public class SignUpActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     btnSignUp.setEnabled(true);
-                    Toast.makeText(SignUpActivity.this, "Auth error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(SignUpActivity.this, buildAuthErrorMessage(e), Toast.LENGTH_LONG).show();
                 });
+    }
+
+    private ArrayList<String> parseInterests(String raw) {
+        ArrayList<String> interests = new ArrayList<>();
+        if (TextUtils.isEmpty(raw)) {
+            return interests;
+        }
+
+        String[] tokens = raw.split(",");
+        for (String token : tokens) {
+            String value = token == null ? "" : token.trim();
+            if (!TextUtils.isEmpty(value) && !interests.contains(value)) {
+                interests.add(value);
+            }
+        }
+        return interests;
+    }
+
+    private String buildAuthErrorMessage(Exception exception) {
+        if (exception == null) {
+            return "Auth error: sign up failed.";
+        }
+
+        String message = exception.getMessage();
+        if (message != null && message.contains("CONFIGURATION_NOT_FOUND")) {
+            return "Auth error: Firebase Authentication is not fully configured. Enable Email/Password and finish Auth/App Check setup in Firebase Console.";
+        }
+
+        if (exception instanceof FirebaseAuthException) {
+            FirebaseAuthException authException = (FirebaseAuthException) exception;
+            return "Auth error: " + authException.getErrorCode();
+        }
+
+        return "Auth error: " + message;
     }
 }

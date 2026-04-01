@@ -161,6 +161,37 @@
             android:background="@color/colorSecondary"
             app:layout_constraintTop_toBottomOf="@id/etRepeatPassword" />
 
+        <TextView
+            android:id="@+id/lblInterests"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/interests_label"
+            android:textColor="@color/colorOnBackground"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/divider4" />
+
+        <EditText
+            android:id="@+id/etInterests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:hint="@string/interests_hint"
+            android:inputType="text"
+            android:paddingVertical="12dp"
+            android:textColor="@color/colorOnBackground"
+            android:textColorHint="@color/colorSecondary"
+            app:layout_constraintTop_toBottomOf="@id/lblInterests" />
+
+        <View
+            android:id="@+id/divider5"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/colorSecondary"
+            app:layout_constraintTop_toBottomOf="@id/etInterests" />
+
         <!-- Type of User -->
         <TextView
             android:id="@+id/lblUserType"
@@ -171,7 +202,7 @@
             android:textColor="@color/colorOnBackground"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider4" />
+            app:layout_constraintTop_toBottomOf="@id/divider5" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggleUserType"
@@ -205,11 +236,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="12dp"
             android:padding="14dp"
             android:text="@string/sign_up"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/toggleUserType" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDevBypass"
+            style="@style/AppSecondaryButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:padding="14dp"
+            android:text="@string/dev_bypass_action"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnSignUp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>
