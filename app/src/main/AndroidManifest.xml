@@ -13,6 +13,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CampusEventDiscovery">
 
+
+        <activity
+            android:name="com.example.CampusEventDiscovery.ui.admin.AdminHomeActivity"
+            android:exported="false" />
         <activity
             android:name="com.example.CampusEventDiscovery.MaintenanceActivity"
             android:exported="false" />

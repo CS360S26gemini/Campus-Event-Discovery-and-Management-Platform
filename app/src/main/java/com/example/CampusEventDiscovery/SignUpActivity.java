@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.util.DevBypassHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.SignupValidator;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
@@ -31,8 +32,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     private EditText etFullName, etEmail, etPassword, etRepeatPassword, etInterests;
     private MaterialButtonToggleGroup toggleUserType;
-    private MaterialButton btnSignUp, btnDevBypass;
-    private ImageButton btnBack;
+    private MaterialButton btnSignUp;
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -45,7 +45,7 @@ public class SignUpActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        btnBack = findViewById(R.id.btnBack);
+        ImageButton btnBack = findViewById(R.id.btnBack);
         etFullName = findViewById(R.id.etFullName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
@@ -53,7 +53,7 @@ public class SignUpActivity extends AppCompatActivity {
         etInterests = findViewById(R.id.etInterests);
         toggleUserType = findViewById(R.id.toggleUserType);
         btnSignUp = findViewById(R.id.btnSignUp);
-        btnDevBypass = findViewById(R.id.btnDevBypass);
+        MaterialButton btnDevBypass = findViewById(R.id.btnDevBypass);
 
         btnBack.setOnClickListener(v -> finish());
 
@@ -69,18 +69,14 @@ public class SignUpActivity extends AppCompatActivity {
         String repeatPassword = etRepeatPassword.getText().toString().trim();
         String interestsRaw = etInterests.getText().toString().trim();
 
-        if (TextUtils.isEmpty(fullName) || TextUtils.isEmpty(email) ||
-                TextUtils.isEmpty(password) || TextUtils.isEmpty(repeatPassword)) {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (!password.equals(repeatPassword)) {
-            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         String role = toggleUserType.getCheckedButtonId() == R.id.btnOrganizer ? "organizer" : "attendee";
+
+        String validationError = SignupValidator.validate(fullName, email, password, repeatPassword, role);
+        if (validationError != null) {
+            Toast.makeText(this, validationError, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         boolean darkMode = ThemeManager.isDarkModeEnabled(this);
         ArrayList<String> interests = parseInterests(interestsRaw);
 
@@ -88,6 +84,11 @@ public class SignUpActivity extends AppCompatActivity {
 
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
+                    if (authResult.getUser() == null) {
+                        btnSignUp.setEnabled(true);
+                        Toast.makeText(SignUpActivity.this, "Auth error: User is null", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     String uid = authResult.getUser().getUid();
                     User newUser = new User(
                             fullName,
