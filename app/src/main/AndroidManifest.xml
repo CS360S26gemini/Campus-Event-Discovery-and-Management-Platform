@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <application
+        android:name=".CampusEventDiscoveryApp"
+        android:allowBackup="true"
+        android:enableOnBackInvokedCallback="true"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CampusEventDiscovery">
+
+        <activity
+            android:name="com.example.campuseventdiscovery.MaintenanceActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.event.OrganizerProposalDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.profile.NotificationCenterActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.profile.MemoriesActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.organizer.WhoIsComingActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.organizer.OrganizerEventDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.SignUpActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.SignInActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.WelcomeActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.organizer.ManageEventsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.profile.AccountSettingsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.organizer.CreateEventActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.event.EventApprovalActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.event.CheckoutActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.event.EventFeedbackActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.event.BuyTicketActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.campuseventdiscovery.ui.event.EventDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.campuseventdiscovery.MainActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.campuseventdiscovery.SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>
