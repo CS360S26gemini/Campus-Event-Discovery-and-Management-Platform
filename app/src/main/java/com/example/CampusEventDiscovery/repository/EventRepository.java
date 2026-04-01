@@ -1,13 +1,13 @@
-package com.example.campuseventdiscovery.repository;
+package com.example.CampusEventDiscovery.repository;
 
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.example.campuseventdiscovery.model.Event;
-import com.example.campuseventdiscovery.model.EventAttendee;
-import com.example.campuseventdiscovery.model.EventProposal;
-import com.example.campuseventdiscovery.model.Notification;
-import com.example.campuseventdiscovery.model.User;
+import com.example.CampusEventDiscovery.model.Event;
+import com.example.CampusEventDiscovery.model.EventAttendee;
+import com.example.CampusEventDiscovery.model.EventProposal;
+import com.example.CampusEventDiscovery.model.Notification;
+import com.example.CampusEventDiscovery.model.User;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;

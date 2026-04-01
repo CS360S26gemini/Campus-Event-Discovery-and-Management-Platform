@@ -1,4 +1,4 @@
-package com.example.campuseventdiscovery.model;
+package com.example.CampusEventDiscovery.model;
 
 import com.google.firebase.Timestamp;
 import java.util.ArrayList;
