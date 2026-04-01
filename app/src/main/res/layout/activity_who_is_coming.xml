@@ -65,7 +65,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintBottom_toTopOf="@id/btnBlacklist"
+        app:layout_constraintBottom_toTopOf="@id/actionBar"
         app:layout_constraintTop_toBottomOf="@id/header" />
 
     <TextView
@@ -76,19 +76,39 @@
         android:textColor="@color/colorSecondary"
         android:textSize="16sp"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/btnBlacklist"
+        app:layout_constraintBottom_toTopOf="@id/actionBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/header" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnBlacklist"
-        style="@style/AppDangerButtonStyle"
+    <LinearLayout
+        android:id="@+id/actionBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:padding="14dp"
-        android:text="@string/blacklist_selected"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCheckIn"
+            style="@style/AppSecondaryButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:padding="14dp"
+            android:text="@string/check_in_attendee" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBlacklist"
+            style="@style/AppDangerButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:padding="14dp"
+            android:text="@string/blacklist_selected" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

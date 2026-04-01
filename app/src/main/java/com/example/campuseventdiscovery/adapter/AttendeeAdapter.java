@@ -113,6 +113,16 @@ public class AttendeeAdapter extends RecyclerView.Adapter<AttendeeAdapter.Attend
         return selectedIds.size();
     }
 
+    public List<EventAttendee> getSelectedAttendees() {
+        List<EventAttendee> selectedAttendees = new ArrayList<>();
+        for (EventAttendee attendee : allAttendees) {
+            if (selectedIds.contains(resolveSelectionId(attendee))) {
+                selectedAttendees.add(attendee);
+            }
+        }
+        return selectedAttendees;
+    }
+
     private void pruneSelectionToKnownAttendees() {
         Set<String> validIds = new HashSet<>();
         for (EventAttendee attendee : allAttendees) {
