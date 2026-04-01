@@ -170,6 +170,69 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="20dp"
+            android:text="@string/tags_label"
+            android:textColor="@color/colorOnBackground"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/etTags"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_card_rounded"
+            android:hint="@string/tags_hint"
+            android:padding="14dp"
+            android:textColor="@color/colorOnBackground"
+            android:textColorHint="@color/colorSecondary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="20dp"
+            android:text="@string/sponsors_label"
+            android:textColor="@color/colorOnBackground"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/etSponsors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_card_rounded"
+            android:hint="@string/sponsors_hint"
+            android:padding="14dp"
+            android:textColor="@color/colorOnBackground"
+            android:textColorHint="@color/colorSecondary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="20dp"
+            android:text="@string/food_stalls_label"
+            android:textColor="@color/colorOnBackground"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/etFoodStalls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_card_rounded"
+            android:hint="@string/food_stalls_hint"
+            android:padding="14dp"
+            android:textColor="@color/colorOnBackground"
+            android:textColorHint="@color/colorSecondary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="20dp"
             android:text="@string/trailer_url_hint"
             android:textColor="@color/colorOnBackground"
             android:textSize="14sp" />

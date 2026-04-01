@@ -69,7 +69,7 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
         holder.ivShare.setVisibility(View.GONE);
 
         holder.tvNewBadge.setVisibility(View.VISIBLE);
-        holder.tvNewBadge.setText(holder.itemView.getContext().getString(R.string.pending_badge));
+        holder.tvNewBadge.setText(resolveStatusBadge(holder.itemView, event));
 
         String imageUrl = event.getThumbnailUrl();
         if (!TextUtils.isEmpty(imageUrl)) {
@@ -112,6 +112,22 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
         Date date = timestamp.toDate();
         SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM • hh:mm a", Locale.getDefault());
         return sdf.format(date);
+    }
+
+    private String resolveStatusBadge(View itemView, Event event) {
+        String status = event == null || event.getStatus() == null
+                ? ""
+                : event.getStatus().trim().toLowerCase(Locale.getDefault());
+
+        if ("rejected".equals(status)) {
+            return itemView.getContext().getString(R.string.rejected_badge);
+        }
+
+        if ("approved".equals(status)) {
+            return itemView.getContext().getString(R.string.approved_badge);
+        }
+
+        return itemView.getContext().getString(R.string.pending_badge);
     }
 
     public static class PendingViewHolder extends RecyclerView.ViewHolder {
