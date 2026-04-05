@@ -27,12 +27,14 @@ public class EventProposal {
     private List<String> sponsors;
     private List<String> foodStalls;
     private String trailerUrl;
+    private String thumbnailUrl;
     private String organizerId;
     private String organizerName;
     private String status;
     private String adminNote;
     private Timestamp submittedAt;
     private Timestamp reviewedAt;
+    private double ticketPrice;
 
     /**
      * Required empty constructor for Firestore deserialization.
@@ -80,7 +82,8 @@ public class EventProposal {
                          String status,
                          String adminNote,
                          Timestamp submittedAt,
-                         Timestamp reviewedAt) {
+                         Timestamp reviewedAt,
+                         double ticketPrice) {
         this.proposalId = proposalId;
         this.title = title;
         this.description = description;
@@ -98,6 +101,7 @@ public class EventProposal {
         this.adminNote = adminNote;
         this.submittedAt = submittedAt;
         this.reviewedAt = reviewedAt;
+        this.ticketPrice = ticketPrice;
     }
 
     /**
@@ -300,6 +304,24 @@ public class EventProposal {
     }
 
     /**
+     * Gets the thumbnail/banner image URL for this event proposal.
+     *
+     * @return Thumbnail URL (Firebase Storage download URL).
+     */
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
+    }
+
+    /**
+     * Sets the thumbnail/banner image URL for this event proposal.
+     *
+     * @param thumbnailUrl Firebase Storage download URL.
+     */
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
+
+    /**
      * Gets the organizer ID.
      *
      * @return Organizer ID.
@@ -405,5 +427,23 @@ public class EventProposal {
      */
     public void setReviewedAt(Timestamp reviewedAt) {
         this.reviewedAt = reviewedAt;
+    }
+
+    /**
+     * Gets the ticket price set by the organizer.
+     *
+     * @return Ticket price (0.0 for free events).
+     */
+    public double getTicketPrice() {
+        return ticketPrice;
+    }
+
+    /**
+     * Sets the ticket price for the event.
+     *
+     * @param ticketPrice Ticket price (0.0 for free events).
+     */
+    public void setTicketPrice(double ticketPrice) {
+        this.ticketPrice = ticketPrice;
     }
 }

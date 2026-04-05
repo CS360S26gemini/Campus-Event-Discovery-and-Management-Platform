@@ -1,9 +1,12 @@
 package com.example.CampusEventDiscovery.ui.organizer;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
@@ -19,6 +22,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.EventProposal;
@@ -36,6 +40,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 /**
  * CreateEventActivity.java
@@ -55,6 +62,7 @@ public class CreateEventActivity extends AppCompatActivity {
     private EditText etVenue;
     private EditText etDescription;
     private EditText etCapacity;
+    private EditText etTicketPrice;
     private EditText etTags;
     private EditText etSponsors;
     private EditText etFoodStalls;
@@ -76,6 +84,17 @@ public class CreateEventActivity extends AppCompatActivity {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     selectedImageUri = result.getData().getData();
                     ivEventThumbnail.setImageURI(selectedImageUri);
+                }
+            });
+
+    private final ActivityResultLauncher<String> mediaPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    launchImagePicker();
+                } else {
+                    Toast.makeText(this,
+                            "Storage permission is required to select an image.",
+                            Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -110,6 +129,7 @@ public class CreateEventActivity extends AppCompatActivity {
         etVenue = findViewById(R.id.etVenue);
         etDescription = findViewById(R.id.etDescription);
         etCapacity = findViewById(R.id.etCapacity);
+        etTicketPrice = findViewById(R.id.etTicketPrice);
         etTags = findViewById(R.id.etTags);
         etSponsors = findViewById(R.id.etSponsors);
         etFoodStalls = findViewById(R.id.etFoodStalls);
@@ -123,10 +143,35 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     private void setupImagePicker() {
-        btnSelectImage.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            imagePickerLauncher.launch(intent);
-        });
+        btnSelectImage.setOnClickListener(v -> checkMediaPermissionAndPick());
+    }
+
+    /**
+     * Checks for the appropriate media read permission before opening the
+     * image picker. On Android 13+ (API 33+) this is READ_MEDIA_IMAGES;
+     * on older versions it is READ_EXTERNAL_STORAGE.
+     */
+    private void checkMediaPermissionAndPick() {
+        String permission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                ? Manifest.permission.READ_MEDIA_IMAGES
+                : Manifest.permission.READ_EXTERNAL_STORAGE;
+
+        if (ContextCompat.checkSelfPermission(this, permission)
+                == PackageManager.PERMISSION_GRANTED) {
+            launchImagePicker();
+        } else {
+            mediaPermissionLauncher.launch(permission);
+        }
+    }
+
+    /**
+     * Opens the system image picker. Only called after storage permission
+     * has been confirmed.
+     */
+    private void launchImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        imagePickerLauncher.launch(intent);
     }
 
     private void setupCategoryDropdown() {
@@ -215,6 +260,7 @@ public class CreateEventActivity extends AppCompatActivity {
         String venue = etVenue.getText().toString().trim();
         String description = etDescription.getText().toString().trim();
         String capacityText = etCapacity.getText().toString().trim();
+        String ticketPriceText = etTicketPrice.getText().toString().trim();
         String tagsText = etTags.getText().toString().trim();
         String sponsorsText = etSponsors.getText().toString().trim();
         String foodStallsText = etFoodStalls.getText().toString().trim();
@@ -261,6 +307,11 @@ public class CreateEventActivity extends AppCompatActivity {
         proposal.setDate(selectedTimestamp);
         proposal.setLocation(venue);
         proposal.setCapacity(capacity);
+        double ticketPrice = 0.0;
+        if (!TextUtils.isEmpty(ticketPriceText)) {
+            try { ticketPrice = Double.parseDouble(ticketPriceText); } catch (NumberFormatException ignored) {}
+        }
+        proposal.setTicketPrice(ticketPrice);
         proposal.setSponsors(parseCommaSeparated(sponsorsText, false));
         proposal.setFoodStalls(parseCommaSeparated(foodStallsText, false));
         proposal.setTrailerUrl(trailerUrl);
@@ -271,15 +322,39 @@ public class CreateEventActivity extends AppCompatActivity {
         proposal.setSubmittedAt(Timestamp.now());
         proposal.setReviewedAt(null);
 
-        // In a working prototype, we would upload selectedImageUri to Firebase Storage here.
-        // For now, we'll simulate the "ready" state for visuals.
-        if (selectedImageUri != null) {
-            // Placeholder: Set a mock URL or real upload task would go here
-            // proposal.setThumbnailUrl(selectedImageUri.toString());
-        }
-
         showLoading(true);
 
+        if (selectedImageUri != null) {
+            // Upload path matches the team DB schema: event_thumbnails/{userId}_{timestamp}
+            StorageReference storageRef = FirebaseStorage.getInstance().getReference()
+                    .child("event_thumbnails/" + currentUserId + "_" + System.currentTimeMillis() + ".jpg");
+
+            storageRef.putFile(selectedImageUri)
+                    .addOnSuccessListener(taskSnapshot ->
+                            storageRef.getDownloadUrl()
+                                    .addOnSuccessListener(downloadUri -> {
+                                        proposal.setThumbnailUrl(downloadUri.toString());
+                                        saveProposal(proposal);
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        showLoading(false);
+                                        Toast.makeText(CreateEventActivity.this,
+                                                getString(R.string.image_upload_failed, e.getMessage()),
+                                                Toast.LENGTH_SHORT).show();
+                                    }))
+                    .addOnFailureListener(e -> {
+                        showLoading(false);
+                        Toast.makeText(CreateEventActivity.this,
+                                getString(R.string.image_upload_failed, e.getMessage()),
+                                Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            proposal.setThumbnailUrl("");
+            saveProposal(proposal);
+        }
+    }
+
+    private void saveProposal(EventProposal proposal) {
         repository.proposeEvent(proposal, new EventRepository.ActionCallback() {
             @Override
             public void onSuccess() {

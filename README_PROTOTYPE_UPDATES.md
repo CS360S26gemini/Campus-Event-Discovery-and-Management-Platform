@@ -4,54 +4,48 @@ This document summarizes the changes implemented to transform the Campus Event D
 
 ## 🚀 New Core Features
 
-### 1. Enhanced Event Discovery (Visuals)
-*   **Image Selection:** Organizers can now select an event image from their gallery during the creation/proposal process.
-*   **Visual Placeholders:** Implemented `placeholder_event.xml` and updated `CreateEventActivity` to show a live preview of the selected image.
-*   **Discovery UI:** Updated `HomeFragment` and `EventDetailActivity` to better handle event visuals and provide a "Sign in to Register" call-to-action for guest users.
+### 1. Enhanced Event Discovery & Visuals
+*   **Image Selection:** Organizers can now select an event image from their gallery during the creation/proposal process in `CreateEventActivity`.
+*   **Visual Placeholders:** Implemented `bg_placeholder_image.xml` and updated discovery screens to handle missing or loading images gracefully.
+*   **Discovery UI:** `HomeFragment` and `EventDetailActivity` now prioritize visual storytelling with banner images and improved layout hierarchy.
 
-### 2. Digital Ticketing Flow (Attendee)
-*   **Digital Ticket Access:** From the **My Events** tab, attendees can now long-press any RSVP'd event to **"View Check-In Code"**.
-*   **Unique Tokens:** This displays the unique `qrCodeToken` generated during registration, which serves as the user's digital entry pass for the prototype.
-*   **Conditional Feedback:** The "Leave Feedback" option is now intelligently enabled only for events that have already occurred.
+### 2. Full Ticketing & Mock Payment Flow
+*   **Tiered Pricing:** `BuyTicketActivity` allows attendees to select from multiple ticket tiers (Early Bird, Standard, VIP).
+*   **Mock Checkout:** `CheckoutActivity` collects attendee information and "processes" payments via `MockPaymentService`, creating real RSVP records in Firestore.
+*   **Digital QR Tickets:** Upon successful checkout, `TicketActivity` generates a unique, scannable QR code for the event using the `QRCodeHelper` (ZXing-based).
 
 ### 3. Personal Scheduling (Calendar)
-*   **Personalized View:** The `EventCalendarFragment` has been refocused to show only **RSVP'd events** instead of all campus events.
-*   **Schedule Management:** Users can now use the calendar as a personal planner to see their specific commitments on any given date.
-*   **Improved Feedback:** Updated empty states to help users distinguish between "No events on campus" and "You have no registrations for this day."
+*   **RSVP-Refocused Calendar:** `EventCalendarFragment` has been updated to show only **RSVP'd events** on the calendar view, transforming it into a personal planner for the user.
+*   **External Sync:** Attendees can long-press events in the calendar or details screen to add them directly to their Android device calendar.
 
-### 4. Attendance Tracking & QR Scanning (Organizer)
-*   **Simulated QR Scanner:** Added a **"Scan QR Code"** action in `WhoIsComingActivity`.
-*   **Real-time Check-In:** Organizers can simulate a scan by entering/pasting an attendee's token. This triggers the backend logic to verify the token, mark the attendee as "Checked In," and update the event's live attendance count.
-*   **Attendee Management:** Improved the check-in loop to provide immediate feedback (e.g., "Already checked in" or "Invalid code").
+### 4. Attendance Tracking & Simulated Scanning
+*   **Simulated QR Scanner:** Added a **"Scan QR Code"** action in `WhoIsComingActivity`. This allows organizers to simulate a camera scan by pasting an attendee's unique QR token.
+*   **Real-time Check-In:** The system verifies the token against Firestore records, marks the attendee as "Checked In," and updates the event's live attendance counts.
+*   **Attendee Management:** Organizers can now search participants, view check-in status, and blacklist users directly from the `WhoIsComingActivity`.
 
-### 5. Unified Management Dashboard (Organizer)
-*   **Status-Aware Navigation:** In the **Manage Events** section, organizers can now seamlessly navigate between:
-    *   **Active Events:** Opens the management dashboard and attendee lists.
-    *   **Pending/Rejected Proposals:** Opens the proposal detail view to see admin feedback and review notes.
+### 5. Role-Based Enhancements
+*   **Guest Mode Improvements:** Guest users now see a clear "Sign in to Register" call-to-action on event details.
+*   **Organizer Dashboard:** `OrganizerEventDetailActivity` provides real-time stats on RSVPs and check-ins.
+*   **Admin Review:** Streamlined `EventApprovalActivity` to allow admins to provide specific feedback when rejecting proposals.
 
 ---
 
-## 🛠 Files Modified/Created
+## 🛠 Key Files Involved
 
-| File | Change Description |
+| Category | Files |
 | --- | --- |
-| `CreateEventActivity.java` | Added image picker logic and UI preview. |
-| `activity_create_event.xml` | Added Image selection button and Preview ImageView. |
-| `WhoIsComingActivity.java` | Implemented simulated QR scanning and check-in flow. |
-| `activity_who_is_coming.xml` | Added "Scan QR Code" action button. |
-| `EventCalendarFragment.java` | Refocused data loading to show user RSVPs only. |
-| `MyEventsFragment.java` | Added long-press actions for digital tickets and feedback. |
-| `EventDetailActivity.java` | Improved CTA logic for guest vs attendee users. |
-| `placeholder_event.xml` | New drawable for consistent event visuals. |
-| `strings.xml` | Added strings for scanning, image selection, and scheduling. |
+| **Ticketing** | `BuyTicketActivity.java`, `CheckoutActivity.java`, `TicketActivity.java`, `QRCodeHelper.java` |
+| **Discovery** | `EventDetailActivity.java`, `HomeFragment.java`, `CreateEventActivity.java` |
+| **Management** | `WhoIsComingActivity.java`, `OrganizerEventDetailActivity.java`, `EventRepository.java` |
+| **Personal** | `EventCalendarFragment.java`, `MyEventsFragment.java` |
 
 ---
 
-## 📋 How to Demo the Prototype
+## 📋 How to Demo the Complete Loop
 
-1.  **Create an Event:** Log in as an **Organizer**, go to "Create Event," and select a photo for your event.
-2.  **Approve the Event:** Log in as an **Admin**, find the proposal, and approve it.
-3.  **RSVP & Get Ticket:** Log in as an **Attendee**, find the new event, and click "Tickets" to register.
-4.  **View Your Ticket:** Go to the "My Events" tab, long-press your event, and select **"View Check-In Code"**. Copy this code.
-5.  **Check Your Schedule:** Open the **Calendar** to see the event highlighted on your personal schedule.
-6.  **Scan & Check-In:** Log in back as the **Organizer**, go to "Manage Events" -> "Who's Coming" -> **"Scan QR"**, and paste the attendee's code to verify their attendance.
+1.  **Propose an Event:** Log in as an **Organizer**, create a new event, select a category, and "upload" an image.
+2.  **Approve the Event:** Log in as an **Admin** and approve the pending proposal.
+3.  **Purchase a Ticket:** Log in as an **Attendee**, find the event, select a "VIP" ticket, and complete the checkout.
+4.  **View the QR Code:** Click "Done" after checkout or find the event in **My Events** to see your unique QR ticket.
+5.  **Check Your Schedule:** Open the **Calendar**; your newly purchased event will be marked.
+6.  **Simulated Entry:** Log in as the **Organizer**, go to the event's attendee list, click **"Scan QR"**, and paste the token from the attendee's ticket to check them in.

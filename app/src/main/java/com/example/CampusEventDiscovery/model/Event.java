@@ -42,6 +42,7 @@ public class Event {
     private long ratingCount;
     private String status;
     private Timestamp createdAt;
+    private double ticketPrice;
 
     /**
      * Required empty constructor for Firestore deserialization.
@@ -77,6 +78,7 @@ public class Event {
      * @param ratingCount Number of ratings.
      * @param status Event status.
      * @param createdAt Event creation timestamp.
+     * @param ticketPrice Price of the event ticket.
      */
     public Event(String eventId,
                  String title,
@@ -99,7 +101,8 @@ public class Event {
                  double averageRating,
                  long ratingCount,
                  String status,
-                 Timestamp createdAt) {
+                 Timestamp createdAt,
+                 double ticketPrice) {
         this.eventId = eventId;
         this.title = title;
         this.description = description;
@@ -122,6 +125,7 @@ public class Event {
         this.ratingCount = ratingCount;
         this.status = status;
         this.createdAt = createdAt;
+        this.ticketPrice = ticketPrice;
     }
 
     /**
@@ -519,5 +523,23 @@ public class Event {
      */
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
+    }
+
+    /**
+     * Gets the ticket price.
+     *
+     * @return Ticket price.
+     */
+    public double getTicketPrice() {
+        return ticketPrice;
+    }
+
+    /**
+     * Sets the ticket price.
+     *
+     * @param ticketPrice Ticket price.
+     */
+    public void setTicketPrice(double ticketPrice) {
+        this.ticketPrice = ticketPrice;
     }
 }

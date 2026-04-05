@@ -60,7 +60,21 @@ public class EventRepository {
 
     private static final int FIRESTORE_WHERE_IN_LIMIT = 10;
 
-    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final FirebaseFirestore db;
+
+    /**
+     * Default constructor for production use.
+     */
+    public EventRepository() {
+        this(FirebaseFirestore.getInstance());
+    }
+
+    /**
+     * Constructor for testing to allow dependency injection.
+     */
+    public EventRepository(FirebaseFirestore db) {
+        this.db = db;
+    }
 
     public interface EventListCallback {
         void onSuccess(List<Event> events);
@@ -120,6 +134,17 @@ public class EventRepository {
     public interface ActionCallback {
         void onSuccess();
         void onError(Exception e);
+    }
+
+    public void incrementAttendeeCount(String eventId, ActionCallback cb) {
+        if (TextUtils.isEmpty(eventId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("eventId is empty"));
+            return;
+        }
+        db.collection(COLLECTION_EVENTS).document(eventId)
+                .update("rsvpCount", FieldValue.increment(1))
+                .addOnSuccessListener(aVoid -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
     // --- EVENT FETCHING ---
@@ -308,58 +333,58 @@ public class EventRepository {
         DocumentReference blacklistRef = eventRef.collection(SUBCOLLECTION_BLACKLIST).document(userId);
 
         db.runTransaction(transaction -> {
-            DocumentSnapshot eventSnap = transaction.get(eventRef);
-            if (!eventSnap.exists()) throw new FirebaseFirestoreException("Event not found", FirebaseFirestoreException.Code.NOT_FOUND);
+                    DocumentSnapshot eventSnap = transaction.get(eventRef);
+                    if (!eventSnap.exists()) throw new FirebaseFirestoreException("Event not found", FirebaseFirestoreException.Code.NOT_FOUND);
 
-            DocumentSnapshot existingRsvpSnap = transaction.get(userRsvpRef);
-            DocumentSnapshot existingAttendeeSnap = transaction.get(eventAttendeeRef);
-            DocumentSnapshot blacklistSnap = transaction.get(blacklistRef);
+                    DocumentSnapshot existingRsvpSnap = transaction.get(userRsvpRef);
+                    DocumentSnapshot existingAttendeeSnap = transaction.get(eventAttendeeRef);
+                    DocumentSnapshot blacklistSnap = transaction.get(blacklistRef);
 
-            if (blacklistSnap.exists()) {
-                throw new FirebaseFirestoreException("You are not allowed to register for this event", FirebaseFirestoreException.Code.PERMISSION_DENIED);
-            }
+                    if (blacklistSnap.exists()) {
+                        throw new FirebaseFirestoreException("You are not allowed to register for this event", FirebaseFirestoreException.Code.PERMISSION_DENIED);
+                    }
 
-            boolean alreadyRegistered = existingAttendeeSnap.exists()
-                    || (existingRsvpSnap.exists()
-                    && !"cancelled".equalsIgnoreCase(existingRsvpSnap.getString("status")));
-            if (alreadyRegistered) {
-                throw new FirebaseFirestoreException("Already registered", FirebaseFirestoreException.Code.ABORTED);
-            }
+                    boolean alreadyRegistered = existingAttendeeSnap.exists()
+                            || (existingRsvpSnap.exists()
+                            && !"cancelled".equalsIgnoreCase(existingRsvpSnap.getString("status")));
+                    if (alreadyRegistered) {
+                        throw new FirebaseFirestoreException("Already registered", FirebaseFirestoreException.Code.ABORTED);
+                    }
 
-            Long cap = eventSnap.getLong("capacity");
-            long capacity = cap != null ? cap : 0L;
-            Long rsvp = eventSnap.getLong("rsvpCount");
-            long rsvpCount = rsvp != null ? rsvp : 0L;
+                    Long cap = eventSnap.getLong("capacity");
+                    long capacity = cap != null ? cap : 0L;
+                    Long rsvp = eventSnap.getLong("rsvpCount");
+                    long rsvpCount = rsvp != null ? rsvp : 0L;
 
-            if (rsvpCount >= capacity) throw new FirebaseFirestoreException("Event full", FirebaseFirestoreException.Code.ABORTED);
+                    if (rsvpCount >= capacity) throw new FirebaseFirestoreException("Event full", FirebaseFirestoreException.Code.ABORTED);
 
-            String qrToken = UUID.randomUUID().toString();
+                    String qrToken = UUID.randomUUID().toString();
 
-            Map<String, Object> rsvpData = new HashMap<>();
-            rsvpData.put("eventId", event.getEventId());
-            rsvpData.put("title", event.getTitle());
-            rsvpData.put("date", event.getDate());
-            rsvpData.put("status", "confirmed");
-            rsvpData.put("checkedIn", false);
-            rsvpData.put("qrCodeToken", qrToken);
-            rsvpData.put("addedToCalendar", false);
-            rsvpData.put("gcalEventId", "");
-            rsvpData.put("rsvpAt", Timestamp.now());
-            transaction.set(userRsvpRef, rsvpData);
+                    Map<String, Object> rsvpData = new HashMap<>();
+                    rsvpData.put("eventId", event.getEventId());
+                    rsvpData.put("title", event.getTitle());
+                    rsvpData.put("date", event.getDate());
+                    rsvpData.put("status", "confirmed");
+                    rsvpData.put("checkedIn", false);
+                    rsvpData.put("qrCodeToken", qrToken);
+                    rsvpData.put("addedToCalendar", false);
+                    rsvpData.put("gcalEventId", "");
+                    rsvpData.put("rsvpAt", Timestamp.now());
+                    transaction.set(userRsvpRef, rsvpData);
 
-            Map<String, Object> attendeeData = new HashMap<>();
-            attendeeData.put("userId", userId);
-            attendeeData.put("fullName", TextUtils.isEmpty(fullName) ? "Attendee" : fullName);
-            attendeeData.put("qrToken", qrToken);
-            attendeeData.put("checkedIn", false);
-            attendeeData.put("checkedInAt", null);
-            transaction.set(eventAttendeeRef, attendeeData);
+                    Map<String, Object> attendeeData = new HashMap<>();
+                    attendeeData.put("userId", userId);
+                    attendeeData.put("fullName", TextUtils.isEmpty(fullName) ? "Attendee" : fullName);
+                    attendeeData.put("qrToken", qrToken);
+                    attendeeData.put("checkedIn", false);
+                    attendeeData.put("checkedInAt", null);
+                    transaction.set(eventAttendeeRef, attendeeData);
 
-            transaction.update(eventRef, "rsvpCount", FieldValue.increment(1));
+                    transaction.update(eventRef, "rsvpCount", FieldValue.increment(1));
 
-            return null;
-        }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
-          .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+                    return null;
+                }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
     public void cancelRsvp(String userId, String eventId, Runnable onSuccess) {
@@ -876,12 +901,12 @@ public class EventRepository {
         report.put("reporterName", reporterName);
         report.put("isAnonymous", TextUtils.isEmpty(reporterId));
         report.put("description", description);
-        
+
         Map<String, Object> location = new HashMap<>();
         location.put("lat", lat);
         location.put("lng", lng);
         report.put("location", location);
-        
+
         report.put("status", "open");
         report.put("adminNote", null);
         report.put("submittedAt", Timestamp.now());
@@ -1096,7 +1121,7 @@ public class EventRepository {
         event.setCapacity(proposal.getCapacity());
         event.setRsvpCount(0L);
         event.setCheckedInCount(0L);
-        event.setThumbnailUrl("");
+        event.setThumbnailUrl(proposal.getThumbnailUrl() != null ? proposal.getThumbnailUrl() : "");
         event.setTrailerUrl(proposal.getTrailerUrl());
         event.setSponsors(proposal.getSponsors() != null ? proposal.getSponsors() : new ArrayList<>());
         event.setFoodStalls(proposal.getFoodStalls() != null ? proposal.getFoodStalls() : new ArrayList<>());
@@ -1107,6 +1132,7 @@ public class EventRepository {
         event.setRatingCount(0L);
         event.setStatus("active");
         event.setCreatedAt(proposal.getSubmittedAt() != null ? proposal.getSubmittedAt() : Timestamp.now());
+        event.setTicketPrice(proposal.getTicketPrice());
         return event;
     }
 
