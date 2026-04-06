@@ -225,6 +225,10 @@ public class EventRepository {
     }
 
     public void getEventById(String eventId, SingleEventCallback cb) {
+        if (TextUtils.isEmpty(eventId)) {
+            cb.onError(new Exception("Event ID is empty"));
+            return;
+        }
         db.collection(COLLECTION_EVENTS)
                 .document(eventId)
                 .get()
@@ -326,6 +330,11 @@ public class EventRepository {
             return;
         }
 
+        if (event.getCapacity() <= 0) {
+            if (cb != null) cb.onError(new Exception("Event full"));
+            return;
+        }
+
         DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(event.getEventId());
         DocumentReference userRsvpRef = db.collection(COLLECTION_USERS).document(userId)
                 .collection(SUBCOLLECTION_RSVPS).document(event.getEventId());
@@ -387,7 +396,12 @@ public class EventRepository {
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
-    public void cancelRsvp(String userId, String eventId, Runnable onSuccess) {
+    public void cancelRsvp(String userId, String eventId, ActionCallback cb) {
+        if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(eventId)) {
+            if (cb != null) cb.onError(new Exception("Invalid user or event ID"));
+            return;
+        }
+
         DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(eventId);
         DocumentReference userRsvpRef = db.collection(COLLECTION_USERS).document(userId).collection(SUBCOLLECTION_RSVPS).document(eventId);
         DocumentReference eventAttendeeRef = eventRef.collection(SUBCOLLECTION_ATTENDEES).document(userId);
@@ -419,7 +433,8 @@ public class EventRepository {
                 transaction.update(eventRef, "rsvpCount", Math.max(0L, safeCount - 1L));
             }
             return null;
-        }).addOnSuccessListener(unused -> runIfNotNull(onSuccess));
+        }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+          .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
     public void getRsvps(String userId, EventListCallback cb) {
@@ -548,6 +563,14 @@ public class EventRepository {
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
+    public void createEvent(Event event, ActionCallback cb) {
+        db.collection(COLLECTION_EVENTS)
+                .document(event.getEventId() == null ? UUID.randomUUID().toString() : event.getEventId())
+                .set(event)
+                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
     public void getProposalById(String proposalId, ProposalCallback cb) {
         db.collection(COLLECTION_EVENT_PROPOSALS)
                 .document(proposalId)
@@ -598,6 +621,10 @@ public class EventRepository {
     }
 
     public void getOrganizerEvents(String organizerId, EventListCallback cb) {
+        if (TextUtils.isEmpty(organizerId)) {
+            cb.onError(new Exception("Organizer ID is empty"));
+            return;
+        }
         db.collection(COLLECTION_EVENTS)
                 .whereEqualTo("organizerId", organizerId)
                 .whereEqualTo("status", "active")
@@ -675,6 +702,20 @@ public class EventRepository {
                 .addOnFailureListener(cb::onError);
     }
 
+    public void getPendingEvents(EventListCallback cb) {
+        db.collection(COLLECTION_EVENTS)
+                .whereEqualTo("status", "pending")
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    List<Event> events = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        events.add(documentToEvent(doc));
+                    }
+                    cb.onSuccess(events);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
     public void approveProposal(String proposalId, EventProposal proposal, ActionCallback cb) {
         WriteBatch batch = db.batch();
 
@@ -705,6 +746,13 @@ public class EventRepository {
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
+    public void approveEvent(String eventId, ActionCallback cb) {
+        db.collection(COLLECTION_EVENTS).document(eventId)
+                .update("status", "active")
+                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
     public void rejectProposal(String proposalId, String note, ActionCallback cb) {
         rejectProposal(proposalId, null, note, cb);
     }
@@ -732,6 +780,13 @@ public class EventRepository {
         }
 
         batch.commit()
+                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
+    public void rejectEvent(String eventId, ActionCallback cb) {
+        db.collection(COLLECTION_EVENTS).document(eventId)
+                .update("status", "rejected")
                 .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }

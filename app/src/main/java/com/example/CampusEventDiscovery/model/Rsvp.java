@@ -24,6 +24,7 @@ public class Rsvp {
     private boolean checkedIn;
     private boolean qrExpired;
     private Timestamp rsvpAt;
+    private Timestamp checkedInAt;
 
     /**
      * Required empty constructor for Firestore deserialization.
@@ -33,19 +34,6 @@ public class Rsvp {
 
     /**
      * Full constructor for creating Rsvp objects.
-     *
-     * @param rsvpId        Helper field for Firestore document ID.
-     * @param userId        User ID of the attendee.
-     * @param eventId       Event ID.
-     * @param title         Event title.
-     * @param date          Event date.
-     * @param status        RSVP status (e.g., "CONFIRMED").
-     * @param paymentStatus Payment status (e.g., "SUCCESS").
-     * @param transactionId Transaction ID from the payment.
-     * @param qrPayload     JSON payload for QR code.
-     * @param checkedIn     Whether the attendee has been checked in.
-     * @param qrExpired     Whether the QR code has been used and expired.
-     * @param rsvpAt        Timestamp of RSVP creation.
      */
     public Rsvp(String rsvpId, String userId, String eventId, String title, Timestamp date,
                 String status, String paymentStatus, String transactionId, String qrPayload,
@@ -95,21 +83,22 @@ public class Rsvp {
     public boolean isCheckedIn() { return checkedIn; }
     public void setCheckedIn(boolean checkedIn) { this.checkedIn = checkedIn; }
 
-    /**
-     * Returns whether this QR code has been used and is no longer valid.
-     *
-     * @return true if the QR code has expired after a successful check-in.
-     */
     public boolean isQrExpired() { return qrExpired; }
-
-    /**
-     * Marks the QR code as expired. Called after organizer scans and
-     * confirms attendance, making the ticket one-time use only.
-     *
-     * @param qrExpired true to invalidate this QR code.
-     */
     public void setQrExpired(boolean qrExpired) { this.qrExpired = qrExpired; }
 
     public Timestamp getRsvpAt() { return rsvpAt; }
     public void setRsvpAt(Timestamp rsvpAt) { this.rsvpAt = rsvpAt; }
+
+    public Timestamp getCheckedInAt() { return checkedInAt; }
+    public void setCheckedInAt(Timestamp checkedInAt) { this.checkedInAt = checkedInAt; }
+
+    @Exclude
+    public long getCheckInTimestamp() {
+        return checkedInAt != null ? checkedInAt.toDate().getTime() : 0L;
+    }
+
+    @Exclude
+    public void setCheckInTimestamp(long timestamp) {
+        this.checkedInAt = new Timestamp(new java.util.Date(timestamp));
+    }
 }

@@ -7,7 +7,7 @@ public class SignupValidator {
 
     public static String validate(String name, String email, String password,
                                   String confirmPassword, String role) {
-        if (TextUtils.isEmpty(name))
+        if (TextUtils.isEmpty(name) || name.trim().isEmpty())
             return "Name is required";
         if (TextUtils.isEmpty(email))
             return "Email is required";
@@ -31,6 +31,8 @@ public class SignupValidator {
             return "Passwords do not match";
         if (TextUtils.isEmpty(role))
             return "Please select a role";
+        if (!role.equals("attendee") && !role.equals("organizer"))
+            return "Invalid role selected";
         return null;
     }
 }

@@ -35,7 +35,6 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.example.CampusEventDiscovery.ui.event.CheckoutActivity;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -178,8 +177,6 @@ public class MyEventsFragment extends Fragment {
                     }
                 }
         );
-        adapter2 = createAdapter(list2, ids2, false);
-        adapter3 = createAdapter(list3, ids3, false);
         adapter2 = createAdapter(list2, ids2, false);
         adapter3 = createAdapter(list3, ids3, false);
 
@@ -445,9 +442,17 @@ public class MyEventsFragment extends Fragment {
                 .setTitle(getString(R.string.cancel_rsvp))
                 .setMessage(getString(R.string.cancel_rsvp_message))
                 .setPositiveButton(getString(R.string.confirm), (dialog, which) -> {
-                    repository.cancelRsvp(currentUserId, event.getEventId(), () -> {
-                        loadRsvps();
-                        Toast.makeText(requireContext(), getString(R.string.rsvp_cancelled), Toast.LENGTH_SHORT).show();
+                    repository.cancelRsvp(currentUserId, event.getEventId(), new EventRepository.ActionCallback() {
+                        @Override
+                        public void onSuccess() {
+                            loadRsvps();
+                            Toast.makeText(requireContext(), getString(R.string.rsvp_cancelled), Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Toast.makeText(requireContext(), "Failed to cancel RSVP", Toast.LENGTH_SHORT).show();
+                        }
                     });
                 })
                 .setNegativeButton(getString(R.string.cancel), null)
