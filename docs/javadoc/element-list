@@ -1,0 +1,15 @@
+com.example.CampusEventDiscovery
+com.example.CampusEventDiscovery.adapter
+com.example.CampusEventDiscovery.callback
+com.example.CampusEventDiscovery.model
+com.example.CampusEventDiscovery.repository
+com.example.CampusEventDiscovery.ui.admin
+com.example.CampusEventDiscovery.ui.calendar
+com.example.CampusEventDiscovery.ui.event
+com.example.CampusEventDiscovery.ui.favourites
+com.example.CampusEventDiscovery.ui.home
+com.example.CampusEventDiscovery.ui.myevents
+com.example.CampusEventDiscovery.ui.organizer
+com.example.CampusEventDiscovery.ui.profile
+com.example.CampusEventDiscovery.ui.search
+com.example.CampusEventDiscovery.util
