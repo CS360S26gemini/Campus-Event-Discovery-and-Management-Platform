@@ -3,6 +3,7 @@ package com.example.CampusEventDiscovery.ui.organizer;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -29,6 +30,7 @@ import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.EventValidator;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
@@ -57,7 +59,9 @@ public class CreateEventActivity extends AppCompatActivity {
     private ImageView ivEventThumbnail;
     private MaterialButton btnSelectImage;
     private TextView tvSelectedDate;
+    private TextView tvSelectedTime;
     private MaterialButton btnPickDate;
+    private MaterialButton btnPickTime;
     private AutoCompleteTextView actvCategory;
     private EditText etVenue;
     private EditText etDescription;
@@ -75,6 +79,8 @@ public class CreateEventActivity extends AppCompatActivity {
     private Calendar selectedDateCalendar;
     private Timestamp selectedTimestamp;
     private Uri selectedImageUri;
+    private boolean hasSelectedDate;
+    private boolean hasSelectedTime;
 
     private String currentUserId;
     private String currentOrganizerName = "";
@@ -105,6 +111,8 @@ public class CreateEventActivity extends AppCompatActivity {
 
         repository = new EventRepository();
         selectedDateCalendar = Calendar.getInstance();
+        selectedDateCalendar.set(Calendar.SECOND, 0);
+        selectedDateCalendar.set(Calendar.MILLISECOND, 0);
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         currentUserId = currentUser != null ? currentUser.getUid() : DevSessionManager.getEffectiveUserId(this);
@@ -114,6 +122,7 @@ public class CreateEventActivity extends AppCompatActivity {
         setupImagePicker();
         setupCategoryDropdown();
         setupDatePicker();
+        setupTimePicker();
         preloadOrganizerName();
         setupSubmitButton();
     }
@@ -124,7 +133,9 @@ public class CreateEventActivity extends AppCompatActivity {
         ivEventThumbnail = findViewById(R.id.ivEventThumbnail);
         btnSelectImage = findViewById(R.id.btnSelectImage);
         tvSelectedDate = findViewById(R.id.tvSelectedDate);
+        tvSelectedTime = findViewById(R.id.tvSelectedTime);
         btnPickDate = findViewById(R.id.btnPickDate);
+        btnPickTime = findViewById(R.id.btnPickTime);
         actvCategory = findViewById(R.id.actvCategory);
         etVenue = findViewById(R.id.etVenue);
         etDescription = findViewById(R.id.etDescription);
@@ -182,6 +193,12 @@ public class CreateEventActivity extends AppCompatActivity {
                 categories
         );
         actvCategory.setAdapter(adapter);
+        actvCategory.setOnClickListener(v -> actvCategory.showDropDown());
+        actvCategory.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                actvCategory.showDropDown();
+            }
+        });
     }
 
     private void setupDatePicker() {
@@ -196,23 +213,60 @@ public class CreateEventActivity extends AppCompatActivity {
                         selectedDateCalendar.set(Calendar.YEAR, selectedYear);
                         selectedDateCalendar.set(Calendar.MONTH, selectedMonth);
                         selectedDateCalendar.set(Calendar.DAY_OF_MONTH, selectedDay);
-                        selectedDateCalendar.set(Calendar.HOUR_OF_DAY, 18);
-                        selectedDateCalendar.set(Calendar.MINUTE, 0);
                         selectedDateCalendar.set(Calendar.SECOND, 0);
-
-                        selectedTimestamp = new Timestamp(selectedDateCalendar.getTime());
+                        selectedDateCalendar.set(Calendar.MILLISECOND, 0);
+                        hasSelectedDate = true;
 
                         SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault());
                         tvSelectedDate.setText(getString(R.string.selected_date_label, sdf.format(selectedDateCalendar.getTime())));
                         tvSelectedDate.setTextColor(getColor(R.color.colorOnBackground));
+                        refreshSelectedTimestamp();
                     },
                     year,
                     month,
                     day
             );
 
+            dialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1_000L);
             dialog.show();
         });
+    }
+
+    private void setupTimePicker() {
+        btnPickTime.setOnClickListener(v -> {
+            Calendar source = hasSelectedTime ? selectedDateCalendar : Calendar.getInstance();
+            int hour = source.get(Calendar.HOUR_OF_DAY);
+            int minute = hasSelectedTime ? source.get(Calendar.MINUTE) : 0;
+
+            TimePickerDialog dialog = new TimePickerDialog(
+                    CreateEventActivity.this,
+                    (view, selectedHour, selectedMinute) -> {
+                        selectedDateCalendar.set(Calendar.HOUR_OF_DAY, selectedHour);
+                        selectedDateCalendar.set(Calendar.MINUTE, selectedMinute);
+                        selectedDateCalendar.set(Calendar.SECOND, 0);
+                        selectedDateCalendar.set(Calendar.MILLISECOND, 0);
+                        hasSelectedTime = true;
+
+                        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+                        tvSelectedTime.setText(getString(R.string.selected_time_label, sdf.format(selectedDateCalendar.getTime())));
+                        tvSelectedTime.setTextColor(getColor(R.color.colorOnBackground));
+                        refreshSelectedTimestamp();
+                    },
+                    hour,
+                    minute,
+                    false
+            );
+
+            dialog.show();
+        });
+    }
+
+    private void refreshSelectedTimestamp() {
+        if (hasSelectedDate && hasSelectedTime) {
+            selectedTimestamp = new Timestamp(selectedDateCalendar.getTime());
+        } else {
+            selectedTimestamp = null;
+        }
     }
 
     private void preloadOrganizerName() {
@@ -266,13 +320,8 @@ public class CreateEventActivity extends AppCompatActivity {
         String foodStallsText = etFoodStalls.getText().toString().trim();
         String trailerUrl = etTrailerUrl.getText().toString().trim();
 
-        if (TextUtils.isEmpty(title)
-                || TextUtils.isEmpty(category)
-                || TextUtils.isEmpty(venue)
-                || TextUtils.isEmpty(description)
-                || TextUtils.isEmpty(capacityText)
-                || selectedTimestamp == null) {
-            Toast.makeText(this, getString(R.string.please_fill_all_fields), Toast.LENGTH_SHORT).show();
+        if (!hasSelectedDate || !hasSelectedTime || selectedTimestamp == null) {
+            Toast.makeText(this, getString(R.string.date_and_time_required), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -293,6 +342,34 @@ public class CreateEventActivity extends AppCompatActivity {
             return;
         }
 
+        double ticketPrice = 0.0;
+        if (!TextUtils.isEmpty(ticketPriceText)) {
+            try {
+                ticketPrice = Double.parseDouble(ticketPriceText);
+                if (ticketPrice < 0.0) {
+                    Toast.makeText(this, getString(R.string.invalid_ticket_price), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, getString(R.string.invalid_ticket_price), Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        String validationError = EventValidator.validate(
+                title,
+                description,
+                venue,
+                selectedTimestamp.toDate().getTime(),
+                capacity,
+                category,
+                currentUserId
+        );
+        if (validationError != null) {
+            Toast.makeText(this, validationError, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         List<String> tags = parseCommaSeparated(tagsText, true);
         String normalizedCategory = category.toLowerCase(Locale.getDefault());
         if (!tags.contains(normalizedCategory)) {
@@ -307,10 +384,6 @@ public class CreateEventActivity extends AppCompatActivity {
         proposal.setDate(selectedTimestamp);
         proposal.setLocation(venue);
         proposal.setCapacity(capacity);
-        double ticketPrice = 0.0;
-        if (!TextUtils.isEmpty(ticketPriceText)) {
-            try { ticketPrice = Double.parseDouble(ticketPriceText); } catch (NumberFormatException ignored) {}
-        }
         proposal.setTicketPrice(ticketPrice);
         proposal.setSponsors(parseCommaSeparated(sponsorsText, false));
         proposal.setFoodStalls(parseCommaSeparated(foodStallsText, false));

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -24,6 +25,7 @@ import com.example.CampusEventDiscovery.util.MockPaymentService;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -52,7 +54,9 @@ public class CheckoutActivity extends AppCompatActivity {
     private TextView tvCheckoutSubtitle;
     private EditText etFullName;
     private EditText etLastName;
+    private LinearLayout layoutPaymentSection;
     private RadioGroup radioGroupPayment;
+    private TextInputLayout tilCardNumber;
     private EditText etCardNumber;
     private TextView tvCheckoutTotal;
     private ProgressBar progressBarCheckout;
@@ -94,7 +98,9 @@ public class CheckoutActivity extends AppCompatActivity {
         tvCheckoutSubtitle   = findViewById(R.id.tvCheckoutSubtitle);
         etFullName           = findViewById(R.id.etFirstName);
         etLastName           = findViewById(R.id.etLastName);
+        layoutPaymentSection = findViewById(R.id.layoutPaymentSection);
         radioGroupPayment    = findViewById(R.id.radioGroupPayment);
+        tilCardNumber        = findViewById(R.id.tilCardNumber);
         etCardNumber         = findViewById(R.id.etCardNumber);
         tvCheckoutTotal      = findViewById(R.id.tvCheckoutTotal);
         progressBarCheckout  = findViewById(R.id.progressBarCheckout);
@@ -124,12 +130,17 @@ public class CheckoutActivity extends AppCompatActivity {
         tvCheckoutEventTitle.setText(eventTitle != null ? eventTitle : getString(R.string.app_name));
         tvCheckoutSubtitle.setText(getString(R.string.secure_your_spot_subtitle));
 
-        if (totalPrice == 0.0) {
+        if (isFreeEvent()) {
             tvCheckoutTotal.setText(getString(R.string.checkout_total_free));
             btnPay.setText(getString(R.string.register_free));
+            layoutPaymentSection.setVisibility(View.GONE);
+            radioGroupPayment.clearCheck();
+            etCardNumber.setText("");
+            tilCardNumber.setVisibility(View.GONE);
         } else {
             tvCheckoutTotal.setText(getString(R.string.checkout_total_pkr, totalPrice));
             btnPay.setText(getString(R.string.pay_now));
+            layoutPaymentSection.setVisibility(View.VISIBLE);
         }
     }
 
@@ -139,11 +150,15 @@ public class CheckoutActivity extends AppCompatActivity {
      * JazzCash and Apple Pay do not.
      */
     private void setupPaymentMethodToggle() {
+        if (isFreeEvent()) {
+            return;
+        }
+
         radioGroupPayment.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rbCreditCard || checkedId == R.id.rbDebitCard) {
-                etCardNumber.setVisibility(View.VISIBLE);
+                tilCardNumber.setVisibility(View.VISIBLE);
             } else {
-                etCardNumber.setVisibility(View.GONE);
+                tilCardNumber.setVisibility(View.GONE);
                 etCardNumber.setText("");
             }
         });
@@ -211,6 +226,10 @@ public class CheckoutActivity extends AppCompatActivity {
             return false;
         }
 
+        if (isFreeEvent()) {
+            return true;
+        }
+
         if (radioGroupPayment.getCheckedRadioButtonId() == -1) {
             Toast.makeText(this, getString(R.string.please_select_payment_method), Toast.LENGTH_SHORT).show();
             return false;
@@ -226,6 +245,10 @@ public class CheckoutActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    private boolean isFreeEvent() {
+        return totalPrice <= 0.0;
     }
 
     /**

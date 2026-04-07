@@ -75,6 +75,12 @@
     <string name="event_calendar">Event Calendar</string>
     <string name="upcoming_events">Upcoming Events</string>
     <string name="add_to_google_calendar">Add to Google Calendar</string>
+    <string name="calendar_all_events_legend">All events</string>
+    <string name="calendar_registered_events_legend">Registered events</string>
+    <string name="calendar_approved_events_legend">My approved events</string>
+    <string name="calendar_filter_all">All events</string>
+    <string name="calendar_filter_registered">Registered only</string>
+    <string name="calendar_filter_approved">My approved events</string>
 
     <string name="create_event">Create Event</string>
     <string name="approved_events">Approved Events</string>
@@ -97,6 +103,22 @@
     <string name="manage_events">Manage Events</string>
     <string name="view_event_calendar">View Event Calendar</string>
     <string name="account_settings">Account Settings</string>
+    <string name="account_name_label">Account Name</string>
+    <string name="campus_label">Campus</string>
+    <string name="campus_hint">Select campus</string>
+    <string name="campus_required">Please select a campus.</string>
+    <string name="current_password_label">Current Password</string>
+    <string name="new_password_label">New Password</string>
+    <string name="confirm_new_password_label">Confirm New Password</string>
+    <string name="current_password_hint">Enter current password to confirm email or password changes</string>
+    <string name="new_password_hint">Leave blank to keep your current password</string>
+    <string name="confirm_new_password_hint">Repeat the new password</string>
+    <string name="current_password_required_for_auth_updates">Enter your current password to change email or password.</string>
+    <string name="account_updated">Account updated.</string>
+    <string name="account_update_failed">Update failed: %1$s</string>
+    <string name="profile_updated_but_auth_failed">Profile details were saved, but the email/password update failed: %1$s</string>
+    <string name="reauthentication_failed">Could not verify your current password: %1$s</string>
+    <string name="unknown_error">Unknown error</string>
     <string name="logout">Logout</string>
 
     <string name="send_sos_title">Send SOS?</string>
@@ -185,6 +207,7 @@
     <string name="selected_day_events">Selected Day Events</string>
     <string name="calendar_not_available">Calendar screen unavailable right now</string>
     <string name="no_rsvpd_events_for_day">You have no RSVP\'d events for this day.</string>
+    <string name="no_approved_events_for_day">You have no approved events for this day.</string>
 
     <string name="organizer_welcome_back">Welcome Back,</string>
     <string name="approved_events_label">Approved Events</string>
@@ -202,20 +225,28 @@
     <string name="create_event_header">Create Event</string>
     <string name="event_title_hint">Event Title</string>
     <string name="event_date_hint">Event Date</string>
+    <string name="event_time">Event Time</string>
+    <string name="event_time_hint">Event Time</string>
     <string name="event_category_hint">Event Category</string>
     <string name="venue_hint">Venue</string>
     <string name="description_hint">Description</string>
     <string name="capacity_hint">Capacity</string>
     <string name="tags_label">Tags</string>
     <string name="tags_hint">concert, networking, sports</string>
-    <string name="sponsors_label">Sponsors</string>
+    <string name="event_image_label">Event Image</string>
+    <string name="sponsors_label">Sponsors (Optional)</string>
     <string name="sponsors_hint">Brand A, Student Council</string>
-    <string name="food_stalls_label">Food Stalls</string>
+    <string name="food_stalls_label">Food Stalls (Optional)</string>
     <string name="food_stalls_hint">Coffee Cart, Burger Truck</string>
     <string name="trailer_url_hint">Trailer URL (optional)</string>
     <string name="pick_date">Pick Date</string>
+    <string name="pick_time">Pick Time</string>
     <string name="selected_date_label">%1$s</string>
+    <string name="selected_time_label">%1$s</string>
+    <string name="date_and_time_required">Please select both an event date and time.</string>
     <string name="invalid_capacity">Please enter a valid capacity</string>
+    <string name="invalid_ticket_price">Please enter a valid ticket price.</string>
+    <string name="ticket_price_optional_label">Ticket Price (PKR) - leave 0 for free</string>
     <string name="submit_failed">Failed to submit proposal.</string>
     <string name="ok">OK</string>
 
@@ -255,7 +286,8 @@
     <string name="full_name_label">Full Name</string>
     <string name="confirm_password_label">Repeat password</string>
     <string name="interests_label">Interests</string>
-    <string name="interests_hint">Music, Sports, Career</string>
+    <string name="interests_hint">Select one or more interests</string>
+    <string name="interests_dropdown_hint">Type to choose interests</string>
     <string name="user_type_label">Type of User</string>
     <string name="attendee">Attendee</string>
     <string name="organizer">Organizer</string>

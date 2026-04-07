@@ -1081,7 +1081,7 @@ public class EventRepository {
                                   String university,
                                   String location,
                                   ActionCallback cb) {
-        updateUserProfile(userId, fullName, university, location, null, cb);
+        updateUserProfile(userId, fullName, null, university, location, null, cb);
     }
 
     public void updateUserProfile(String userId,
@@ -1090,8 +1090,21 @@ public class EventRepository {
                                   String location,
                                   List<String> interests,
                                   ActionCallback cb) {
+        updateUserProfile(userId, fullName, null, university, location, interests, cb);
+    }
+
+    public void updateUserProfile(String userId,
+                                  String fullName,
+                                  String email,
+                                  String university,
+                                  String location,
+                                  List<String> interests,
+                                  ActionCallback cb) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("fullName", fullName);
+        if (email != null) {
+            updates.put("email", email);
+        }
         updates.put("university", university);
         updates.put("location", location);
         if (interests != null) {

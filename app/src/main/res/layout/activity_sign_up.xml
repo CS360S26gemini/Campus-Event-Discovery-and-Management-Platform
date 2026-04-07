@@ -162,6 +162,37 @@
             app:layout_constraintTop_toBottomOf="@id/etRepeatPassword" />
 
         <TextView
+            android:id="@+id/lblCampus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/campus_label"
+            android:textColor="@color/colorOnBackground"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/divider4" />
+
+        <AutoCompleteTextView
+            android:id="@+id/actvCampus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:hint="@string/campus_hint"
+            android:inputType="none"
+            android:paddingVertical="12dp"
+            android:textColor="@color/colorOnBackground"
+            android:textColorHint="@color/colorSecondary"
+            app:layout_constraintTop_toBottomOf="@id/lblCampus" />
+
+        <View
+            android:id="@+id/divider5"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/colorSecondary"
+            app:layout_constraintTop_toBottomOf="@id/actvCampus" />
+
+        <TextView
             android:id="@+id/lblInterests"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -170,15 +201,15 @@
             android:textColor="@color/colorOnBackground"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider4" />
+            app:layout_constraintTop_toBottomOf="@id/divider5" />
 
-        <EditText
+        <MultiAutoCompleteTextView
             android:id="@+id/etInterests"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:background="@null"
-            android:hint="@string/interests_hint"
+            android:hint="@string/interests_dropdown_hint"
             android:inputType="text"
             android:paddingVertical="12dp"
             android:textColor="@color/colorOnBackground"
@@ -186,7 +217,7 @@
             app:layout_constraintTop_toBottomOf="@id/lblInterests" />
 
         <View
-            android:id="@+id/divider5"
+            android:id="@+id/divider6"
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@color/colorSecondary"
@@ -202,7 +233,7 @@
             android:textColor="@color/colorOnBackground"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/divider5" />
+            app:layout_constraintTop_toBottomOf="@id/divider6" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggleUserType"
