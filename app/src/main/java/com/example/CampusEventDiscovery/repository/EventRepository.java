@@ -330,10 +330,7 @@ public class EventRepository {
             return;
         }
 
-        if (event.getCapacity() <= 0) {
-            if (cb != null) cb.onError(new Exception("Event full"));
-            return;
-        }
+        // Removed local capacity check to rely on Firestore source of truth inside transaction
 
         DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(event.getEventId());
         DocumentReference userRsvpRef = db.collection(COLLECTION_USERS).document(userId)

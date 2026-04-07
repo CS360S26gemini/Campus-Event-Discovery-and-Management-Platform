@@ -29,7 +29,7 @@ public class EventApprovalActivity extends AppCompatActivity {
 
     private ImageView ivBanner;
     private ImageButton btnBack;
-    private TextView tvTitle, tvDateTime, tvVenue, tvDescription;
+    private TextView tvTitle, tvDateTime, tvVenue, tvDescription, tvPriceInfo;
     private com.google.android.material.button.MaterialButton btnApprove, btnReject;
 
     private String proposalId;
@@ -56,6 +56,7 @@ public class EventApprovalActivity extends AppCompatActivity {
         tvDateTime = findViewById(R.id.tvDateTime);
         tvVenue = findViewById(R.id.tvVenue);
         tvDescription = findViewById(R.id.tvDescription);
+        tvPriceInfo = findViewById(R.id.tvPriceInfo);
         btnApprove = findViewById(R.id.btnApprove);
         btnReject = findViewById(R.id.btnReject);
     }
@@ -100,6 +101,15 @@ public class EventApprovalActivity extends AppCompatActivity {
                 tvDateTime.setText(formatDateTime(currentProposal.getDate()));
                 tvVenue.setText(currentProposal.getLocation());
                 tvDescription.setText(currentProposal.getDescription());
+                
+                if (tvPriceInfo != null) {
+                    if (currentProposal.getTicketPrice() == 0) {
+                        tvPriceInfo.setText(R.string.price_free);
+                    } else {
+                        tvPriceInfo.setText(String.format(Locale.getDefault(), "PKR %.2f", currentProposal.getTicketPrice()));
+                    }
+                }
+
                 ivBanner.setImageResource(R.drawable.bg_placeholder_image);
             }
 
