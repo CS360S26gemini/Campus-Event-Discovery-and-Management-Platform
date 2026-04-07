@@ -1770,4 +1770,4 @@ Place screenshots in `docs/images/` and reference them here as:
 
 ---
 
-*Last updated: April 7, 2026 — Branch: `nausher-final-fix`*
+*Last updated: April 7, 2026 — Branch: `main`*
