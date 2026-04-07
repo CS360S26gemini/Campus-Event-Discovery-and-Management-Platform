@@ -1,0 +1,384 @@
+@startuml CampusEventDiscovery_ClassDiagram
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam packageFontSize 13
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBorderColor #888888
+skinparam BackgroundColor #FFFFFF
+skinparam ClassBackgroundColor #F8F8F8
+
+' ─────────────────────────────────────────
+' PACKAGE: model
+' ─────────────────────────────────────────
+package "model" #EAF4FB {
+
+    class User {
+        - fullName : String
+        - email : String
+        - role : String
+        - university : String
+        - location : String
+        - profilePicUrl : String
+        - interests : List<String>
+        - darkMode : boolean
+        - fcmToken : String
+        - googleCalendarToken : Map<String,Object>
+        - createdAt : Timestamp
+        + User()
+        + User(fullName, email, role, university, location, profilePicUrl, interests, darkMode)
+        + getFullName() : String
+        + getEmail() : String
+        + getRole() : String
+        + setRole(role : String) : void
+    }
+
+    class Event {
+        - eventId : String  <<@Exclude>>
+        - title : String
+        - description : String
+        - category : String
+        - tags : List<String>
+        - date : Timestamp
+        - endTime : Timestamp
+        - location : String
+        - capacity : long
+        - rsvpCount : long
+        - checkedInCount : long
+        - thumbnailUrl : String
+        - trailerUrl : String
+        - sponsors : List<String>
+        - foodStalls : List<String>
+        - organizerId : String
+        - organizerName : String
+        - verified : boolean
+        - averageRating : double
+        - ratingCount : long
+        - status : String
+        - ticketPrice : double
+        - createdAt : Timestamp
+        + Event()
+        + getEventId() : String
+        + setEventId(id : String) : void
+        + getTitle() : String
+        + getStatus() : String
+    }
+
+    class Rsvp {
+        - rsvpId : String  <<@Exclude>>
+        - userId : String
+        - eventId : String
+        - title : String
+        - date : Timestamp
+        - status : String
+        - paymentStatus : String
+        - transactionId : String
+        - qrPayload : String
+        - checkedIn : boolean
+        - qrExpired : boolean
+        - rsvpAt : Timestamp
+        - checkedInAt : Timestamp
+        + Rsvp()
+        + Rsvp(rsvpId, userId, eventId, title, date, status, paymentStatus, transactionId, qrPayload, checkedIn, qrExpired, rsvpAt)
+        + getQrPayload() : String
+        + isCheckedIn() : boolean
+        + isQrExpired() : boolean
+        + setCheckedIn(v : boolean) : void
+        + setQrExpired(v : boolean) : void
+    }
+
+    class Payment {
+        - paymentId : String  <<@Exclude>>
+        - userId : String
+        - eventId : String
+        - amount : double
+        - status : String
+        - transactionId : String
+        - timestamp : long
+        + Payment()
+        + Payment(paymentId, userId, eventId, amount, status, transactionId, timestamp)
+        + getTransactionId() : String
+        + getStatus() : String
+    }
+
+    class EventProposal {
+        - proposalId : String  <<@Exclude>>
+        - title : String
+        - description : String
+        - category : String
+        - tags : List<String>
+        - date : Timestamp
+        - location : String
+        - capacity : long
+        - sponsors : List<String>
+        - foodStalls : List<String>
+        - trailerUrl : String
+        - thumbnailUrl : String
+        - organizerId : String
+        - organizerName : String
+        - status : String
+        - adminNote : String
+        - submittedAt : Timestamp
+        - reviewedAt : Timestamp
+        - ticketPrice : double
+        + EventProposal()
+        + getStatus() : String
+        + setStatus(status : String) : void
+        + setAdminNote(note : String) : void
+    }
+
+    class EventAttendee {
+        - userId : String
+        - fullName : String
+        - qrToken : String
+        - checkedIn : boolean
+        - checkedInAt : Timestamp
+        + EventAttendee()
+        + getQrToken() : String
+        + isCheckedIn() : boolean
+        + setCheckedIn(v : boolean) : void
+        + setCheckedInAt(t : Timestamp) : void
+    }
+
+    class Notification {
+        - notificationId : String  <<@Exclude>>
+        - title : String
+        - body : String
+        - type : String
+        - eventId : String
+        - isRead : boolean
+        - createdAt : Timestamp
+        + Notification()
+        + Notification(title, body, type, eventId)
+        + isRead() : boolean
+        + setRead(read : boolean) : void
+    }
+
+    class Memory {
+        - eventId : String
+        - eventTitle : String
+        - photoUrls : List<String>
+        - attendedAt : Timestamp
+        - rating : int
+        + Memory()
+        + Memory(eventId, eventTitle, photoUrls, attendedAt, rating)
+        + getRating() : int
+    }
+}
+
+' ─────────────────────────────────────────
+' PACKAGE: callback
+' ─────────────────────────────────────────
+package "callback" #EBF5EB {
+
+    interface AuthCallback {
+        + onSuccess(user : User) : void
+        + onFailure(errorMessage : String) : void
+    }
+
+    interface FirestoreCallback {
+        + onSuccess(result : Object) : void
+        + onFailure(e : Exception) : void
+    }
+}
+
+' ─────────────────────────────────────────
+' PACKAGE: repository
+' ─────────────────────────────────────────
+package "repository" #FFF8E7 {
+
+    interface AuthRepository {
+        + signup(name, email, password, role : String, callback : AuthCallback) : void
+        + login(email, password : String, callback : AuthCallback) : void
+        + logout() : void
+        + isLoggedIn() : boolean
+    }
+
+    class FirebaseAuthRepository {
+        - auth : FirebaseAuth
+        - db : FirebaseFirestore
+        + FirebaseAuthRepository()
+        + signup(name, email, password, role : String, callback : AuthCallback) : void
+        + login(email, password : String, callback : AuthCallback) : void
+        + logout() : void
+        + isLoggedIn() : boolean
+    }
+
+    class MockAuthRepository {
+        - users : Map<String, User>
+        - currentUser : User
+        + MockAuthRepository()
+        + signup(name, email, password, role : String, callback : AuthCallback) : void
+        + login(email, password : String, callback : AuthCallback) : void
+        + logout() : void
+        + isLoggedIn() : boolean
+    }
+
+    class PaymentRepository {
+        - db : FirebaseFirestore
+        + savePayment(payment : Payment, callback : FirestoreCallback) : void
+        + getPaymentByTransactionId(txnId : String, callback : FirestoreCallback) : void
+    }
+
+    class EventRepository {
+        - db : FirebaseFirestore
+        + getUpcomingEvents(...) : void
+        + getEventById(eventId : String, ...) : void
+        + createEvent(event : Event, ...) : void
+        + getRsvpsForUser(userId : String, ...) : void
+        + createRsvp(rsvp : Rsvp, ...) : void
+        + checkInAttendee(eventId, userId : String, ...) : void
+        + saveEventProposal(proposal : EventProposal, ...) : void
+        + getPersonalisedEvents(interests : List<String>, ...) : void
+    }
+}
+
+' ─────────────────────────────────────────
+' PACKAGE: util
+' ─────────────────────────────────────────
+package "util" #F5EEFF {
+
+    class QRCodeHelper {
+        + {static} generateQRCode(content : String, widthPx : int, heightPx : int) : Bitmap
+    }
+
+    class SignupValidator {
+        + {static} validate(name, email, password, confirmPassword, role : String) : String
+    }
+
+    class EventValidator {
+        - {static} VALID_CATEGORIES : List<String>
+        + {static} validate(title, description, location : String, timestamp : long, capacity : long, category, organizerId : String) : String
+    }
+
+    class DevSessionManager {
+        - {static} PREFS_NAME : String
+        - {static} KEY_BYPASS_ENABLED : String
+        - {static} KEY_ROLE : String
+        + {static} enableBypass(context : Context, role : String) : void
+        + {static} clearBypass(context : Context) : void
+        + {static} isBypassEnabled(context : Context) : boolean
+        + {static} shouldUseBypass(context : Context) : boolean
+        + {static} getBypassRole(context : Context) : String
+        + {static} getEffectiveUserId(context : Context) : String
+    }
+
+    class MockPaymentService {
+        + {static} processPayment(userId, eventId : String, amount : double) : Payment
+    }
+
+    class UserRoles {
+        + {static} ATTENDEE : String
+        + {static} ORGANIZER : String
+        + {static} ADMIN : String
+        + {static} sanitize(role : String) : String
+        + {static} isAttendee(role : String) : boolean
+        + {static} isOrganizer(role : String) : boolean
+        + {static} isAdmin(role : String) : boolean
+    }
+
+    class ThemeManager {
+        + {static} applyTheme(context : Context) : void
+    }
+}
+
+' ─────────────────────────────────────────
+' PACKAGE: ui (key screens only)
+' ─────────────────────────────────────────
+package "ui" #FEF0F0 {
+
+    class SignInActivity {
+        - authRepository : AuthRepository
+        + onCreate(savedInstanceState : Bundle) : void
+        - handleLogin(email, password : String) : void
+        - checkAdminBypass(email, password : String) : boolean
+    }
+
+    class SignUpActivity {
+        - authRepository : AuthRepository
+        + onCreate(savedInstanceState : Bundle) : void
+        - handleSignup() : void
+    }
+
+    class CheckoutActivity {
+        - eventRepository : EventRepository
+        - paymentRepository : PaymentRepository
+        + onCreate(savedInstanceState : Bundle) : void
+        - checkDuplicateRsvp(userId, eventId : String) : void
+        - processPayment(method : String) : void
+    }
+
+    class TicketActivity {
+        + onCreate(savedInstanceState : Bundle) : void
+        - displayQRCode(qrPayload : String) : void
+    }
+
+    class WhoIsComingActivity {
+        - eventRepository : EventRepository
+        + onCreate(savedInstanceState : Bundle) : void
+        - validateAndCheckIn(token : String) : void
+    }
+
+    class ScannerActivity {
+        + onCreate(savedInstanceState : Bundle) : void
+        - onScanResult(token : String) : void
+    }
+}
+
+' ─────────────────────────────────────────
+' RELATIONSHIPS
+' ─────────────────────────────────────────
+
+' Inheritance / Implementation
+FirebaseAuthRepository ..|> AuthRepository
+MockAuthRepository ..|> AuthRepository
+
+' Repository uses callbacks
+FirebaseAuthRepository ..> AuthCallback : uses
+MockAuthRepository ..> AuthCallback : uses
+PaymentRepository ..> FirestoreCallback : uses
+EventRepository ..> FirestoreCallback : uses
+
+' AuthCallback uses User
+AuthCallback ..> User : returns
+
+' Repository uses models
+FirebaseAuthRepository ..> User : creates
+MockAuthRepository ..> User : manages
+PaymentRepository ..> Payment : persists
+EventRepository ..> Event : manages
+EventRepository ..> Rsvp : manages
+EventRepository ..> EventProposal : manages
+EventRepository ..> EventAttendee : manages
+
+' MockPaymentService creates Payment
+MockPaymentService ..> Payment : creates
+
+' QRCodeHelper used by TicketActivity
+TicketActivity ..> QRCodeHelper : uses
+
+' UI → Repository
+SignInActivity ..> AuthRepository : uses
+SignUpActivity ..> AuthRepository : uses
+CheckoutActivity ..> EventRepository : uses
+CheckoutActivity ..> PaymentRepository : uses
+CheckoutActivity ..> MockPaymentService : uses
+WhoIsComingActivity ..> EventRepository : uses
+
+' UI → Util
+SignInActivity ..> DevSessionManager : uses
+SignUpActivity ..> SignupValidator : uses
+CheckoutActivity ..> UserRoles : uses
+
+' Model associations
+Rsvp --> User : "belongs to"
+Rsvp --> Event : "for"
+Payment --> User : "made by"
+Payment --> Event : "for"
+EventAttendee --> User : "references"
+EventProposal --> User : "submitted by"
+Notification --> User : "sent to"
+Memory --> Event : "references"
+
+@enduml

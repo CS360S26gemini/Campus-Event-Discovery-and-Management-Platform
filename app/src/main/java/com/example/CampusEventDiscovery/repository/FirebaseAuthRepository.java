@@ -21,7 +21,7 @@ public class FirebaseAuthRepository implements AuthRepository {
     }
 
     @Override
-    public void registerUser(String name, String email, String password, String role, AuthCallback callback) {
+    public void signup(String name, String email, String password, String role, AuthCallback callback) {
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
                     FirebaseUser firebaseUser = auth.getCurrentUser();
@@ -32,7 +32,7 @@ public class FirebaseAuthRepository implements AuthRepository {
                     String uid = firebaseUser.getUid();
                     Map<String, Object> userMap = new HashMap<>();
                     userMap.put("uid", uid);
-                    userMap.put("fullName", name);      // NOTE: fullName not name
+                    userMap.put("fullName", name);
                     userMap.put("email", email);
                     userMap.put("role", role);
                     userMap.put("createdAt", Timestamp.now());
@@ -47,7 +47,7 @@ public class FirebaseAuthRepository implements AuthRepository {
     }
 
     @Override
-    public void loginUser(String email, String password, AuthCallback callback) {
+    public void login(String email, String password, AuthCallback callback) {
         auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
                     FirebaseUser firebaseUser = auth.getCurrentUser();
@@ -72,5 +72,15 @@ public class FirebaseAuthRepository implements AuthRepository {
                 })
                 .addOnFailureListener(e ->
                         callback.onFailure("Login failed: " + e.getMessage()));
+    }
+
+    @Override
+    public void logout() {
+        auth.signOut();
+    }
+
+    @Override
+    public boolean isLoggedIn() {
+        return auth.getCurrentUser() != null;
     }
 }

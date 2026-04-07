@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.CalendarContract;
 import android.text.TextUtils;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -17,12 +18,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.Event;
+import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.LinkedList;
@@ -35,7 +38,11 @@ import java.util.Set;
  * EventDetailActivity.java
  *
  * Shows full event details for a selected event.
+ * Updated to show "View Ticket" if already registered.
  */
+
+// export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
+//export PATH="$JAVA_HOME/bin:$PATH"
 public class EventDetailActivity extends AppCompatActivity {
 
     private ImageView ivBanner;
@@ -52,12 +59,14 @@ public class EventDetailActivity extends AppCompatActivity {
     private TextView tvSpotsRemaining;
     private TextView tvPrice;
     private com.google.android.material.button.MaterialButton btnTickets;
+    private com.google.android.material.button.MaterialButton btnViewTicket;
 
     private EventRepository repository;
     private String eventId;
     private String currentUserId;
     private String currentUserRole = "";
     private Event currentEvent;
+    private Rsvp currentRsvp;
     private final Set<String> savedEventIds = new HashSet<>();
 
     @Override
@@ -84,6 +93,7 @@ public class EventDetailActivity extends AppCompatActivity {
         loadSavedState();
         loadCurrentUserRole();
         loadEventDetails();
+        checkRsvpStatus();
     }
 
     private void bindViews() {
@@ -101,6 +111,14 @@ public class EventDetailActivity extends AppCompatActivity {
         tvSpotsRemaining = findViewById(R.id.tvSpotsRemaining);
         tvPrice = findViewById(R.id.tvPrice);
         btnTickets = findViewById(R.id.btnTickets);
+        
+        // Add dynamic View Ticket button if not in layout, or bind it
+//        btnViewTicket = findViewById(R.id.btnViewTicket);
+        // btnViewTicket is optional — only bind if present in layout
+        View rawBtn = findViewById(R.id.btnViewTicket);
+        if (rawBtn instanceof com.google.android.material.button.MaterialButton) {
+            btnViewTicket = (com.google.android.material.button.MaterialButton) rawBtn;
+        }
     }
 
     private void setupStaticListeners() {
@@ -167,19 +185,55 @@ public class EventDetailActivity extends AppCompatActivity {
                 return;
             }
 
-            Intent intent = new Intent(EventDetailActivity.this, BuyTicketActivity.class);
+            // Launch CheckoutActivity for payment and QR ticket generation
+            Intent intent = new Intent(EventDetailActivity.this, CheckoutActivity.class);
             intent.putExtra("eventId", currentEvent.getEventId());
             intent.putExtra("eventTitle", safeText(currentEvent.getTitle(), getString(R.string.app_name)));
-            intent.putExtra("eventVenue", safeText(currentEvent.getLocation(), getString(R.string.placeholder_venue)));
-            intent.putExtra("eventCapacity", currentEvent.getCapacity());
-            intent.putExtra("eventRsvpCount", currentEvent.getRsvpCount());
-
-            if (currentEvent.getDate() != null) {
-                intent.putExtra("eventDateMillis", currentEvent.getDate().toDate().getTime());
-            }
+            intent.putExtra("totalPrice", currentEvent.getTicketPrice());
+            intent.putExtra("eventDateMillis", currentEvent.getDate() != null
+                    ? currentEvent.getDate().toDate().getTime() : -1L);
+            intent.putExtra("eventVenue", safeText(currentEvent.getLocation(), ""));
 
             startActivity(intent);
         });
+
+        if (btnViewTicket != null) {
+            btnViewTicket.setOnClickListener(v -> {
+                if (currentRsvp != null) {
+                    Intent intent = new Intent(this, TicketActivity.class);
+                    intent.putExtra("rsvpId", eventId);
+                    intent.putExtra("eventName", currentEvent.getTitle());
+                    intent.putExtra("eventDate", formatDateTime(currentEvent.getDate()));
+                    intent.putExtra("transactionId", currentRsvp.getTransactionId());
+                    intent.putExtra("qrPayload", currentRsvp.getQrPayload());
+                    startActivity(intent);
+                }
+            });
+        }
+    }
+
+    private void checkRsvpStatus() {
+        if (currentUserId == null || eventId == null) return;
+
+        FirebaseFirestore.getInstance().collection("users").document(currentUserId)
+                .collection("rsvps").document(eventId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        currentRsvp = doc.toObject(Rsvp.class);
+                        if (currentRsvp != null && !"cancelled".equalsIgnoreCase(currentRsvp.getStatus())) {
+                            showViewTicketButton();
+                        }
+                    }
+                });
+    }
+
+    private void showViewTicketButton() {
+        if (btnTickets != null) btnTickets.setVisibility(View.GONE);
+        if (btnViewTicket != null) {
+            btnViewTicket.setVisibility(View.VISIBLE);
+            btnViewTicket.setText("View Ticket");
+        }
     }
 
     private void loadCurrentUserRole() {
@@ -259,7 +313,12 @@ public class EventDetailActivity extends AppCompatActivity {
         tvVenue.setText(safeText(event.getLocation(), getString(R.string.placeholder_venue)));
         tvRefundPolicy.setText(getString(R.string.refund_policy_body));
         tvDescription.setText(safeText(event.getDescription(), getString(R.string.placeholder_description)));
-        tvPrice.setText(getString(R.string.ticket_price_label));
+        
+        if (event.getTicketPrice() == 0) {
+            tvPrice.setText(getString(R.string.price_free));
+        } else {
+            tvPrice.setText(String.format(Locale.getDefault(), "PKR %.2f", event.getTicketPrice()));
+        }
 
         long remaining = Math.max(0L, event.getCapacity() - event.getRsvpCount());
         if (remaining <= 0) {

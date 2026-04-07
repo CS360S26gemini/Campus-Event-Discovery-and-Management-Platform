@@ -1,6 +1,5 @@
 package com.example.CampusEventDiscovery.ui.organizer;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -12,9 +11,8 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -24,11 +22,22 @@ import com.example.CampusEventDiscovery.adapter.AttendeeAdapter;
 import com.example.CampusEventDiscovery.model.EventAttendee;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
- * Screen for organizers to view attendees, check them in (via code or mock scanner), and blacklist them.
+ * WhoIsComingActivity.java
+ *
+ * Screen for organizers to view attendees, mark them as attended via
+ * QR scanner or manual code entry, and blacklist attendees. Uses a
+ * real-time Firestore snapshot listener so the list updates instantly
+ * after a scan without flicker or stale data.
  */
 public class WhoIsComingActivity extends AppCompatActivity {
 
@@ -45,17 +54,7 @@ public class WhoIsComingActivity extends AppCompatActivity {
     private AttendeeAdapter adapter;
     private String eventId;
     private String eventTitle;
-
-    // Mock scanner for the prototype
-    private final ActivityResultLauncher<Intent> qrScannerLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    String scannedCode = result.getData().getStringExtra("scanned_code");
-                    if (!TextUtils.isEmpty(scannedCode)) {
-                        performCheckIn(scannedCode);
-                    }
-                }
-            });
+    private ListenerRegistration attendeeListener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -63,80 +62,124 @@ public class WhoIsComingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_who_is_coming);
 
         repository = new EventRepository();
-        eventId = getIntent().getStringExtra("eventId");
+        eventId    = getIntent().getStringExtra("eventId");
         eventTitle = getIntent().getStringExtra("eventTitle");
 
         bindViews();
         btnBack.setOnClickListener(v -> finish());
-        tvTitle.setText(TextUtils.isEmpty(eventTitle) ? getString(R.string.who_is_coming) : eventTitle);
+        tvTitle.setText(TextUtils.isEmpty(eventTitle)
+                ? getString(R.string.who_is_coming) : eventTitle);
 
         setupRecyclerView();
         setupSearch();
         setupScanQrAction();
         setupCheckInAction();
         setupBlacklistAction();
-        loadParticipants();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startAttendeesListener();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopAttendeesListener();
     }
 
     private void bindViews() {
-        btnBack = findViewById(R.id.btnBack);
-        tvTitle = findViewById(R.id.tvTitle);
+        btnBack              = findViewById(R.id.btnBack);
+        tvTitle              = findViewById(R.id.tvTitle);
         etSearchParticipants = findViewById(R.id.etSearchParticipants);
-        rvParticipants = findViewById(R.id.rvParticipants);
-        tvEmptyParticipants = findViewById(R.id.tvEmptyParticipants);
-        btnScanQr = findViewById(R.id.btnScanQr);
-        btnCheckIn = findViewById(R.id.btnCheckIn);
-        btnBlacklist = findViewById(R.id.btnBlacklist);
+        rvParticipants       = findViewById(R.id.rvParticipants);
+        tvEmptyParticipants  = findViewById(R.id.tvEmptyParticipants);
+        btnScanQr            = findViewById(R.id.btnScanQr);
+        btnCheckIn           = findViewById(R.id.btnCheckIn);
+        btnBlacklist         = findViewById(R.id.btnBlacklist);
     }
 
     private void setupRecyclerView() {
-        adapter = new AttendeeAdapter(selectedCount -> btnBlacklist.setEnabled(selectedCount > 0));
+        adapter = new AttendeeAdapter(
+                selectedCount -> btnBlacklist.setEnabled(selectedCount > 0));
         rvParticipants.setLayoutManager(new LinearLayoutManager(this));
         rvParticipants.setAdapter(adapter);
         btnBlacklist.setEnabled(false);
     }
 
+    /**
+     * Starts a real-time Firestore snapshot listener on the event's
+     * attendees subcollection. The list updates automatically whenever
+     * any attendee document changes — no manual refresh needed, no flicker.
+     */
+    private void startAttendeesListener() {
+        if (TextUtils.isEmpty(eventId)) return;
+        stopAttendeesListener();
+
+        attendeeListener = FirebaseFirestore.getInstance()
+                .collection("events").document(eventId)
+                .collection("attendees")
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null || snapshots == null) return;
+
+                    List<EventAttendee> attendees = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        EventAttendee a = doc.toObject(EventAttendee.class);
+                        if (a != null) {
+                            if (TextUtils.isEmpty(a.getUserId())) {
+                                a.setUserId(doc.getId());
+                            }
+                            attendees.add(a);
+                        }
+                    }
+
+                    Collections.sort(attendees, Comparator.comparing(
+                            a -> a.getFullName() == null
+                                    ? "" : a.getFullName().toLowerCase()));
+
+                    adapter.updateData(attendees);
+                    updateEmptyState();
+                });
+    }
+
+    private void stopAttendeesListener() {
+        if (attendeeListener != null) {
+            attendeeListener.remove();
+            attendeeListener = null;
+        }
+    }
+
     private void setupSearch() {
         etSearchParticipants.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // no-op
-            }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 adapter.filter(s == null ? "" : s.toString());
                 updateEmptyState();
             }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                // no-op
-            }
         });
     }
 
+    /**
+     * Opens ScannerActivity which uses the ZXing camera to scan the
+     * attendee's QR code and mark them as attended.
+     */
     private void setupScanQrAction() {
         btnScanQr.setOnClickListener(v -> {
-            // In a real product, this would launch a ZXing or CameraX scanner.
-            // For the prototype, we show a dialog to "simulate" a scan.
-            EditText input = new EditText(this);
-            input.setHint("Paste QR code token here (Simulated Scan)");
-            
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.scan_qr_code)
-                    .setView(input)
-                    .setPositiveButton(R.string.confirm, (dialog, which) -> {
-                        String code = input.getText().toString().trim();
-                        if (!TextUtils.isEmpty(code)) {
-                            performCheckIn(code);
-                        }
-                    })
-                    .setNegativeButton(R.string.cancel, null)
-                    .show();
+            Intent intent = new Intent(this, ScannerActivity.class);
+            intent.putExtra("eventId", eventId);
+            intent.putExtra("eventTitle", eventTitle);
+            startActivity(intent);
         });
     }
 
+    /**
+     * Manual fallback — allows the organizer to type an attendee's
+     * qrCodeToken directly if the camera is unavailable.
+     */
     private void setupCheckInAction() {
         btnCheckIn.setOnClickListener(v -> {
             EditText input = new EditText(this);
@@ -149,99 +192,73 @@ public class WhoIsComingActivity extends AppCompatActivity {
                     .setPositiveButton(R.string.confirm, (dialog, which) -> {
                         String code = input.getText().toString().trim();
                         if (TextUtils.isEmpty(code)) {
-                            Toast.makeText(this, getString(R.string.check_in_requires_code), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this,
+                                    getString(R.string.check_in_requires_code),
+                                    Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        performCheckIn(code);
+                        performManualAttendance(code);
                     })
                     .setNegativeButton(R.string.cancel, null)
                     .show();
         });
     }
 
-    private void performCheckIn(String code) {
-        repository.checkInAttendeeByQrToken(eventId, code, new EventRepository.ActionCallback() {
-            @Override
-            public void onSuccess() {
-                Toast.makeText(
-                        WhoIsComingActivity.this,
-                        getString(R.string.check_in_success),
-                        Toast.LENGTH_SHORT
-                ).show();
-                loadParticipants();
-            }
+    /**
+     * Marks an attendee as attended using their plain qrCodeToken.
+     * The attendees list updates automatically via the snapshot listener.
+     *
+     * @param code The attendee's qrCodeToken string.
+     */
+    private void performManualAttendance(String code) {
+        repository.checkInAttendeeByQrToken(eventId, code,
+                new EventRepository.ActionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        Toast.makeText(WhoIsComingActivity.this,
+                                getString(R.string.check_in_success),
+                                Toast.LENGTH_SHORT).show();
+                    }
 
-            @Override
-            public void onError(Exception e) {
-                Toast.makeText(
-                        WhoIsComingActivity.this,
-                        e.getMessage() == null ? getString(R.string.check_in_failed) : e.getMessage(),
-                        Toast.LENGTH_SHORT
-                ).show();
-            }
-        });
+                    @Override
+                    public void onError(Exception e) {
+                        Toast.makeText(WhoIsComingActivity.this,
+                                e.getMessage() == null
+                                        ? getString(R.string.check_in_failed)
+                                        : e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void setupBlacklistAction() {
         btnBlacklist.setOnClickListener(v -> {
-            List<EventAttendee> selectedAttendees = adapter.getSelectedAttendees();
-            if (selectedAttendees.isEmpty()) {
-                return;
-            }
+            List<EventAttendee> selected = adapter.getSelectedAttendees();
+            if (selected.isEmpty()) return;
 
             new AlertDialog.Builder(this)
                     .setTitle(R.string.blacklist_confirm_title)
-                    .setMessage(getString(R.string.blacklist_confirm_message, selectedAttendees.size()))
+                    .setMessage(getString(
+                            R.string.blacklist_confirm_message, selected.size()))
                     .setPositiveButton(R.string.blacklist_selected, (dialog, which) ->
-                            repository.blacklistAttendees(eventId, selectedAttendees, new EventRepository.ActionCallback() {
-                                @Override
-                                public void onSuccess() {
-                                    Toast.makeText(
-                                            WhoIsComingActivity.this,
-                                            getString(R.string.blacklist_success),
-                                            Toast.LENGTH_SHORT
-                                    ).show();
-                                    loadParticipants();
-                                }
+                            repository.blacklistAttendees(eventId, selected,
+                                    new EventRepository.ActionCallback() {
+                                        @Override
+                                        public void onSuccess() {
+                                            Toast.makeText(WhoIsComingActivity.this,
+                                                    getString(R.string.blacklist_success),
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
 
-                                @Override
-                                public void onError(Exception e) {
-                                    Toast.makeText(
-                                            WhoIsComingActivity.this,
-                                            getString(R.string.blacklist_failed),
-                                            Toast.LENGTH_SHORT
-                                    ).show();
-                                }
-                            }))
+                                        @Override
+                                        public void onError(Exception e) {
+                                            Toast.makeText(WhoIsComingActivity.this,
+                                                    getString(R.string.blacklist_failed),
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                    }))
                     .setNegativeButton(R.string.cancel, null)
                     .show();
-        });
-    }
-
-    private void loadParticipants() {
-        if (TextUtils.isEmpty(eventId)) {
-            Toast.makeText(this, getString(R.string.error_loading_participants), Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
-        repository.getEventAttendees(eventId, new EventRepository.AttendeeListCallback() {
-            @Override
-            public void onSuccess(List<EventAttendee> attendees) {
-                adapter.updateData(attendees);
-                updateEmptyState();
-            }
-
-            @Override
-            public void onError(Exception e) {
-                Toast.makeText(
-                        WhoIsComingActivity.this,
-                        getString(R.string.error_loading_participants),
-                        Toast.LENGTH_SHORT
-                ).show();
-                adapter.updateData(null);
-                updateEmptyState();
-            }
         });
     }
 

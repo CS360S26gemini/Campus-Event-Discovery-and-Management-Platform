@@ -108,6 +108,7 @@
 
     <string name="early_bird">Early Bird</string>
     <string name="vip">VIP</string>
+    <string name="early_bird_desc">Early Bird</string>
     <string name="general">General</string>
 
     <string name="share">Share</string>
@@ -235,7 +236,7 @@
     <string name="account_settings_row">Account Settings</string>
     <string name="my_events_row">My Events</string>
 
-    <!-- New Auth Screens -->
+    <!-- Auth Screens -->
     <string name="welcome_title">Welcome!</string>
     <string name="welcome_subtitle">Sign in or create a new account</string>
     <string name="create_account_action">Create an Account</string>
@@ -319,16 +320,16 @@
     <string name="blacklist_confirm_message">This will remove %1$d attendee(s) and block them from registering again for this event.</string>
     <string name="blacklist_success">Selected attendees blacklisted.</string>
     <string name="blacklist_failed">Failed to blacklist attendees.</string>
-    <string name="check_in_attendee">Check In</string>
-    <string name="check_in_title">Verify Check-In Code</string>
-    <string name="check_in_code_hint">Enter attendee check-in code</string>
-    <string name="check_in_requires_code">Enter a check-in code.</string>
-    <string name="check_in_success">Attendee checked in.</string>
-    <string name="check_in_failed">Failed to check in attendee.</string>
+    <string name="check_in_attendee">Manual Entry</string>
+    <string name="check_in_title">Enter Attendee Code</string>
+    <string name="check_in_code_hint">Enter attendee code</string>
+    <string name="check_in_requires_code">Please enter the attendee code.</string>
+    <string name="check_in_success">Attendee marked as attended.</string>
+    <string name="check_in_failed">Failed to mark attendee.</string>
     <string name="participant_name_fallback">Unnamed attendee</string>
     <string name="participant_registered_status">Registered</string>
-    <string name="participant_checked_in_status">Checked in</string>
-    <string name="participant_checked_in_at">Checked in %1$s</string>
+    <string name="participant_checked_in_status">Attended</string>
+    <string name="participant_checked_in_at">Attended %1$s</string>
     <string name="attendee_actions_title">RSVP Actions</string>
     <string name="view_check_in_code">View Check-In Code</string>
     <string name="check_in_code_title">Your Check-In Code</string>
@@ -349,5 +350,60 @@
 
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="select_event_image">Select Event Image</string>
+    <string name="image_upload_failed">Image upload failed: %1$s</string>
+
+    <!-- Payment and ticket strings -->
+    <string name="price_format">Price: PKR %1$.2f</string>
+    <string name="price_free">Free</string>
+    <string name="pay_now">Pay Now</string>
+    <string name="register_free">Register Free</string>
+    <string name="ticket_header">Your Ticket</string>
+    <string name="txn_id_format">Txn ID: %1$s</string>
+    <string name="done">Done</string>
+    <string name="scanner_result">Scanner Result</string>
+    <string name="scanner_attendee_format">Attendee: %1$s</string>
+    <string name="scanner_event_format">Event: %1$s</string>
+    <string name="scanner_payment_format">Payment: %1$s</string>
+    <string name="scanner_status_format">Checked In: %1$s</string>
+    <string name="mark_as_attended">Mark as Attended</string>
+    <string name="open_camera">Open Camera</string>
+    <string name="scan_ticket_prompt">Please scan a valid ticket QR code.</string>
+
+    <!-- Checkout strings -->
+    <string name="checkout_section_personal">Personal details</string>
+    <string name="checkout_section_payment">Payment method</string>
+    <string name="checkout_hint_full_name">Full name</string>
+    <string name="checkout_hint_last_name">Last name</string>
+    <string name="checkout_hint_card_number">Card / account number (16 digits)</string>
+    <string name="checkout_order_total_label">Order total</string>
+    <string name="checkout_total_free">Free</string>
+    <string name="checkout_total_pkr">PKR %1$.2f</string>
+    <string name="payment_method_jazzcash">JazzCash</string>
+    <string name="payment_method_credit_card">Credit Card</string>
+    <string name="payment_method_debit_card">Debit Card</string>
+    <string name="payment_method_apple_pay">Apple Pay</string>
+    <string name="invalid_card_number">Card number must be exactly 16 digits</string>
+    <string name="already_registered_for_event">You are already registered for this event. Opening your ticket.</string>
+    <string name="checkout_rsvp_check_failed">Could not verify registration status. Please try again.</string>
+    <string name="payment_failed_message">Payment failed: %1$s</string>
+    <string name="rsvp_failed_message">Registration failed: %1$s</string>
+
+    <!-- Scanner strings -->
+    <string name="scanner_camera_permission_required">Camera permission is required to scan QR codes</string>
+    <string name="scanner_prompt">Scan attendee ticket QR code</string>
+    <string name="scanner_cancelled">Scan cancelled</string>
+    <string name="scanner_invalid_qr">Invalid QR code format</string>
+    <string name="scanner_rsvp_mismatch">Ticket data does not match our records</string>
+    <string name="scanner_rsvp_not_found">No registration found for this ticket</string>
+    <string name="scanner_error_fetching">Error fetching registration: %1$s</string>
+    <string name="scanner_unknown_user">Unknown attendee</string>
+    <string name="scanner_label_attendee">Attendee: %1$s</string>
+    <string name="scanner_label_event">Event: %1$s</string>
+    <string name="scanner_label_payment">Payment: %1$s</string>
+    <string name="scanner_checked_in_yes">Checked in: YES</string>
+    <string name="scanner_checked_in_no">Checked in: NO</string>
+    <string name="scanner_ticket_already_used">TICKET ALREADY USED</string>
+    <string name="scanner_marked_attended">Attendee marked as attended!</string>
+    <string name="scanner_mark_failed">Failed to update check-in status</string>
 
 </resources>

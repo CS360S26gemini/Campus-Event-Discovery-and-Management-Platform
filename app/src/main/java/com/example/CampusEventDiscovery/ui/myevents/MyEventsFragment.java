@@ -21,22 +21,27 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.adapter.EventAdapter;
 import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.EventProposal;
+import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
 import com.example.CampusEventDiscovery.ui.event.EventFeedbackActivity;
 import com.example.CampusEventDiscovery.ui.event.OrganizerProposalDetailActivity;
+import com.example.CampusEventDiscovery.ui.event.TicketActivity;
 import com.example.CampusEventDiscovery.ui.organizer.OrganizerEventDetailActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -143,7 +148,35 @@ public class MyEventsFragment extends Fragment {
     }
 
     private void setupRecyclerViews() {
-        adapter1 = createAdapter(list1, ids1, true);
+        adapter1 = new EventAdapter(
+                list1,
+                ids1,
+                null,
+                new EventAdapter.OnEventClickListener() {
+                    @Override
+                    public void onItemClick(Event event) {
+                        if (event == null || event.getEventId() == null) return;
+                        // For attendee RSVPs: if a QR ticket exists, open it directly
+                        if (UserRoles.isAttendee(userRole)) {
+                            openTicketOrDetail(event);
+                        } else {
+                            openEventDetail(event);
+                        }
+                    }
+
+                    @Override
+                    public void onHeartClick(Event event, boolean isCurrentlySaved) {
+                        // no-op
+                    }
+
+                    @Override
+                    public void onItemLongClick(Event event) {
+                        if (UserRoles.isAttendee(userRole)) {
+                            showAttendeeActionsDialog(event);
+                        }
+                    }
+                }
+        );
         adapter2 = createAdapter(list2, ids2, false);
         adapter3 = createAdapter(list3, ids3, false);
 
@@ -409,9 +442,17 @@ public class MyEventsFragment extends Fragment {
                 .setTitle(getString(R.string.cancel_rsvp))
                 .setMessage(getString(R.string.cancel_rsvp_message))
                 .setPositiveButton(getString(R.string.confirm), (dialog, which) -> {
-                    repository.cancelRsvp(currentUserId, event.getEventId(), () -> {
-                        loadRsvps();
-                        Toast.makeText(requireContext(), getString(R.string.rsvp_cancelled), Toast.LENGTH_SHORT).show();
+                    repository.cancelRsvp(currentUserId, event.getEventId(), new EventRepository.ActionCallback() {
+                        @Override
+                        public void onSuccess() {
+                            loadRsvps();
+                            Toast.makeText(requireContext(), getString(R.string.rsvp_cancelled), Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Toast.makeText(requireContext(), "Failed to cancel RSVP", Toast.LENGTH_SHORT).show();
+                        }
                     });
                 })
                 .setNegativeButton(getString(R.string.cancel), null)
@@ -424,7 +465,7 @@ public class MyEventsFragment extends Fragment {
         }
 
         List<String> options = new ArrayList<>();
-        options.add(getString(R.string.view_check_in_code));
+        options.add(getString(R.string.view_check_in_code)); // This will now launch TicketActivity
         if (isPastEvent(event)) {
             options.add(getString(R.string.leave_feedback));
         }
@@ -434,25 +475,27 @@ public class MyEventsFragment extends Fragment {
                 .setTitle(R.string.attendee_actions_title)
                 .setItems(options.toArray(new String[0]), (dialog, which) -> {
                     if (which == 0) {
-                        repository.getRsvpQrToken(currentUserId, event.getEventId(), new EventRepository.StringCallback() {
-                            @Override
-                            public void onSuccess(String value) {
-                                new AlertDialog.Builder(requireContext())
-                                        .setTitle(R.string.check_in_code_title)
-                                        .setMessage(getString(R.string.check_in_code_message, value))
-                                        .setPositiveButton(R.string.ok, null)
-                                        .show();
-                            }
-
-                            @Override
-                            public void onError(Exception e) {
-                                Toast.makeText(
-                                        requireContext(),
-                                        e.getMessage() == null ? getString(R.string.check_in_failed) : e.getMessage(),
-                                        Toast.LENGTH_SHORT
-                                ).show();
-                            }
-                        });
+                        // Open TicketActivity
+                        FirebaseFirestore.getInstance().collection("users").document(currentUserId)
+                                .collection("rsvps").document(event.getEventId())
+                                .get()
+                                .addOnSuccessListener(doc -> {
+                                    if (doc.exists()) {
+                                        Rsvp rsvp = doc.toObject(Rsvp.class);
+                                        if (rsvp != null) {
+                                            Intent intent = new Intent(requireContext(), TicketActivity.class);
+                                            intent.putExtra("rsvpId", event.getEventId());
+                                            intent.putExtra("eventName", event.getTitle());
+                                            SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM • hh:mm a", Locale.getDefault());
+                                            intent.putExtra("eventDate", event.getDate() != null ? sdf.format(event.getDate().toDate()) : "Date TBD");
+                                            intent.putExtra("transactionId", rsvp.getTransactionId());
+                                            intent.putExtra("qrPayload", rsvp.getQrPayload());
+                                            startActivity(intent);
+                                        }
+                                    } else {
+                                        Toast.makeText(requireContext(), "Ticket not found.", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                     } else if (isPastEvent(event) && which == 1) {
                         Intent intent = new Intent(requireContext(), EventFeedbackActivity.class);
                         intent.putExtra("eventId", event.getEventId());
@@ -473,6 +516,53 @@ public class MyEventsFragment extends Fragment {
 
     private void showLoading(ProgressBar pb, boolean isLoading) {
         if (pb != null) pb.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * For attendee RSVP cards: checks Firestore for an existing QR payload.
+     * If one exists, opens TicketActivity to show the QR code directly.
+     * Falls back to EventDetailActivity if no RSVP ticket is found.
+     *
+     * @param event The event whose ticket or detail screen should be opened.
+     */
+    private void openTicketOrDetail(Event event) {
+        if (currentUserId == null || event.getEventId() == null) {
+            openEventDetail(event);
+            return;
+        }
+
+        FirebaseFirestore.getInstance()
+                .collection("users").document(currentUserId)
+                .collection("rsvps").document(event.getEventId())
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.exists()) {
+                        Rsvp rsvp = snapshot.toObject(Rsvp.class);
+                        if (rsvp != null
+                                && rsvp.getQrPayload() != null
+                                && !rsvp.getQrPayload().isEmpty()) {
+                            String formattedDate = "Date TBD";
+                            if (rsvp.getDate() != null) {
+                                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
+                                        "EEE, dd MMM • hh:mm a", java.util.Locale.getDefault());
+                                formattedDate = sdf.format(rsvp.getDate().toDate());
+                            }
+                            Intent intent = new Intent(requireContext(),
+                                    com.example.CampusEventDiscovery.ui.event.TicketActivity.class);
+                            intent.putExtra("rsvpId", event.getEventId());
+                            intent.putExtra("eventName", rsvp.getTitle() != null
+                                    ? rsvp.getTitle() : event.getTitle());
+                            intent.putExtra("eventDate", formattedDate);
+                            intent.putExtra("transactionId", rsvp.getTransactionId());
+                            intent.putExtra("qrPayload", rsvp.getQrPayload());
+                            startActivity(intent);
+                            return;
+                        }
+                    }
+                    // No ticket found — open event detail as normal
+                    openEventDetail(event);
+                })
+                .addOnFailureListener(e -> openEventDetail(event));
     }
 
     private void openEventDetail(Event event) {
