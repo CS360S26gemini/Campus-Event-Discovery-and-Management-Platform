@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * User.java
  *
- * Model class representing a user document from the Firestore users collection.
+ * Model class representing a user document from the Firestore users collection.g
  * Aligned with the database design in /docs/db/initial_db.txt.
  */
 public class User {
