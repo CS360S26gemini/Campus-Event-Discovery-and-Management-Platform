@@ -75,6 +75,10 @@ public class Event {
     public long getCheckedInCount() { return checkedInCount; }
     public void setCheckedInCount(long checkedInCount) { this.checkedInCount = checkedInCount; }
 
+    @Exclude
+    public long getAttendedCount() { return checkedInCount; }
+    public void setAttendedCount(long attendedCount) { this.checkedInCount = attendedCount; }
+
     public String getThumbnailUrl() { return thumbnailUrl; }
     public void setThumbnailUrl(String thumbnailUrl) { this.thumbnailUrl = thumbnailUrl; }
 

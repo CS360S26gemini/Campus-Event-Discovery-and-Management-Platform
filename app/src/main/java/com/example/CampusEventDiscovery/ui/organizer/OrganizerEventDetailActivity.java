@@ -20,6 +20,7 @@ import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -40,6 +41,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
     private EventRepository repository;
     private String eventId;
     private Event currentEvent;
+    private ListenerRegistration eventListener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -52,6 +54,18 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
         bindViews();
         setupListeners();
         loadEventDetails();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        startEventListener();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        stopEventListener();
     }
 
     private void bindViews() {
@@ -81,23 +95,33 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
     private void loadEventDetails() {
         if (TextUtils.isEmpty(eventId)) {
             finish();
+        }
+    }
+
+    private void startEventListener() {
+        if (TextUtils.isEmpty(eventId)) {
+            finish();
             return;
         }
 
-        repository.getEventById(eventId, new EventRepository.SingleEventCallback() {
+        stopEventListener();
+        eventListener = repository.observeEventById(eventId, new EventRepository.SingleEventCallback() {
             @Override
             public void onSuccess(Event event) {
                 currentEvent = event;
                 tvTitle.setText(event.getTitle());
                 tvDateTime.setText(formatDateTime(event.getDate()));
                 tvVenue.setText(event.getLocation());
-                
+
                 long rsvp = event.getRsvpCount();
                 long capacity = event.getCapacity();
-                tvRegCount.setText(rsvp + "/" + capacity);
-                
+                long checkedIn = event.getCheckedInCount();
+                tvRegCount.setText(checkedIn + " attended • " + rsvp + "/" + capacity);
+
                 if (capacity > 0) {
                     pbRegistrations.setProgress((int) ((rsvp * 100) / capacity));
+                } else {
+                    pbRegistrations.setProgress(0);
                 }
 
                 if (!TextUtils.isEmpty(event.getThumbnailUrl())) {
@@ -113,6 +137,13 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
                 Toast.makeText(OrganizerEventDetailActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void stopEventListener() {
+        if (eventListener != null) {
+            eventListener.remove();
+            eventListener = null;
+        }
     }
 
     private void showAnnouncementDialog() {

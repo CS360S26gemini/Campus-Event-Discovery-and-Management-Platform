@@ -245,6 +245,29 @@ public class EventRepository {
                 });
     }
 
+    public ListenerRegistration observeEventById(String eventId, SingleEventCallback cb) {
+        if (TextUtils.isEmpty(eventId)) {
+            if (cb != null) cb.onError(new Exception("Event ID is empty"));
+            return null;
+        }
+
+        return db.collection(COLLECTION_EVENTS)
+                .document(eventId)
+                .addSnapshotListener((documentSnapshot, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "observeEventById failed", error);
+                        if (cb != null) cb.onError(error);
+                        return;
+                    }
+
+                    if (documentSnapshot != null && documentSnapshot.exists()) {
+                        if (cb != null) cb.onSuccess(documentToEvent(documentSnapshot));
+                    } else {
+                        if (cb != null) cb.onError(new Exception("Event not found."));
+                    }
+                });
+    }
+
     public void searchEvents(String query, String category, EventListCallback cb) {
         final String safeQuery = query == null ? "" : query.trim().toLowerCase();
         final String safeCategory = category == null ? "All" : category.trim();
@@ -372,6 +395,8 @@ public class EventRepository {
                     rsvpData.put("date", event.getDate());
                     rsvpData.put("status", "confirmed");
                     rsvpData.put("checkedIn", false);
+                    rsvpData.put("checkedInAt", null);
+                    rsvpData.put("qrExpired", false);
                     rsvpData.put("qrCodeToken", qrToken);
                     rsvpData.put("addedToCalendar", false);
                     rsvpData.put("gcalEventId", "");
@@ -404,34 +429,49 @@ public class EventRepository {
         DocumentReference eventAttendeeRef = eventRef.collection(SUBCOLLECTION_ATTENDEES).document(userId);
 
         db.runTransaction(transaction -> {
-            DocumentSnapshot eventSnap = transaction.get(eventRef);
-            DocumentSnapshot userRsvpSnap = transaction.get(userRsvpRef);
-            DocumentSnapshot attendeeSnap = transaction.get(eventAttendeeRef);
+                    DocumentSnapshot eventSnap = transaction.get(eventRef);
+                    DocumentSnapshot userRsvpSnap = transaction.get(userRsvpRef);
+                    DocumentSnapshot attendeeSnap = transaction.get(eventAttendeeRef);
 
-            boolean hadActiveRsvp = attendeeSnap.exists();
-            if (userRsvpSnap.exists()) {
-                String currentStatus = userRsvpSnap.getString("status");
-                hadActiveRsvp = hadActiveRsvp || !"cancelled".equalsIgnoreCase(currentStatus);
+                    boolean hadActiveRsvp = attendeeSnap.exists();
+                    boolean wasCheckedIn = false;
+                    if (userRsvpSnap.exists()) {
+                        String currentStatus = userRsvpSnap.getString("status");
+                        hadActiveRsvp = hadActiveRsvp || !"cancelled".equalsIgnoreCase(currentStatus);
 
-                Map<String, Object> cancelledRsvpData = new HashMap<>();
-                cancelledRsvpData.put("status", "cancelled");
-                cancelledRsvpData.put("addedToCalendar", false);
-                cancelledRsvpData.put("gcalEventId", "");
-                transaction.set(userRsvpRef, cancelledRsvpData, SetOptions.merge());
-            }
+                        Boolean rsvpCheckedIn = userRsvpSnap.getBoolean("checkedIn");
+                        wasCheckedIn = rsvpCheckedIn != null && rsvpCheckedIn;
 
-            if (attendeeSnap.exists()) {
-                transaction.delete(eventAttendeeRef);
-            }
+                        Map<String, Object> cancelledRsvpData = new HashMap<>();
+                        cancelledRsvpData.put("status", "cancelled");
+                        cancelledRsvpData.put("addedToCalendar", false);
+                        cancelledRsvpData.put("gcalEventId", "");
+                        transaction.set(userRsvpRef, cancelledRsvpData, SetOptions.merge());
+                    }
 
-            if (hadActiveRsvp && eventSnap.exists()) {
-                Long currentCount = eventSnap.getLong("rsvpCount");
-                long safeCount = Math.max(0L, currentCount != null ? currentCount : 0L);
-                transaction.update(eventRef, "rsvpCount", Math.max(0L, safeCount - 1L));
-            }
-            return null;
-        }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
-          .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+                    if (attendeeSnap.exists()) {
+                        Boolean attendeeCheckedIn = attendeeSnap.getBoolean("checkedIn");
+                        wasCheckedIn = wasCheckedIn || (attendeeCheckedIn != null && attendeeCheckedIn);
+                        transaction.delete(eventAttendeeRef);
+                    }
+
+                    if (hadActiveRsvp && eventSnap.exists()) {
+                        Long currentCount = eventSnap.getLong("rsvpCount");
+                        long safeCount = Math.max(0L, currentCount != null ? currentCount : 0L);
+                        Map<String, Object> eventUpdates = new HashMap<>();
+                        eventUpdates.put("rsvpCount", Math.max(0L, safeCount - 1L));
+
+                        if (wasCheckedIn) {
+                            Long currentCheckedInCount = eventSnap.getLong("checkedInCount");
+                            long safeCheckedInCount = Math.max(0L, currentCheckedInCount != null ? currentCheckedInCount : 0L);
+                            eventUpdates.put("checkedInCount", Math.max(0L, safeCheckedInCount - 1L));
+                        }
+
+                        transaction.update(eventRef, eventUpdates);
+                    }
+                    return null;
+                }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
     public void getRsvps(String userId, EventListCallback cb) {
@@ -823,7 +863,10 @@ public class EventRepository {
             DocumentSnapshot eventSnap = transaction.get(eventRef);
             Long currentCountLong = eventSnap.getLong("rsvpCount");
             long currentCount = currentCountLong != null ? currentCountLong : 0L;
+            Long currentCheckedInCountLong = eventSnap.getLong("checkedInCount");
+            long currentCheckedInCount = currentCheckedInCountLong != null ? currentCheckedInCountLong : 0L;
             long removedCount = 0L;
+            long removedCheckedInCount = 0L;
 
             for (EventAttendee attendee : attendees) {
                 if (attendee == null || TextUtils.isEmpty(attendee.getUserId())) {
@@ -846,6 +889,10 @@ public class EventRepository {
 
                 DocumentSnapshot attendeeSnap = transaction.get(attendeeRef);
                 if (attendeeSnap.exists()) {
+                    Boolean attendeeCheckedIn = attendeeSnap.getBoolean("checkedIn");
+                    if (attendeeCheckedIn != null && attendeeCheckedIn) {
+                        removedCheckedInCount++;
+                    }
                     transaction.delete(attendeeRef);
                     removedCount++;
                 }
@@ -858,7 +905,12 @@ public class EventRepository {
             }
 
             if (removedCount > 0L && eventSnap.exists()) {
-                transaction.update(eventRef, "rsvpCount", Math.max(0L, currentCount - removedCount));
+                Map<String, Object> eventUpdates = new HashMap<>();
+                eventUpdates.put("rsvpCount", Math.max(0L, currentCount - removedCount));
+                if (removedCheckedInCount > 0L) {
+                    eventUpdates.put("checkedInCount", Math.max(0L, currentCheckedInCount - removedCheckedInCount));
+                }
+                transaction.update(eventRef, eventUpdates);
             }
 
             return null;
@@ -871,12 +923,11 @@ public class EventRepository {
 
     public void checkInAttendeeByQrToken(String eventId, String qrToken, ActionCallback cb) {
         if (TextUtils.isEmpty(eventId) || TextUtils.isEmpty(qrToken)) {
-            if (cb != null) cb.onError(new Exception("Invalid check-in data"));
+            if (cb != null) cb.onError(new IllegalArgumentException("Event ID and check-in code are required"));
             return;
         }
 
-        db.collection(COLLECTION_EVENTS)
-                .document(eventId)
+        db.collection(COLLECTION_EVENTS).document(eventId)
                 .collection(SUBCOLLECTION_ATTENDEES)
                 .whereEqualTo("qrToken", qrToken.trim())
                 .limit(1)
@@ -893,47 +944,90 @@ public class EventRepository {
                         attendeeUserId = match.getId();
                     }
 
-                    DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(eventId);
-                    DocumentReference attendeeRef = match.getReference();
-                    DocumentReference userRsvpRef = db.collection(COLLECTION_USERS)
-                            .document(attendeeUserId)
-                            .collection(SUBCOLLECTION_RSVPS)
-                            .document(eventId);
-
-                    String finalAttendeeUserId = attendeeUserId;
-                    db.runTransaction(transaction -> {
-                        DocumentSnapshot attendeeSnapshot = transaction.get(attendeeRef);
-                        if (!attendeeSnapshot.exists()) {
-                            throw new FirebaseFirestoreException("Attendee not found", FirebaseFirestoreException.Code.NOT_FOUND);
-                        }
-
-                        Boolean checkedIn = attendeeSnapshot.getBoolean("checkedIn");
-                        if (checkedIn != null && checkedIn) {
-                            throw new FirebaseFirestoreException("Attendee already checked in", FirebaseFirestoreException.Code.ABORTED);
-                        }
-
-                        Map<String, Object> attendeeUpdates = new HashMap<>();
-                        attendeeUpdates.put("checkedIn", true);
-                        attendeeUpdates.put("checkedInAt", Timestamp.now());
-                        transaction.set(attendeeRef, attendeeUpdates, SetOptions.merge());
-
-                        Map<String, Object> rsvpUpdates = new HashMap<>();
-                        rsvpUpdates.put("checkedIn", true);
-                        rsvpUpdates.put("status", "attended");
-                        rsvpUpdates.put("checkedInUserId", finalAttendeeUserId);
-                        transaction.set(userRsvpRef, rsvpUpdates, SetOptions.merge());
-
-                        transaction.update(eventRef, "checkedInCount", FieldValue.increment(1));
-                        return null;
-                    }).addOnSuccessListener(unused -> {
-                        if (cb != null) cb.onSuccess();
-                    }).addOnFailureListener(e -> {
-                        if (cb != null) cb.onError(e);
-                    });
+                    checkInAttendanceTransaction(eventId, attendeeUserId, null, cb);
                 })
                 .addOnFailureListener(e -> {
                     if (cb != null) cb.onError(e);
                 });
+    }
+
+    public void checkInAttendeeByScan(String eventId, String userId, String transactionId, ActionCallback cb) {
+        if (TextUtils.isEmpty(eventId) || TextUtils.isEmpty(userId) || TextUtils.isEmpty(transactionId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Event ID, user ID, and transaction ID are required"));
+            return;
+        }
+
+        checkInAttendanceTransaction(eventId.trim(), userId.trim(), transactionId.trim(), cb);
+    }
+
+    private void checkInAttendanceTransaction(String eventId, String attendeeUserId, String expectedTransactionId, ActionCallback cb) {
+        DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(eventId);
+        DocumentReference attendeeRef = eventRef.collection(SUBCOLLECTION_ATTENDEES).document(attendeeUserId);
+        DocumentReference userRsvpRef = db.collection(COLLECTION_USERS)
+                .document(attendeeUserId)
+                .collection(SUBCOLLECTION_RSVPS)
+                .document(eventId);
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot eventSnapshot = transaction.get(eventRef);
+            if (!eventSnapshot.exists()) {
+                throw new FirebaseFirestoreException("Event not found", FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+
+            DocumentSnapshot attendeeSnapshot = transaction.get(attendeeRef);
+            if (!attendeeSnapshot.exists()) {
+                throw new FirebaseFirestoreException("Attendee not found", FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+
+            DocumentSnapshot rsvpSnapshot = transaction.get(userRsvpRef);
+            if (!rsvpSnapshot.exists()) {
+                throw new FirebaseFirestoreException("RSVP not found", FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+
+            String status = rsvpSnapshot.getString("status");
+            if ("cancelled".equalsIgnoreCase(status)) {
+                throw new FirebaseFirestoreException("Cancelled RSVP cannot be checked in", FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+
+            if (!TextUtils.isEmpty(expectedTransactionId)) {
+                String storedTransactionId = rsvpSnapshot.getString("transactionId");
+                if (!expectedTransactionId.equals(storedTransactionId)) {
+                    throw new FirebaseFirestoreException("QR does not match RSVP", FirebaseFirestoreException.Code.PERMISSION_DENIED);
+                }
+            }
+
+            Boolean attendeeCheckedIn = attendeeSnapshot.getBoolean("checkedIn");
+            Boolean rsvpCheckedIn = rsvpSnapshot.getBoolean("checkedIn");
+            Boolean qrExpired = rsvpSnapshot.getBoolean("qrExpired");
+            boolean alreadyCheckedIn = (attendeeCheckedIn != null && attendeeCheckedIn)
+                    || (rsvpCheckedIn != null && rsvpCheckedIn)
+                    || (qrExpired != null && qrExpired);
+
+            if (alreadyCheckedIn) {
+                throw new FirebaseFirestoreException("Attendee already checked in", FirebaseFirestoreException.Code.ABORTED);
+            }
+
+            Timestamp now = Timestamp.now();
+
+            Map<String, Object> attendeeUpdates = new HashMap<>();
+            attendeeUpdates.put("checkedIn", true);
+            attendeeUpdates.put("checkedInAt", now);
+            transaction.set(attendeeRef, attendeeUpdates, SetOptions.merge());
+
+            Map<String, Object> rsvpUpdates = new HashMap<>();
+            rsvpUpdates.put("checkedIn", true);
+            rsvpUpdates.put("qrExpired", true);
+            rsvpUpdates.put("checkedInAt", now);
+            rsvpUpdates.put("status", "attended");
+            transaction.set(userRsvpRef, rsvpUpdates, SetOptions.merge());
+
+            transaction.update(eventRef, "checkedInCount", FieldValue.increment(1));
+            return null;
+        }).addOnSuccessListener(unused -> {
+            if (cb != null) cb.onSuccess();
+        }).addOnFailureListener(e -> {
+            if (cb != null) cb.onError(e);
+        });
     }
 
     // --- SOS REPORTS ---
