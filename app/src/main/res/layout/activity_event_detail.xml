@@ -22,16 +22,16 @@
                 android:contentDescription="@string/app_name"
                 android:scaleType="centerCrop" />
 
-            <!-- [ui] removed bg_featured_overlay view to eliminate top dark glow effect -->
-
             <ImageButton
                 android:id="@+id/btnBack"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_gravity="top|start"
                 android:layout_margin="16dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:background="@drawable/bg_icon_button_circle"
                 android:contentDescription="@string/back"
+                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_back"
                 app:tint="@android:color/white" />
 
@@ -46,8 +46,10 @@
                     android:id="@+id/btnHeart"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:background="@drawable/bg_icon_button_circle"
                     android:contentDescription="@string/save"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_heart_outline"
                     app:tint="@color/colorOnOverlay" />
 
@@ -56,8 +58,10 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_marginStart="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:background="@drawable/bg_icon_button_circle"
                     android:contentDescription="@string/share"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_share"
                     app:tint="@color/colorOnOverlay" />
             </LinearLayout>
