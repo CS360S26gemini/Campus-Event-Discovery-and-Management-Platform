@@ -8,9 +8,11 @@ import com.google.firebase.appcheck.FirebaseAppCheck;
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
 import com.example.CampusEventDiscovery.util.ThemeManager;
+import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 
 /**
  * Applies persisted UI preferences before any screen is shown.
+ * Initializes external services like Firebase and Cloudinary.
  */
 public class CampusEventDiscoveryApp extends Application {
 
@@ -33,5 +35,8 @@ public class CampusEventDiscoveryApp extends Application {
         firebaseAppCheck.setTokenAutoRefreshEnabled(true);
 
         ThemeManager.applyStoredTheme(this);
+        
+        // [cloudinary] initialize sdk
+        CloudinaryHelper.init(this);
     }
 }

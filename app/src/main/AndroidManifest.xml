@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -10,11 +11,9 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
-    <!-- Required for Firebase Storage putFile(Uri) on Android 12 and below -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-    <!-- Required for Firebase Storage putFile(Uri) on Android 13+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
@@ -25,6 +24,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CampusEventDiscovery">
 
+        <!-- Cloudinary Upload Service -->
+        <service
+            android:name="com.cloudinary.android.uploadwidget.UploadWidgetService"
+            android:enabled="true"
+            android:exported="false" />
 
         <activity
             android:name="com.example.CampusEventDiscovery.ui.admin.AdminHomeActivity"

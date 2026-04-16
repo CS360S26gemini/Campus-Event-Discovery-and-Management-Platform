@@ -22,10 +22,7 @@
                 android:contentDescription="@string/app_name"
                 android:scaleType="centerCrop" />
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_featured_overlay" />
+            <!-- [ui] removed bg_featured_overlay view to eliminate top dark glow effect -->
 
             <ImageButton
                 android:id="@+id/btnBack"

@@ -37,6 +37,7 @@ public class Event {
     private String status = "pending"; // Default status
     private Timestamp createdAt;
     private double ticketPrice;
+    private String imageUrl; // Added for Cloudinary integration
 
     public Event() {
     }
@@ -114,4 +115,7 @@ public class Event {
 
     public double getTicketPrice() { return ticketPrice; }
     public void setTicketPrice(double ticketPrice) { this.ticketPrice = ticketPrice; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }
