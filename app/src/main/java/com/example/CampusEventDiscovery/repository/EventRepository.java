@@ -1123,7 +1123,7 @@ public class EventRepository {
         updates.put("avatarEnabled", false);
 
         db.collection(COLLECTION_USERS).document(userId)
-                .update(updates)
+                .set(updates, SetOptions.merge())
                 .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
@@ -1134,7 +1134,14 @@ public class EventRepository {
         updates.put("avatarConfig", avatarConfig == null ? new HashMap<>() : avatarConfig);
 
         db.collection(COLLECTION_USERS).document(userId)
-                .update(updates)
+                .set(updates, SetOptions.merge())
+                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
+    public void updateProfileVisualPreference(String userId, boolean avatarEnabled, ActionCallback cb) {
+        db.collection(COLLECTION_USERS).document(userId)
+                .set(Collections.singletonMap("avatarEnabled", avatarEnabled), SetOptions.merge())
                 .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }

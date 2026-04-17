@@ -50,6 +50,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.hdodenhof.circleimageview.CircleImageView;
 
 /**
@@ -114,6 +117,9 @@ public class ProfileFragment extends Fragment {
     private String currentUserId;
     private String currentRole = "attendee";
     private String currentDisplayName = "";
+    private String currentProfilePicUrl = "";
+    private boolean currentAvatarEnabled;
+    private boolean hasSavedAvatar;
     private AvatarConfig currentAvatarConfig;
 
     public ProfileFragment() {
@@ -243,20 +249,27 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
-        String[] options = {
-                getString(R.string.upload_photo),
-                getString(R.string.create_avatar)
-        };
+        List<String> options = new ArrayList<>();
+        List<ProfileVisualAction> actions = new ArrayList<>();
+
+        boolean hasPhoto = !TextUtils.isEmpty(currentProfilePicUrl);
+        if (hasPhoto && hasSavedAvatar) {
+            options.add(getString(R.string.use_photo_as_main));
+            actions.add(() -> setMainProfileImage(false));
+            options.add(getString(R.string.use_avatar_as_main));
+            actions.add(() -> setMainProfileImage(true));
+        }
+
+        options.add(getString(hasPhoto ? R.string.change_photo : R.string.add_profile_picture));
+        actions.add(this::openImagePicker);
+        options.add(getString(hasSavedAvatar ? R.string.edit_avatar : R.string.create_avatar));
+        actions.add(this::showAvatarCreatorDialog);
 
         new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.profile_visual_title)
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0) {
-                        openImagePicker();
-                    } else {
-                        showAvatarCreatorDialog();
-                    }
-                })
+                .setTitle(hasPhoto && hasSavedAvatar
+                        ? R.string.choose_main_profile_visual
+                        : R.string.profile_visual_title)
+                .setItems(options.toArray(new String[0]), (dialog, which) -> actions.get(which).run())
                 .show();
     }
 
@@ -408,6 +421,8 @@ public class ProfileFragment extends Fragment {
                 if (!isAdded()) return;
                 showLoading(false);
                 currentAvatarConfig = avatarConfig.copy();
+                hasSavedAvatar = true;
+                currentAvatarEnabled = true;
                 bindAvatar(currentAvatarConfig);
                 Toast.makeText(requireContext(), R.string.avatar_saved, Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
@@ -445,6 +460,8 @@ public class ProfileFragment extends Fragment {
                         public void onSuccess() {
                             if (!isAdded()) return;
                             showLoading(false);
+                            currentProfilePicUrl = url;
+                            currentAvatarEnabled = false;
                             Glide.with(requireContext())
                                     .load(url)
                                     .placeholder(android.R.drawable.sym_def_app_icon)
@@ -468,6 +485,40 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
+    private void setMainProfileImage(boolean useAvatar) {
+        if (useAvatar && !hasSavedAvatar) {
+            showAvatarCreatorDialog();
+            return;
+        }
+        if (!useAvatar && TextUtils.isEmpty(currentProfilePicUrl)) {
+            openImagePicker();
+            return;
+        }
+
+        showLoading(true);
+        repository.updateProfileVisualPreference(currentUserId, useAvatar, new EventRepository.ActionCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+                showLoading(false);
+                currentAvatarEnabled = useAvatar;
+                if (useAvatar) {
+                    bindAvatar(currentAvatarConfig);
+                } else {
+                    bindPhoto(currentProfilePicUrl);
+                }
+                Toast.makeText(requireContext(), R.string.profile_image_updated, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                showLoading(false);
+                Toast.makeText(requireContext(), R.string.profile_image_update_failed, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void loadProfile() {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         boolean isDevBypass = firebaseUser == null && DevSessionManager.shouldUseBypass(requireContext());
@@ -475,6 +526,9 @@ public class ProfileFragment extends Fragment {
         if (isDevBypass) {
             currentRole = DevSessionManager.getBypassRole(requireContext());
             currentDisplayName = DevSessionManager.getDisplayName(requireContext());
+            currentProfilePicUrl = "";
+            hasSavedAvatar = false;
+            currentAvatarEnabled = true;
             currentAvatarConfig = AvatarConfig.defaultsFor(currentDisplayName, currentRole);
             bindRoleBadge();
             tvFullName.setText(currentDisplayName);
@@ -486,13 +540,15 @@ public class ProfileFragment extends Fragment {
             rowMemories.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
             rowManageEvents.setVisibility(UserRoles.isOrganizer(currentRole) ? View.VISIBLE : View.GONE);
             bindAvatar(currentAvatarConfig);
-            tvEditPhoto.setEnabled(false);
-            tvEditPhoto.setAlpha(0.6f);
+            bindProfileVisualButtonState(true);
             return;
         }
 
         if (firebaseUser == null || currentUserId == null) {
             currentDisplayName = getString(R.string.guest_user);
+            currentProfilePicUrl = "";
+            hasSavedAvatar = false;
+            currentAvatarEnabled = false;
             tvFullName.setText(getString(R.string.guest_user));
             tvEmail.setText(getString(R.string.unknown_email));
             currentRole = UserRoles.ATTENDEE;
@@ -503,8 +559,7 @@ public class ProfileFragment extends Fragment {
             rowMyEvents.setVisibility(View.GONE);
             rowMemories.setVisibility(View.GONE);
             rowManageEvents.setVisibility(View.GONE);
-            tvEditPhoto.setEnabled(false);
-            tvEditPhoto.setAlpha(0.6f);
+            bindProfileVisualButtonState(false);
             return;
         }
 
@@ -535,6 +590,10 @@ public class ProfileFragment extends Fragment {
 
                 String role = UserRoles.sanitize(user.getRole());
                 currentRole = role.isEmpty() ? UserRoles.ATTENDEE : role;
+                currentProfilePicUrl = user.getProfilePicUrl() == null ? "" : user.getProfilePicUrl();
+                hasSavedAvatar = user.isAvatarEnabled()
+                        || (user.getAvatarConfig() != null && !user.getAvatarConfig().isEmpty());
+                currentAvatarEnabled = user.isAvatarEnabled();
                 currentAvatarConfig = AvatarConfig.fromMap(user.getAvatarConfig(), currentDisplayName, currentRole);
                 bindRoleBadge();
                 rowMyEvents.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
@@ -546,8 +605,7 @@ public class ProfileFragment extends Fragment {
                 bindDarkModeListener();
 
                 bindProfileImage(user);
-                tvEditPhoto.setEnabled(true);
-                tvEditPhoto.setAlpha(1f);
+                bindProfileVisualButtonState(true);
             }
 
             @Override
@@ -560,6 +618,9 @@ public class ProfileFragment extends Fragment {
 
     private void bindFallbackProfile(FirebaseUser firebaseUser) {
         currentDisplayName = getString(R.string.guest_user);
+        currentProfilePicUrl = "";
+        hasSavedAvatar = false;
+        currentAvatarEnabled = false;
         tvFullName.setText(getString(R.string.guest_user));
         if (firebaseUser != null && firebaseUser.getEmail() != null) {
             tvEmail.setText(firebaseUser.getEmail());
@@ -574,26 +635,29 @@ public class ProfileFragment extends Fragment {
         bindAvatar(currentAvatarConfig);
         bindRoleBadge();
         switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
-        tvEditPhoto.setEnabled(false);
-        tvEditPhoto.setAlpha(0.6f);
+        bindProfileVisualButtonState(currentUserId != null);
     }
 
     private void bindProfileImage(User user) {
-        if (user != null && user.isAvatarEnabled()) {
+        if (currentAvatarEnabled) {
             bindAvatar(currentAvatarConfig);
             return;
         }
 
-        if (user != null && !TextUtils.isEmpty(user.getProfilePicUrl())) {
-            Glide.with(requireContext())
-                    .load(user.getProfilePicUrl())
-                    .placeholder(android.R.drawable.sym_def_app_icon)
-                    .centerCrop()
-                    .into(ivProfile);
+        if (!TextUtils.isEmpty(currentProfilePicUrl)) {
+            bindPhoto(currentProfilePicUrl);
             return;
         }
 
         bindAvatar(currentAvatarConfig);
+    }
+
+    private void bindPhoto(String profilePicUrl) {
+        Glide.with(requireContext())
+                .load(profilePicUrl)
+                .placeholder(android.R.drawable.sym_def_app_icon)
+                .centerCrop()
+                .into(ivProfile);
     }
 
     private void bindAvatar(AvatarConfig avatarConfig) {
@@ -608,7 +672,12 @@ public class ProfileFragment extends Fragment {
         if (progressBarProfile != null) {
             progressBarProfile.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         }
-        tvEditPhoto.setEnabled(!isLoading);
+        bindProfileVisualButtonState(!isLoading && currentUserId != null);
+    }
+
+    private void bindProfileVisualButtonState(boolean enabled) {
+        tvEditPhoto.setEnabled(enabled);
+        tvEditPhoto.setAlpha(enabled ? 1f : 0.6f);
     }
 
     private void bindRoleBadge() {
@@ -675,5 +744,9 @@ public class ProfileFragment extends Fragment {
 
     private interface AvatarOptionSetter {
         void set(int index);
+    }
+
+    private interface ProfileVisualAction {
+        void run();
     }
 }

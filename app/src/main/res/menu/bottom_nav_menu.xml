@@ -13,8 +13,8 @@
 
     <item
         android:id="@+id/nav_action"
-        android:icon="@drawable/ic_calendar"
-        android:title="@string/action" />
+        android:icon="@drawable/ic_pin"
+        android:title="@string/my_events_row" />
 
     <item
         android:id="@+id/nav_favourites"

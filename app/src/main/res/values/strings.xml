@@ -267,8 +267,14 @@
     <string name="edit_photo">Edit Photo</string>
     <string name="edit_photo_or_avatar">Photo or Avatar</string>
     <string name="profile_visual_title">Profile image</string>
+    <string name="choose_main_profile_visual">Choose main profile image</string>
     <string name="upload_photo">Upload photo</string>
+    <string name="change_photo">Change photo</string>
+    <string name="add_profile_picture">Add profile picture</string>
+    <string name="use_photo_as_main">Use photo as main</string>
+    <string name="use_avatar_as_main">Use avatar as main</string>
     <string name="create_avatar">Create avatar</string>
+    <string name="edit_avatar">Edit avatar</string>
     <string name="avatar_creator_title">Create avatar</string>
     <string name="avatar_creator_subtitle">Pick a look for your profile. You can switch back to a photo anytime.</string>
     <string name="avatar_preview">Avatar preview</string>
@@ -281,6 +287,8 @@
     <string name="avatar_outfit">Outfit</string>
     <string name="avatar_saved">Avatar saved</string>
     <string name="avatar_save_failed">Failed to save avatar</string>
+    <string name="profile_image_updated">Profile image updated</string>
+    <string name="profile_image_update_failed">Failed to update profile image</string>
     <string name="manage_events_placeholder">Manage Events placeholder</string>
     <string name="account_settings_placeholder">Account Settings placeholder</string>
     <string name="logout_confirm_title">Log out?</string>
