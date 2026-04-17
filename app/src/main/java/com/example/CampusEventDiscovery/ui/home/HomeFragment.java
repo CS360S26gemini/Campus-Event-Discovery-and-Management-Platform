@@ -78,6 +78,7 @@ public class HomeFragment extends Fragment {
     private String currentUserId;
     private User currentUser;
     private Event featuredEvent;
+    private boolean isDataLoaded = false;
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 boolean granted = false;
@@ -145,9 +146,15 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (getView() != null) {
+        if (!isDataLoaded && getView() != null) {
             loadHomeData();
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        isDataLoaded = false;
     }
 
     private void setupRecyclerView() {
@@ -179,6 +186,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadHomeData() {
+        isDataLoaded = true;
         showLoading(true);
 
         if (currentUserId == null) {

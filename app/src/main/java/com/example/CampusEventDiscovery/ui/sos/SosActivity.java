@@ -1,7 +1,6 @@
 package com.example.CampusEventDiscovery.ui.sos;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -29,6 +28,9 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -54,7 +56,7 @@ public class SosActivity extends AppCompatActivity {
 
     private FusedLocationProviderClient fusedLocationClient;
     private CancellationTokenSource cancellationTokenSource;
-    private ProgressDialog progressDialog;
+    private AlertDialog progressDialog;
     private Handler timeoutHandler;
     private Runnable timeoutRunnable;
     private boolean locationResolved = false;
@@ -98,10 +100,7 @@ public class SosActivity extends AppCompatActivity {
     }
 
     private void sendSosAlert() {
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Getting your location...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
+        showProgressDialog("Getting your location...");
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -126,7 +125,7 @@ public class SosActivity extends AppCompatActivity {
             if (cancellationTokenSource != null) {
                 cancellationTokenSource.cancel();
             }
-            fetchUserDisplayName(0.0, 0.0);
+            fetchDataAndSend(0.0, 0.0);
         };
         timeoutHandler.postDelayed(timeoutRunnable, LOCATION_TIMEOUT_MS);
 
@@ -139,22 +138,22 @@ public class SosActivity extends AppCompatActivity {
                         locationResolved = true;
                         cancelTimeout();
                         if (location != null) {
-                            fetchUserDisplayName(location.getLatitude(), location.getLongitude());
+                            fetchDataAndSend(location.getLatitude(), location.getLongitude());
                         } else {
-                            fetchUserDisplayName(0.0, 0.0);
+                            fetchDataAndSend(0.0, 0.0);
                         }
                     })
                     .addOnFailureListener(e -> {
                         if (locationResolved) return;
                         locationResolved = true;
                         cancelTimeout();
-                        fetchUserDisplayName(0.0, 0.0);
+                        fetchDataAndSend(0.0, 0.0);
                     });
         } catch (SecurityException e) {
             if (locationResolved) return;
             locationResolved = true;
             cancelTimeout();
-            fetchUserDisplayName(0.0, 0.0);
+            fetchDataAndSend(0.0, 0.0);
         }
     }
 
@@ -164,42 +163,58 @@ public class SosActivity extends AppCompatActivity {
         }
     }
 
-    private void fetchUserDisplayName(double latitude, double longitude) {
-        if (TextUtils.isEmpty(currentUserId)) {
-            fetchAdminsAndSend(latitude, longitude, "Unknown User");
-            return;
-        }
+    private void fetchDataAndSend(double lat, double lng) {
+        updateProgressMessage("Sending alert...");
+        Task<String> displayNameTask = buildDisplayNameTask();
+        Task<List<String>> adminIdsTask = buildAdminIdsTask();
+        Tasks.whenAll(displayNameTask, adminIdsTask)
+                .addOnSuccessListener(unused -> {
+                    String displayName = displayNameTask.getResult();
+                    List<String> adminIds = adminIdsTask.getResult();
+                    writeAlert(lat, lng,
+                            displayName != null ? displayName : "Unknown User",
+                            adminIds != null ? adminIds : new ArrayList<>());
+                })
+                .addOnFailureListener(e -> writeAlert(lat, lng, "Unknown User", new ArrayList<>()));
+    }
 
+    private Task<String> buildDisplayNameTask() {
+        TaskCompletionSource<String> tcs = new TaskCompletionSource<>();
+        if (TextUtils.isEmpty(currentUserId)) {
+            tcs.setResult("Unknown User");
+            return tcs.getTask();
+        }
         FirebaseFirestore.getInstance()
                 .collection(Constants.COLLECTION_USERS)
                 .document(currentUserId)
                 .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    String displayName = "Unknown User";
-                    if (documentSnapshot != null && documentSnapshot.exists()) {
-                        String fetched = documentSnapshot.getString("fullName");
-                        if (!TextUtils.isEmpty(fetched)) {
-                            displayName = fetched;
-                        }
+                .addOnSuccessListener(doc -> {
+                    String name = "Unknown User";
+                    if (doc != null && doc.exists()) {
+                        String fetched = doc.getString("fullName");
+                        if (!TextUtils.isEmpty(fetched)) name = fetched;
                     }
-                    fetchAdminsAndSend(latitude, longitude, displayName);
+                    tcs.setResult(name);
                 })
-                .addOnFailureListener(e -> fetchAdminsAndSend(latitude, longitude, "Unknown User"));
+                .addOnFailureListener(e -> tcs.setResult("Unknown User"));
+        return tcs.getTask();
     }
 
-    private void fetchAdminsAndSend(double lat, double lng, String displayName) {
+    private Task<List<String>> buildAdminIdsTask() {
+        TaskCompletionSource<List<String>> tcs = new TaskCompletionSource<>();
         FirebaseFirestore.getInstance()
                 .collection(Constants.COLLECTION_USERS)
                 .whereEqualTo("role", "admin")
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(snap -> {
                     List<String> adminIds = new ArrayList<>();
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                    for (DocumentSnapshot doc : snap.getDocuments()) {
                         adminIds.add(doc.getId());
                     }
-                    writeAlert(lat, lng, displayName, adminIds);
+                    tcs.setResult(adminIds);
                 })
-                .addOnFailureListener(e -> writeAlert(lat, lng, displayName, new ArrayList<>()));
+                .addOnFailureListener(e -> tcs.setResult(new ArrayList<>()));
+        return tcs.getTask();
     }
 
     private void writeAlert(double lat, double lng, String displayName, List<String> adminIds) {
@@ -239,10 +254,29 @@ public class SosActivity extends AppCompatActivity {
         });
     }
 
+    private void showProgressDialog(String message) {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.setMessage(message);
+            return;
+        }
+        progressDialog = new AlertDialog.Builder(this)
+                .setMessage(message)
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+    }
+
+    private void updateProgressMessage(String message) {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.setMessage(message);
+        }
+    }
+
     private void dismissProgress() {
         if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
         }
+        progressDialog = null;
     }
 
     private void showSuccessUi(String mapsUrl) {
