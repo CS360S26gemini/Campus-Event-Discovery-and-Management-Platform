@@ -11,6 +11,7 @@ import android.widget.MultiAutoCompleteTextView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -63,6 +64,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
 
         bindViews();
         setupToolbar();
+        setupBackNavigation();
         setupDropdowns();
 
         if (currentUser != null) {
@@ -95,6 +97,15 @@ public class AccountSettingsActivity extends AppCompatActivity {
 
     private void setupToolbar() {
         toolbarSettings.setNavigationOnClickListener(v -> navigateBackToProfile());
+    }
+
+    private void setupBackNavigation() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                navigateBackToProfile();
+            }
+        });
     }
 
     private void setupDropdowns() {
@@ -132,11 +143,6 @@ public class AccountSettingsActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    public void onBackPressed() {
-        navigateBackToProfile();
-    }
-
     private void navigateBackToProfile() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("OPEN_TAB", "profile");
@@ -150,6 +156,9 @@ public class AccountSettingsActivity extends AppCompatActivity {
         repository.getUserData(currentUserId, new EventRepository.UserCallback() {
             @Override
             public void onSuccess(User user) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
                 showLoading(false);
                 if (user == null) {
                     return;
@@ -167,6 +176,9 @@ public class AccountSettingsActivity extends AppCompatActivity {
 
             @Override
             public void onError(Exception e) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
                 showLoading(false);
                 Toast.makeText(AccountSettingsActivity.this, "Failed to load profile", Toast.LENGTH_SHORT).show();
             }

@@ -19,6 +19,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -34,6 +35,7 @@ import com.example.CampusEventDiscovery.util.NavigationTransitions;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.FirebaseStorage;
@@ -54,6 +56,7 @@ public class ProfileFragment extends Fragment {
     private MaterialButton tvEditPhoto;
     private TextView tvFullName;
     private TextView tvEmail;
+    private Chip chipRole;
     private Switch switchDarkMode;
     private View cardDarkMode;
     private View rowMyEvents;
@@ -62,6 +65,7 @@ public class ProfileFragment extends Fragment {
     private View rowCalendar;
     private View rowNotifications;
     private View rowAccountSettings;
+    private MaterialButton btnHelp;
     private MaterialButton btnLogout;
     private ProgressBar progressBarProfile;
 
@@ -119,6 +123,7 @@ public class ProfileFragment extends Fragment {
         tvEditPhoto = view.findViewById(R.id.tvEditPhoto);
         tvFullName = view.findViewById(R.id.tvFullName);
         tvEmail = view.findViewById(R.id.tvEmail);
+        chipRole = view.findViewById(R.id.chipRole);
         switchDarkMode = view.findViewById(R.id.switchDarkMode);
         cardDarkMode = view.findViewById(R.id.cardDarkMode);
         rowMyEvents = view.findViewById(R.id.rowMyEvents);
@@ -127,6 +132,7 @@ public class ProfileFragment extends Fragment {
         rowCalendar = view.findViewById(R.id.rowCalendar);
         rowNotifications = view.findViewById(R.id.rowNotifications);
         rowAccountSettings = view.findViewById(R.id.rowAccountSettings);
+        btnHelp = view.findViewById(R.id.btn_help);
         btnLogout = view.findViewById(R.id.btnLogout);
         progressBarProfile = view.findViewById(R.id.progressBarProfile);
     }
@@ -146,7 +152,7 @@ public class ProfileFragment extends Fragment {
                 NavigationTransitions.replace(
                         requireActivity().getSupportFragmentManager(),
                         R.id.fragmentContainer,
-                        new MyEventsFragment(),
+                        MyEventsFragment.newInstance(true),
                         true,
                         true
                 )
@@ -182,6 +188,16 @@ public class ProfileFragment extends Fragment {
             startActivity(intent);
         }));
 
+        btnHelp.setOnClickListener(v -> runAfterTouchFeedback(v, () ->
+                NavigationTransitions.replace(
+                        requireActivity().getSupportFragmentManager(),
+                        R.id.fragmentContainer,
+                        new HelpFragment(),
+                        true,
+                        true
+                )
+        ));
+
         btnLogout.setOnClickListener(v -> runAfterTouchFeedback(v, this::showLogoutDialog));
     }
 
@@ -201,10 +217,12 @@ public class ProfileFragment extends Fragment {
                     return storageRef.getDownloadUrl();
                 })
                 .addOnSuccessListener(downloadUri -> {
+                    if (!isAdded()) return;
                     String url = downloadUri.toString();
                     repository.updateProfilePic(currentUserId, url, new EventRepository.ActionCallback() {
                         @Override
                         public void onSuccess() {
+                            if (!isAdded()) return;
                             showLoading(false);
                             Glide.with(requireContext())
                                     .load(url)
@@ -216,12 +234,14 @@ public class ProfileFragment extends Fragment {
 
                         @Override
                         public void onError(Exception e) {
+                            if (!isAdded()) return;
                             showLoading(false);
                             Toast.makeText(requireContext(), "Failed to update profile picture in database", Toast.LENGTH_SHORT).show();
                         }
                     });
                 })
                 .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
                     showLoading(false);
                     Toast.makeText(requireContext(), "Failed to upload image", Toast.LENGTH_SHORT).show();
                 });
@@ -233,6 +253,7 @@ public class ProfileFragment extends Fragment {
 
         if (isDevBypass) {
             currentRole = DevSessionManager.getBypassRole(requireContext());
+            bindRoleBadge();
             tvFullName.setText(DevSessionManager.getDisplayName(requireContext()));
             tvEmail.setText(DevSessionManager.getDisplayEmail(requireContext()));
             switchDarkMode.setOnCheckedChangeListener(null);
@@ -250,6 +271,8 @@ public class ProfileFragment extends Fragment {
         if (firebaseUser == null || currentUserId == null) {
             tvFullName.setText(getString(R.string.guest_user));
             tvEmail.setText(getString(R.string.unknown_email));
+            currentRole = UserRoles.ATTENDEE;
+            bindRoleBadge();
             switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
             rowMyEvents.setVisibility(View.GONE);
             rowMemories.setVisibility(View.GONE);
@@ -262,61 +285,73 @@ public class ProfileFragment extends Fragment {
         repository.getUserData(currentUserId, new EventRepository.UserCallback() {
             @Override
             public void onSuccess(User user) {
-                if (user != null) {
-                    if (!TextUtils.isEmpty(user.getFullName())) {
-                        tvFullName.setText(user.getFullName());
-                    } else {
-                        tvFullName.setText(getString(R.string.guest_user));
-                    }
-
-                    if (!TextUtils.isEmpty(user.getEmail())) {
-                        tvEmail.setText(user.getEmail());
-                    } else if (firebaseUser.getEmail() != null) {
-                        tvEmail.setText(firebaseUser.getEmail());
-                    } else {
-                        tvEmail.setText(getString(R.string.unknown_email));
-                    }
-
-                    String role = UserRoles.sanitize(user.getRole());
-                    currentRole = role.isEmpty() ? UserRoles.ATTENDEE : role;
-                    rowMyEvents.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
-                    rowMemories.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
-                    rowManageEvents.setVisibility(UserRoles.isOrganizer(currentRole) ? View.VISIBLE : View.GONE);
-
-                    switchDarkMode.setOnCheckedChangeListener(null);
-                    switchDarkMode.setChecked(user.isDarkMode());
-                    bindDarkModeListener();
-
-                    if (!TextUtils.isEmpty(user.getProfilePicUrl())) {
-                        Glide.with(requireContext())
-                                .load(user.getProfilePicUrl())
-                                .placeholder(android.R.drawable.sym_def_app_icon)
-                                .centerCrop()
-                                .into(ivProfile);
-                    } else {
-                        ivProfile.setImageResource(android.R.drawable.sym_def_app_icon);
-                    }
-                    tvEditPhoto.setEnabled(true);
-                    tvEditPhoto.setAlpha(1f);
+                if (!isAdded()) return;
+                if (user == null) {
+                    bindFallbackProfile(firebaseUser);
+                    return;
                 }
-            }
 
-            @Override
-            public void onError(Exception e) {
-                tvFullName.setText(getString(R.string.guest_user));
-                if (firebaseUser.getEmail() != null) {
+                if (!TextUtils.isEmpty(user.getFullName())) {
+                    tvFullName.setText(user.getFullName());
+                } else {
+                    tvFullName.setText(getString(R.string.guest_user));
+                }
+
+                if (!TextUtils.isEmpty(user.getEmail())) {
+                    tvEmail.setText(user.getEmail());
+                } else if (firebaseUser.getEmail() != null) {
                     tvEmail.setText(firebaseUser.getEmail());
                 } else {
                     tvEmail.setText(getString(R.string.unknown_email));
                 }
-                rowMyEvents.setVisibility(View.GONE);
-                rowMemories.setVisibility(View.GONE);
-                rowManageEvents.setVisibility(View.GONE);
-                switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
-                tvEditPhoto.setEnabled(false);
-                tvEditPhoto.setAlpha(0.6f);
+
+                String role = UserRoles.sanitize(user.getRole());
+                currentRole = role.isEmpty() ? UserRoles.ATTENDEE : role;
+                bindRoleBadge();
+                rowMyEvents.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
+                rowMemories.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
+                rowManageEvents.setVisibility(UserRoles.isOrganizer(currentRole) ? View.VISIBLE : View.GONE);
+
+                switchDarkMode.setOnCheckedChangeListener(null);
+                switchDarkMode.setChecked(user.isDarkMode());
+                bindDarkModeListener();
+
+                if (!TextUtils.isEmpty(user.getProfilePicUrl())) {
+                    Glide.with(requireContext())
+                            .load(user.getProfilePicUrl())
+                            .placeholder(android.R.drawable.sym_def_app_icon)
+                            .centerCrop()
+                            .into(ivProfile);
+                } else {
+                    ivProfile.setImageResource(android.R.drawable.sym_def_app_icon);
+                }
+                tvEditPhoto.setEnabled(true);
+                tvEditPhoto.setAlpha(1f);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                bindFallbackProfile(firebaseUser);
             }
         });
+    }
+
+    private void bindFallbackProfile(FirebaseUser firebaseUser) {
+        tvFullName.setText(getString(R.string.guest_user));
+        if (firebaseUser != null && firebaseUser.getEmail() != null) {
+            tvEmail.setText(firebaseUser.getEmail());
+        } else {
+            tvEmail.setText(getString(R.string.unknown_email));
+        }
+        rowMyEvents.setVisibility(View.GONE);
+        rowMemories.setVisibility(View.GONE);
+        rowManageEvents.setVisibility(View.GONE);
+        currentRole = UserRoles.ATTENDEE;
+        bindRoleBadge();
+        switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
+        tvEditPhoto.setEnabled(false);
+        tvEditPhoto.setAlpha(0.6f);
     }
 
     private void showLoading(boolean isLoading) {
@@ -324,6 +359,26 @@ public class ProfileFragment extends Fragment {
             progressBarProfile.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         }
         tvEditPhoto.setEnabled(!isLoading);
+    }
+
+    private void bindRoleBadge() {
+        if (chipRole == null) {
+            return;
+        }
+
+        if (UserRoles.isAdmin(currentRole)) {
+            chipRole.setText(R.string.admin);
+            chipRole.setChipBackgroundColorResource(R.color.role_admin_container);
+            chipRole.setTextColor(ContextCompat.getColor(requireContext(), R.color.role_admin_on_container));
+        } else if (UserRoles.isOrganizer(currentRole)) {
+            chipRole.setText(R.string.organizer);
+            chipRole.setChipBackgroundColorResource(R.color.role_organizer_container);
+            chipRole.setTextColor(ContextCompat.getColor(requireContext(), R.color.role_organizer_on_container));
+        } else {
+            chipRole.setText(R.string.attendee);
+            chipRole.setChipBackgroundColorResource(R.color.role_attendee_container);
+            chipRole.setTextColor(ContextCompat.getColor(requireContext(), R.color.role_attendee_on_container));
+        }
     }
 
     private void bindDarkModeListener() {
