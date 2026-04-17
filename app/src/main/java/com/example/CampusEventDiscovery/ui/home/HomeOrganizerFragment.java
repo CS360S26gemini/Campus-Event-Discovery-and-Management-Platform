@@ -170,6 +170,7 @@ public class HomeOrganizerFragment extends Fragment {
         repository.getSavedEvents(currentUserId, new EventRepository.EventListCallback() {
             @Override
             public void onSuccess(List<Event> events) {
+                if (!isAdded()) return;
                 savedEventIds.clear();
                 for (Event event : events) {
                     if (event.getEventId() != null) {
@@ -182,6 +183,7 @@ public class HomeOrganizerFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (!isAdded()) return;
                 savedEventIds.clear();
                 adapter.updateSavedIds(savedEventIds);
             }
@@ -190,9 +192,10 @@ public class HomeOrganizerFragment extends Fragment {
         repository.getUserData(currentUserId, new EventRepository.UserCallback() {
             @Override
             public void onSuccess(User user) {
+                if (!isAdded()) return;
                 currentUser = user;
 
-                String name = user.getFullName();
+                String name = user == null ? null : user.getFullName();
                 if (TextUtils.isEmpty(name)) {
                     tvOrganizerWelcome.setText(getString(R.string.organizer_welcome_back));
                 } else {
@@ -201,15 +204,18 @@ public class HomeOrganizerFragment extends Fragment {
 
                 loadFeaturedEvent();
 
-                repository.getPersonalisedEvents(user.getInterests(), new EventRepository.EventListCallback() {
+                List<String> interests = user == null ? new ArrayList<>() : user.getInterests();
+                repository.getPersonalisedEvents(interests, new EventRepository.EventListCallback() {
                     @Override
                     public void onSuccess(List<Event> events) {
+                        if (!isAdded()) return;
                         showLoading(false);
                         updateEventList(events);
                     }
 
                     @Override
                     public void onError(Exception e) {
+                        if (!isAdded()) return;
                         showLoading(false);
                         tvEmpty.setVisibility(View.VISIBLE);
                         updateEventList(new ArrayList<>());
@@ -219,6 +225,7 @@ public class HomeOrganizerFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (!isAdded()) return;
                 if (DevSessionManager.shouldUseBypass(requireContext())) {
                     tvOrganizerWelcome.setText(getString(R.string.organizer_welcome_back) + "\n" + DevSessionManager.getDisplayName(requireContext()));
                 } else {
@@ -229,12 +236,14 @@ public class HomeOrganizerFragment extends Fragment {
                 repository.getUpcomingEvents(new EventRepository.EventListCallback() {
                     @Override
                     public void onSuccess(List<Event> events) {
+                        if (!isAdded()) return;
                         showLoading(false);
                         updateEventList(events);
                     }
 
                     @Override
                     public void onError(Exception e) {
+                        if (!isAdded()) return;
                         showLoading(false);
                         tvEmpty.setVisibility(View.VISIBLE);
                         updateEventList(new ArrayList<>());
@@ -248,6 +257,7 @@ public class HomeOrganizerFragment extends Fragment {
         repository.getFeaturedEventIds(new EventRepository.FeaturedEventIdsCallback() {
             @Override
             public void onSuccess(List<String> featuredIds) {
+                if (!isAdded()) return;
                 if (featuredIds == null || featuredIds.isEmpty()) {
                     featuredCardContainer.setVisibility(View.GONE);
                     return;
@@ -256,6 +266,7 @@ public class HomeOrganizerFragment extends Fragment {
                 repository.getFeaturedEvents(featuredIds, new EventRepository.EventListCallback() {
                     @Override
                     public void onSuccess(List<Event> events) {
+                        if (!isAdded()) return;
                         if (events == null || events.isEmpty()) {
                             featuredCardContainer.setVisibility(View.GONE);
                             return;
@@ -267,6 +278,7 @@ public class HomeOrganizerFragment extends Fragment {
 
                     @Override
                     public void onError(Exception e) {
+                        if (!isAdded()) return;
                         featuredCardContainer.setVisibility(View.GONE);
                     }
                 });
@@ -274,6 +286,7 @@ public class HomeOrganizerFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (!isAdded()) return;
                 featuredCardContainer.setVisibility(View.GONE);
             }
         });
@@ -329,6 +342,7 @@ public class HomeOrganizerFragment extends Fragment {
 
         if (isCurrentlySaved) {
             repository.unsaveEvent(currentUserId, event.getEventId(), () -> {
+                if (!isAdded()) return;
                 savedEventIds.remove(event.getEventId());
                 adapter.updateSavedIds(savedEventIds);
                 bindFeaturedEvent(featuredEvent);
@@ -337,6 +351,7 @@ public class HomeOrganizerFragment extends Fragment {
             repository.saveEvent(currentUserId, event, new EventRepository.ActionCallback() {
                 @Override
                 public void onSuccess() {
+                    if (!isAdded()) return;
                     savedEventIds.add(event.getEventId());
                     adapter.updateSavedIds(savedEventIds);
                     bindFeaturedEvent(featuredEvent);
@@ -344,6 +359,7 @@ public class HomeOrganizerFragment extends Fragment {
 
                 @Override
                 public void onError(Exception e) {
+                    if (!isAdded()) return;
                     Toast.makeText(requireContext(), "Failed to save event.", Toast.LENGTH_SHORT).show();
                 }
             });

@@ -8,12 +8,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.Event;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.chip.Chip;
 import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
@@ -53,9 +55,14 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
         Event event = events.get(position);
 
         holder.tvTitle.setText(safeText(event.getTitle(), holder.itemView.getContext().getString(R.string.app_name)));
-        holder.tvDateTime.setText(formatDateTime(event.getDate()));
+        holder.tvDateTime.setText(formatDateTime(event.getDate(), holder.itemView));
         holder.tvVenue.setText(safeText(event.getLocation(),
                 holder.itemView.getContext().getString(R.string.placeholder_venue)));
+        if (holder.chipCategory != null) {
+            String category = event.getCategory();
+            holder.chipCategory.setText(category);
+            holder.chipCategory.setVisibility(TextUtils.isEmpty(category) ? View.GONE : View.VISIBLE);
+        }
 
         long capacity = event.getCapacity();
         holder.tvSpots.setText(holder.itemView.getContext().getString(
@@ -63,16 +70,19 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
                 0,
                 capacity
         ));
+        bindProposalStatus(holder, event);
 
-        holder.ivVerified.setVisibility(View.GONE);
-        holder.ivHeart.setVisibility(View.GONE);
-        holder.ivShare.setVisibility(View.GONE);
+        if (holder.ivVerified != null) holder.ivVerified.setVisibility(View.GONE);
+        if (holder.ivHeart != null) holder.ivHeart.setVisibility(View.GONE);
+        if (holder.ivShare != null) holder.ivShare.setVisibility(View.GONE);
 
-        holder.tvNewBadge.setVisibility(View.VISIBLE);
-        holder.tvNewBadge.setText(resolveStatusBadge(holder.itemView, event));
+        if (holder.tvNewBadge != null) {
+            holder.tvNewBadge.setVisibility(View.GONE);
+        }
 
         String imageUrl = event.getThumbnailUrl();
         if (!TextUtils.isEmpty(imageUrl)) {
+            if (holder.ivPlaceholderIcon != null) holder.ivPlaceholderIcon.setVisibility(View.GONE);
             Glide.with(holder.itemView.getContext())
                     .load(imageUrl)
                     .placeholder(R.drawable.bg_placeholder_image)
@@ -81,6 +91,7 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
         } else {
             holder.ivThumbnail.setImageResource(0);
             holder.ivThumbnail.setBackgroundResource(R.drawable.bg_placeholder_image);
+            if (holder.ivPlaceholderIcon != null) holder.ivPlaceholderIcon.setVisibility(View.VISIBLE);
         }
 
         holder.cardRoot.setOnClickListener(v -> {
@@ -104,9 +115,9 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
         return TextUtils.isEmpty(text) ? fallback : text;
     }
 
-    private String formatDateTime(Timestamp timestamp) {
+    private String formatDateTime(Timestamp timestamp, View view) {
         if (timestamp == null) {
-            return "Date TBD";
+            return view.getContext().getString(R.string.placeholder_date);
         }
 
         Date date = timestamp.toDate();
@@ -130,10 +141,35 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
         return itemView.getContext().getString(R.string.pending_badge);
     }
 
+    private void bindProposalStatus(PendingViewHolder holder, Event event) {
+        if (holder.chipStatus == null) {
+            return;
+        }
+
+        String statusText = resolveStatusBadge(holder.itemView, event);
+        holder.chipStatus.setText(statusText);
+
+        String status = event == null || event.getStatus() == null
+                ? ""
+                : event.getStatus().trim().toLowerCase(Locale.getDefault());
+
+        if ("rejected".equals(status)) {
+            holder.chipStatus.setChipBackgroundColorResource(R.color.colorErrorContainer);
+            holder.chipStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.colorOnErrorContainer));
+        } else if ("approved".equals(status)) {
+            holder.chipStatus.setChipBackgroundColorResource(R.color.colorPrimaryContainer);
+            holder.chipStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.colorOnPrimaryContainer));
+        } else {
+            holder.chipStatus.setChipBackgroundColorResource(R.color.colorSecondaryContainer);
+            holder.chipStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.colorOnSecondaryContainer));
+        }
+    }
+
     public static class PendingViewHolder extends RecyclerView.ViewHolder {
 
         MaterialCardView cardRoot;
         ImageView ivThumbnail;
+        ImageView ivPlaceholderIcon;
         ImageView ivVerified;
         ImageView ivHeart;
         ImageView ivShare;
@@ -142,12 +178,15 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
         TextView tvVenue;
         TextView tvSpots;
         TextView tvNewBadge;
+        Chip chipCategory;
+        Chip chipStatus;
 
         public PendingViewHolder(@NonNull View itemView) {
             super(itemView);
 
             cardRoot = (MaterialCardView) itemView;
             ivThumbnail = itemView.findViewById(R.id.ivThumbnail);
+            ivPlaceholderIcon = itemView.findViewById(R.id.ivPlaceholderIcon);
             ivVerified = itemView.findViewById(R.id.ivVerified);
             ivHeart = itemView.findViewById(R.id.ivHeart);
             ivShare = itemView.findViewById(R.id.ivShare);
@@ -156,6 +195,8 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
             tvVenue = itemView.findViewById(R.id.tvVenue);
             tvSpots = itemView.findViewById(R.id.tvSpots);
             tvNewBadge = itemView.findViewById(R.id.tvNewBadge);
+            chipCategory = itemView.findViewById(R.id.chipCategory);
+            chipStatus = itemView.findViewById(R.id.chipStatus);
         }
     }
 }
