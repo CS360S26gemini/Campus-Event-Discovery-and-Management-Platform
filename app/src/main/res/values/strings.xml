@@ -124,6 +124,10 @@
     <string name="send_sos_title">Send SOS?</string>
     <string name="send_sos_message">This will alert campus security.</string>
     <string name="sos_sent">SOS sent</string>
+    <string name="sos_label_reporter">Reporter: %s</string>
+    <string name="sos_label_event">Event: %s</string>
+    <string name="sos_label_unknown_reporter">Unknown Reporter</string>
+    <string name="sos_status_active">ACTIVE</string>
 
     <string name="you_are_in">You\'re in! 🎉</string>
     <string name="spot_confirmed">Your spot is confirmed. See you there!</string>

@@ -60,12 +60,12 @@ public class SOSAlertActivity extends AppCompatActivity {
         String eventName = getIntent().getStringExtra("eventName");
 
         if (!TextUtils.isEmpty(reporter)) {
-            tvReporter.setText("Reporter: " + reporter);
+            tvReporter.setText(getString(R.string.sos_label_reporter, reporter));
         }
 
         StringBuilder body = new StringBuilder();
         if (!TextUtils.isEmpty(eventName)) {
-            body.append("Event: ").append(eventName).append("\n");
+            body.append(getString(R.string.sos_label_event, eventName)).append("\n");
         }
         if (!TextUtils.isEmpty(description)) {
             body.append(description);

@@ -66,10 +66,14 @@ public class SosAlertAdapter extends RecyclerView.Adapter<SosAlertAdapter.AlertH
 
         void bind(SosAlert alert) {
             tvReporter.setText(TextUtils.isEmpty(alert.getDisplayName())
-                    ? "Unknown Reporter" : alert.getDisplayName());
-            tvStatus.setText(TextUtils.isEmpty(alert.getStatus()) ? "ACTIVE" : alert.getStatus());
+                    ? itemView.getContext().getString(R.string.sos_label_unknown_reporter)
+                    : alert.getDisplayName());
+            tvStatus.setText(TextUtils.isEmpty(alert.getStatus())
+                    ? itemView.getContext().getString(R.string.sos_status_active)
+                    : alert.getStatus());
             tvEventName.setText(TextUtils.isEmpty(alert.getEventName())
-                    ? "" : "Event: " + alert.getEventName());
+                    ? ""
+                    : itemView.getContext().getString(R.string.sos_label_event, alert.getEventName()));
 
             if (alert.getTimestamp() > 0L) {
                 CharSequence relative = DateUtils.getRelativeTimeSpanString(
