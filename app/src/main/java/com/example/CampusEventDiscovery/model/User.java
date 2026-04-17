@@ -20,6 +20,8 @@ public class User {
     private String university;
     private String location;
     private String profilePicUrl;
+    private boolean avatarEnabled;
+    private Map<String, Object> avatarConfig;
     private List<String> interests;
     private boolean darkMode;
     private String fcmToken;
@@ -31,6 +33,7 @@ public class User {
      */
     public User() {
         this.interests = new ArrayList<>();
+        this.avatarConfig = new HashMap<>();
         this.googleCalendarToken = new HashMap<>();
     }
 
@@ -51,6 +54,8 @@ public class User {
         this.university = university;
         this.location = location;
         this.profilePicUrl = profilePicUrl;
+        this.avatarEnabled = false;
+        this.avatarConfig = new HashMap<>();
         this.interests = interests != null ? interests : new ArrayList<>();
         this.darkMode = darkMode;
         this.googleCalendarToken = new HashMap<>();
@@ -105,6 +110,22 @@ public class User {
 
     public void setProfilePicUrl(String profilePicUrl) {
         this.profilePicUrl = profilePicUrl;
+    }
+
+    public boolean isAvatarEnabled() {
+        return avatarEnabled;
+    }
+
+    public void setAvatarEnabled(boolean avatarEnabled) {
+        this.avatarEnabled = avatarEnabled;
+    }
+
+    public Map<String, Object> getAvatarConfig() {
+        return avatarConfig;
+    }
+
+    public void setAvatarConfig(Map<String, Object> avatarConfig) {
+        this.avatarConfig = avatarConfig != null ? avatarConfig : new HashMap<>();
     }
 
     public List<String> getInterests() {

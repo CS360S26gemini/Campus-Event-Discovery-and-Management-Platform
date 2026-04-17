@@ -1118,8 +1118,23 @@ public class EventRepository {
     }
 
     public void updateProfilePic(String userId, String url, ActionCallback cb) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("profilePicUrl", url);
+        updates.put("avatarEnabled", false);
+
         db.collection(COLLECTION_USERS).document(userId)
-                .update("profilePicUrl", url)
+                .update(updates)
+                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
+    public void updateProfileAvatar(String userId, Map<String, Object> avatarConfig, ActionCallback cb) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("avatarEnabled", true);
+        updates.put("avatarConfig", avatarConfig == null ? new HashMap<>() : avatarConfig);
+
+        db.collection(COLLECTION_USERS).document(userId)
+                .update(updates)
                 .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
