@@ -180,7 +180,8 @@ public class SearchFragment extends Fragment {
                     public void onItemLongClick(Event event) {
                         // no-op for search screen
                     }
-                }
+                },
+                true
         );
 
         rvResults.setLayoutManager(new LinearLayoutManager(requireContext()));

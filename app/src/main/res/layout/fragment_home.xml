@@ -37,7 +37,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSos"
-                    style="@style/AppDangerButtonStyle"
+                    style="@style/AppSosButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/sos" />
@@ -49,10 +49,27 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="20dp"
-                android:text="@string/popular_in_lums"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:layout_marginBottom="@dimen/spacing_sm"
+                android:text="@string/popular_events"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="?attr/colorOnSurface" />
+
+            <HorizontalScrollView
+                android:id="@+id/popularEventsScroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/popularEventsContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/spacing_md"
+                    android:paddingEnd="@dimen/spacing_md" />
+            </HorizontalScrollView>
 
             <FrameLayout
                 android:id="@+id/featuredCardContainer"
@@ -80,7 +97,8 @@
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
                 android:nestedScrollingEnabled="false"
-                android:paddingTop="4dp" />
+                android:paddingTop="@dimen/spacing_md"
+                android:paddingBottom="@dimen/bottom_nav_safe_padding" />
 
             <TextView
                 android:id="@+id/tvEmpty"
@@ -90,8 +108,11 @@
                 android:layout_marginTop="32dp"
                 android:layout_marginBottom="24dp"
                 android:text="@string/no_events_found"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="?attr/colorOnSurface"
+                android:drawableTop="@drawable/ic_event_outline"
+                android:drawablePadding="@dimen/spacing_md"
+                android:gravity="center"
                 android:visibility="gone" />
 
         </LinearLayout>
