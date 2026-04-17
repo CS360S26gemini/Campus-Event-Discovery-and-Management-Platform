@@ -44,8 +44,6 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
-    implementation("com.google.firebase:firebase-appcheck-playintegrity")
-    debugImplementation("com.google.firebase:firebase-appcheck-debug")
 
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.13.0")
@@ -55,7 +53,6 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
     implementation("de.hdodenhof:circleimageview:3.1.0")
 
