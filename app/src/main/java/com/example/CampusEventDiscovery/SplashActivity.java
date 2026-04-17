@@ -35,11 +35,32 @@ public class SplashActivity extends AppCompatActivity {
 
     private void routeFromSplash() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
         if (currentUser == null && DevSessionManager.shouldUseBypass(this)) {
             openActivity(MainActivity.class);
             return;
         }
 
+        if (currentUser == null) {
+            continueRouting(null);
+            return;
+        }
+
+        currentUser.reload()
+                .addOnCompleteListener(task -> {
+                    FirebaseUser refreshedUser = FirebaseAuth.getInstance().getCurrentUser();
+
+                    if (refreshedUser != null && !refreshedUser.isEmailVerified()) {
+                        FirebaseAuth.getInstance().signOut();
+                        openActivity(WelcomeActivity.class);
+                        return;
+                    }
+
+                    continueRouting(refreshedUser);
+                });
+    }
+
+    private void continueRouting(FirebaseUser currentUser) {
         repository.getMaintenanceMode(new EventRepository.BooleanCallback() {
             @Override
             public void onSuccess(boolean maintenanceMode) {
