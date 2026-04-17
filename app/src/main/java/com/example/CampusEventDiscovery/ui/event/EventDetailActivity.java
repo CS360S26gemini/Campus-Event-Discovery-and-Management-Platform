@@ -232,7 +232,7 @@ public class EventDetailActivity extends AppCompatActivity {
         if (btnTickets != null) btnTickets.setVisibility(View.GONE);
         if (btnViewTicket != null) {
             btnViewTicket.setVisibility(View.VISIBLE);
-            btnViewTicket.setText("View Ticket");
+            btnViewTicket.setText(R.string.view_ticket);
         }
     }
 
@@ -252,12 +252,18 @@ public class EventDetailActivity extends AppCompatActivity {
         repository.getUserData(currentUserId, new EventRepository.UserCallback() {
             @Override
             public void onSuccess(com.example.CampusEventDiscovery.model.User user) {
-                currentUserRole = UserRoles.sanitize(user.getRole());
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                currentUserRole = user == null ? "" : UserRoles.sanitize(user.getRole());
                 updateRegistrationCta();
             }
 
             @Override
             public void onError(Exception e) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
                 currentUserRole = "";
                 updateRegistrationCta();
             }

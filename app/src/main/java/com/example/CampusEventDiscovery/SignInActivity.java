@@ -18,7 +18,6 @@ import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
-import com.example.CampusEventDiscovery.ui.admin.AdminHomeActivity;
 /**
  * SignInActivity.java
  *
@@ -83,7 +82,9 @@ public class SignInActivity extends AppCompatActivity {
                     repository.getUserData(authResult.getUser().getUid(), new EventRepository.UserCallback() {
                         @Override
                         public void onSuccess(com.example.CampusEventDiscovery.model.User user) {
-                            ThemeManager.syncThemePreference(SignInActivity.this, user.isDarkMode());
+                            if (user != null) {
+                                ThemeManager.syncThemePreference(SignInActivity.this, user.isDarkMode());
+                            }
                             openMain();
                         }
 

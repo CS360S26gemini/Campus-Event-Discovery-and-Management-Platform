@@ -253,6 +253,11 @@ public class EventCalendarFragment extends Fragment {
                 return;
             }
 
+            if (getParentFragmentManager().getBackStackEntryCount() > 0) {
+                getParentFragmentManager().popBackStack();
+                return;
+            }
+
             if (getActivity() != null) {
                 BottomNavigationView nav = getActivity().findViewById(R.id.bottomNavigationView);
                 if (nav != null) {

@@ -183,7 +183,10 @@ public class BuyTicketActivity extends AppCompatActivity {
         repository.getUserData(currentUser.getUid(), new EventRepository.UserCallback() {
             @Override
             public void onSuccess(com.example.CampusEventDiscovery.model.User user) {
-                if (!UserRoles.isAttendee(user.getRole())) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (user == null || !UserRoles.isAttendee(user.getRole())) {
                     Toast.makeText(BuyTicketActivity.this, getString(R.string.attendee_only_registration_message), Toast.LENGTH_SHORT).show();
                     finish();
                 }
@@ -191,6 +194,9 @@ public class BuyTicketActivity extends AppCompatActivity {
 
             @Override
             public void onError(Exception e) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
                 Toast.makeText(BuyTicketActivity.this, getString(R.string.attendee_only_registration_message), Toast.LENGTH_SHORT).show();
                 finish();
             }

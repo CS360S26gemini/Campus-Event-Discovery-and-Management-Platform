@@ -34,6 +34,10 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void routeFromSplash() {
+        if (!canRoute()) {
+            return;
+        }
+
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null && DevSessionManager.shouldUseBypass(this)) {
             openActivity(MainActivity.class);
@@ -86,8 +90,15 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void openActivity(Class<?> activityClass) {
+        if (!canRoute()) {
+            return;
+        }
         Intent intent = new Intent(SplashActivity.this, activityClass);
         startActivity(intent);
         finish();
+    }
+
+    private boolean canRoute() {
+        return !isFinishing() && !isDestroyed();
     }
 }
