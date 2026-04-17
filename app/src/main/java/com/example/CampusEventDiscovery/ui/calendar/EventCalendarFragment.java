@@ -178,7 +178,8 @@ public class EventCalendarFragment extends Fragment {
                         }
                         addEventToGoogleCalendar(event);
                     }
-                }
+                },
+                true
         );
 
         rvCalendarEvents.setLayoutManager(new LinearLayoutManager(requireContext()));
