@@ -13,6 +13,7 @@
     <string name="welcome_back">Welcome Back,</string>
     <string name="sos">SOS</string>
     <string name="popular_in_lums">Popular in LUMS</string>
+    <string name="popular_events">Popular Events</string>
     <string name="more_like_this">More Like This</string>
     <string name="new_badge">NEW</string>
     <string name="verified">Verified</string>
@@ -47,6 +48,10 @@
     <string name="sold_out">Sold Out</string>
     <string name="spots_remaining">%1$d spots remaining</string>
     <string name="spots_ratio">%1$d / %2$d spots</string>
+    <string name="registered_count_placeholder">0 registered</string>
+    <string name="status_open">Open</string>
+    <string name="status_full">Full</string>
+    <string name="status_closed">Closed</string>
 
     <string name="buy">Buy</string>
     <string name="secure_your_spot">Secure Your Spot</string>
@@ -120,6 +125,9 @@
     <string name="reauthentication_failed">Could not verify your current password: %1$s</string>
     <string name="unknown_error">Unknown error</string>
     <string name="logout">Logout</string>
+    <string name="help_support">Help &amp; Support</string>
+    <string name="help_support_placeholder">We\'re building this section. Full help documentation, FAQs, and support contact will be available here soon.</string>
+    <string name="got_it">Got it</string>
 
     <string name="send_sos_title">Send SOS?</string>
     <string name="send_sos_message">This will alert campus security.</string>
@@ -153,6 +161,7 @@
     <string name="view_on_map_inline">View on map</string>
     <string name="add_to_calendar_inline">Add to calendar</string>
     <string name="tickets_button">Tickets</string>
+    <string name="view_ticket">View Ticket</string>
     <string name="ticket_price_label">PKR 3000</string>
     <string name="sold_out_toast">This event is sold out</string>
 
@@ -201,6 +210,10 @@
 
     <string name="calendar_header">Event Calendar</string>
     <string name="dates_with_events">Dates with events: %1$s</string>
+    <string name="dates_with_events_empty">Dates with events: -</string>
+    <string name="calendar_month_placeholder">Month</string>
+    <string name="previous_month">Previous Month</string>
+    <string name="next_month">Next Month</string>
     <string name="no_events_this_day">No events on this day</string>
     <string name="month_previous"><![CDATA[<]]></string>
     <string name="month_next"><![CDATA[>]]></string>
