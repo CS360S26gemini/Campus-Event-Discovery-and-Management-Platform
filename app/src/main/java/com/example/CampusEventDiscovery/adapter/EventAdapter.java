@@ -111,10 +111,17 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             holder.ivVerified.setVisibility(event.isVerified() ? View.VISIBLE : View.GONE);
         }
 
+        boolean canToggleFavourite = !TextUtils.isEmpty(currentUserId)
+                && event.getEventId() != null
+                && listener != null;
         boolean isSaved = event.getEventId() != null && savedEventIds.contains(event.getEventId());
         if (holder.ivHeart != null) {
             holder.ivHeart.setImageResource(isSaved ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
-            holder.ivHeart.setVisibility(View.GONE);
+            holder.ivHeart.setVisibility(canToggleFavourite ? View.VISIBLE : View.GONE);
+            holder.ivHeart.setEnabled(canToggleFavourite);
+            holder.ivHeart.setOnClickListener(canToggleFavourite
+                    ? v -> listener.onHeartClick(event, isSaved)
+                    : null);
         }
 
         String imageUrl = event.getThumbnailUrl();
@@ -144,14 +151,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             }
             return false;
         });
-
-        if (holder.ivHeart != null) {
-            holder.ivHeart.setOnClickListener(v -> {
-                if (!TextUtils.isEmpty(currentUserId) && listener != null) {
-                    listener.onHeartClick(event, isSaved);
-                }
-            });
-        }
 
         if (holder.ivShare != null) {
             holder.ivShare.setOnClickListener(v -> {
