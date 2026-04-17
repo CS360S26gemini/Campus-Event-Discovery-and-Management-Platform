@@ -36,6 +36,8 @@ public class RsvpPaymentFieldsTest {
     public void emptyConstructor_paymentRefIsNull() {
         Rsvp rsvp = new Rsvp();
         assertNull("paymentRef must default to null for legacy docs", rsvp.getPaymentRef());
+        assertNull("paymentMethod must default to null for legacy docs", rsvp.getPaymentMethod());
+        assertNull("paymentProofUrl must default to null for legacy docs", rsvp.getPaymentProofUrl());
     }
 
     @Test
@@ -96,11 +98,15 @@ public class RsvpPaymentFieldsTest {
 
         rsvp.setPaymentRef("pi_test_foo");
         rsvp.setPaymentStatus(Constants.PAYMENT_CONFIRMED);
+        rsvp.setPaymentMethod("BANK_TRANSFER");
+        rsvp.setPaymentProofUrl("https://example.com/proof.jpg");
 
         assertEquals("u1", rsvp.getUserId());
         assertEquals("e1", rsvp.getEventId());
         assertEquals("confirmed", rsvp.getStatus());
         assertEquals(false, rsvp.isCheckedIn());
+        assertEquals("BANK_TRANSFER", rsvp.getPaymentMethod());
+        assertEquals("https://example.com/proof.jpg", rsvp.getPaymentProofUrl());
     }
 
     @Test

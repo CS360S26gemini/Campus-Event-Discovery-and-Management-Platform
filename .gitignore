@@ -1,10 +1,10 @@
-@"
 .idea/
 *.iml
 .gradle/
+.gradle-home/
 local.properties
 build/
 captures/
 .externalNativeBuild/
 .cxx/
-"@ | Set-Content .gitignore
+supabase/.temp/

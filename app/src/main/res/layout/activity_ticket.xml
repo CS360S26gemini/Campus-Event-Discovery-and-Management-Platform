@@ -62,6 +62,78 @@
         android:textColor="@color/colorSecondary"
         android:textSize="12sp" />
 
+    <!-- Bank Transfer receipt section (EasyPaisa/JazzCash-style) — visible only for BANK_TRANSFER -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardBankTransferReceipt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Payment Receipt"
+                android:textColor="@color/colorOnBackground"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Bank Transfer — Pending Verification"
+                android:textColor="@color/colorSecondary"
+                android:textSize="13sp" />
+
+            <ImageView
+                android:id="@+id/ivPaymentProof"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="12dp"
+                android:background="@color/colorBackground"
+                android:scaleType="centerCrop"
+                android:contentDescription="Payment proof screenshot" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Transaction Reference"
+                android:textColor="@color/colorSecondary"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvBankTxnRef"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="bank_XXXXXXXX"
+                android:textColor="@color/colorOnBackground"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Keep this reference for your records. The organiser will confirm your payment."
+                android:textColor="@color/colorSecondary"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
     <View
         android:layout_width="0dp"
         android:layout_height="0dp"

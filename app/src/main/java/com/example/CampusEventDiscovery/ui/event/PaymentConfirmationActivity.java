@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.callback.FirestoreCallback;
 import com.example.CampusEventDiscovery.model.Payment;
@@ -132,20 +133,41 @@ public class PaymentConfirmationActivity extends AppCompatActivity {
             holder.tvAmount.setText(String.format(Locale.getDefault(), "PKR %.2f", p.getAmount()));
             holder.tvRef.setText(p.getTransactionId() != null ? p.getTransactionId() : "—");
             holder.tvStatus.setText(p.getStatus() != null ? p.getStatus() : "");
+            holder.tvMethod.setText(formatMethod(p.getPaymentMethod()));
             holder.tvWhen.setText(fmt.format(new java.util.Date(p.getTimestamp())));
+
+            String proofUrl = p.getProofUrl();
+            if (proofUrl != null && !proofUrl.isEmpty()) {
+                holder.ivProof.setVisibility(View.VISIBLE);
+                Glide.with(holder.itemView.getContext())
+                        .load(proofUrl)
+                        .into(holder.ivProof);
+            } else {
+                holder.ivProof.setVisibility(View.GONE);
+            }
         }
 
         @Override
         public int getItemCount() { return items.size(); }
 
+        private String formatMethod(String method) {
+            if (method == null || method.isEmpty()) {
+                return "";
+            }
+            return method.replace('_', ' ');
+        }
+
         static class VH extends RecyclerView.ViewHolder {
-            TextView tvAmount, tvRef, tvStatus, tvWhen;
+            TextView tvAmount, tvRef, tvStatus, tvMethod, tvWhen;
+            android.widget.ImageView ivProof;
             VH(@NonNull View itemView) {
                 super(itemView);
                 tvAmount = itemView.findViewById(R.id.tvAmount);
                 tvRef    = itemView.findViewById(R.id.tvRef);
                 tvStatus = itemView.findViewById(R.id.tvStatus);
+                tvMethod = itemView.findViewById(R.id.tvMethod);
                 tvWhen   = itemView.findViewById(R.id.tvWhen);
+                ivProof  = itemView.findViewById(R.id.ivProof);
             }
         }
     }

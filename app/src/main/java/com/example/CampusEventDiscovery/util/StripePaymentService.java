@@ -1,12 +1,14 @@
 package com.example.CampusEventDiscovery.util;
 
 import com.example.CampusEventDiscovery.model.Payment;
+import com.example.CampusEventDiscovery.util.Constants;
 
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.UUID;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -40,6 +42,23 @@ public class StripePaymentService {
     public interface PaymentCallback {
         void onSuccess(Payment payment);
         void onFailure(Exception e);
+    }
+
+    /**
+     * Lightweight synchronous helper kept for unit tests and legacy callers.
+     * The app flow uses the async overload below.
+     */
+    public static Payment processPayment(String userId, String eventId, double amount) {
+        String hex = UUID.randomUUID().toString().replace("-", "").substring(0, 24);
+        return new Payment(
+                null,
+                userId,
+                eventId,
+                amount,
+                Constants.PAYMENT_CONFIRMED,
+                "pi_test_" + hex,
+                System.currentTimeMillis()
+        );
     }
 
     /**

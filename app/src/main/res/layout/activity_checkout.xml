@@ -131,10 +131,10 @@
                     android:padding="8dp">
 
                     <RadioButton
-                        android:id="@+id/rbJazzCash"
+                        android:id="@+id/rbBankTransfer"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:text="@string/payment_method_jazzcash"
+                        android:text="@string/payment_method_bank_transfer"
                         android:paddingStart="12dp"
                         android:textSize="15sp"
                         android:button="@null"
@@ -175,23 +175,6 @@
                         android:drawableEnd="@null"
                         android:background="?attr/selectableItemBackground" />
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="?attr/colorOutlineVariant"
-                        android:layout_marginStart="12dp" />
-
-                    <RadioButton
-                        android:id="@+id/rbApplePay"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:text="@string/payment_method_apple_pay"
-                        android:paddingStart="12dp"
-                        android:textSize="15sp"
-                        android:button="@null"
-                        android:drawableEnd="@null"
-                        android:background="?attr/selectableItemBackground" />
-
                 </RadioGroup>
 
             </com.google.android.material.card.MaterialCardView>
@@ -215,6 +198,128 @@
                     android:imeOptions="actionDone" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:id="@+id/layout_bank_transfer_proof"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- Bank account info card shown to user so they know where to transfer -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceVariant"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorPrimary"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:text="@string/bank_transfer_info_title"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="13sp"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.08"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:text="@string/bank_transfer_bank_name"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:text="@string/bank_transfer_account_name"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:text="@string/bank_transfer_account_number"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:text="@string/bank_transfer_iban"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="0.5dp"
+                            android:layout_marginBottom="10dp"
+                            android:background="?attr/colorOutlineVariant" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/bank_transfer_note"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:id="@+id/tv_payment_proof_hint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/payment_proof_label"
+                    android:textAllCaps="true"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_upload_proof"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/upload_payment_proof" />
+
+                <TextView
+                    android:id="@+id/tv_payment_proof_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/payment_proof_not_selected"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="13sp" />
+
+                <ImageView
+                    android:id="@+id/iv_payment_proof_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:layout_marginTop="10dp"
+                    android:scaleType="centerCrop"
+                    android:visibility="visible" />
+
+            </LinearLayout>
 
             </LinearLayout>
 

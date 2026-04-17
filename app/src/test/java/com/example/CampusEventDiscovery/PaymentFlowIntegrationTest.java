@@ -45,6 +45,8 @@ public class PaymentFlowIntegrationTest {
     @Test
     public void fullFlow_servicePopulatesRsvpFields() {
         Payment p = StripePaymentService.processPayment("u1", "e1", 500.0);
+        p.setPaymentMethod("BANK_TRANSFER");
+        p.setProofUrl("https://example.com/proof.jpg");
 
         Rsvp rsvp = new Rsvp();
         rsvp.setUserId("u1");
@@ -52,10 +54,14 @@ public class PaymentFlowIntegrationTest {
         rsvp.setPaymentStatus(Constants.PAYMENT_CONFIRMED);
         rsvp.setTransactionId(p.getTransactionId());
         rsvp.setPaymentRef(p.getTransactionId());
+        rsvp.setPaymentMethod(p.getPaymentMethod());
+        rsvp.setPaymentProofUrl(p.getProofUrl());
 
         assertEquals(Constants.PAYMENT_CONFIRMED, rsvp.getPaymentStatus());
         assertEquals(p.getTransactionId(), rsvp.getPaymentRef());
         assertEquals(p.getTransactionId(), rsvp.getTransactionId());
+        assertEquals("BANK_TRANSFER", rsvp.getPaymentMethod());
+        assertEquals("https://example.com/proof.jpg", rsvp.getPaymentProofUrl());
         assertTrue(rsvp.getPaymentRef().startsWith("pi_test_"));
     }
 

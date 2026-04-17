@@ -7,6 +7,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.appcheck.FirebaseAppCheck;
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
+import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.stripe.android.PaymentConfiguration;
 
@@ -34,6 +35,7 @@ public class CampusEventDiscoveryApp extends Application {
         firebaseAppCheck.setTokenAutoRefreshEnabled(true);
 
         ThemeManager.applyStoredTheme(this);
+        CloudinaryHelper.init(this);
 
         // Initialise Stripe with test publishable key
         PaymentConfiguration.init(

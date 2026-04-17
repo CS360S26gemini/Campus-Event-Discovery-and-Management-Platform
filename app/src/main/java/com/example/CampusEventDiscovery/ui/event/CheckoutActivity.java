@@ -1,19 +1,25 @@
 package com.example.CampusEventDiscovery.ui.event;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.callback.FirestoreCallback;
 import com.example.CampusEventDiscovery.model.Payment;
@@ -21,6 +27,7 @@ import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.repository.PaymentRepository;
 import com.example.CampusEventDiscovery.util.Constants;
+import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.StripePaymentService;
 import com.example.CampusEventDiscovery.util.UserRoles;
@@ -39,6 +46,7 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * CheckoutActivity.java
@@ -59,6 +67,11 @@ public class CheckoutActivity extends AppCompatActivity {
     private RadioGroup radioGroupPayment;
     private TextInputLayout tilCardNumber;
     private EditText etCardNumber;
+    private LinearLayout layoutBankTransferProof;
+    private ImageView ivPaymentProofPreview;
+    private TextView tvPaymentProofStatus;
+    private TextView tvPaymentProofHint;
+    private MaterialButton btnUploadProof;
     private TextView tvCheckoutTotal;
     private ProgressBar progressBarCheckout;
     private MaterialButton btnPay;
@@ -73,6 +86,17 @@ public class CheckoutActivity extends AppCompatActivity {
     private String eventVenue;
     private double totalPrice;
     private String effectiveUserId;
+    private String selectedPaymentMethod = "";
+    private Uri selectedProofUri;
+    private String uploadedProofUrl;
+    private final ActivityResultLauncher<PickVisualMediaRequest> proofPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                if (uri != null) {
+                    selectedProofUri = uri;
+                    uploadedProofUrl = null;
+                    showProofPreview(uri);
+                }
+            });
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -103,6 +127,11 @@ public class CheckoutActivity extends AppCompatActivity {
         radioGroupPayment    = findViewById(R.id.radioGroupPayment);
         tilCardNumber        = findViewById(R.id.tilCardNumber);
         etCardNumber         = findViewById(R.id.etCardNumber);
+        layoutBankTransferProof = findViewById(R.id.layout_bank_transfer_proof);
+        ivPaymentProofPreview = findViewById(R.id.iv_payment_proof_preview);
+        tvPaymentProofStatus = findViewById(R.id.tv_payment_proof_status);
+        tvPaymentProofHint = findViewById(R.id.tv_payment_proof_hint);
+        btnUploadProof = findViewById(R.id.btn_upload_proof);
         tvCheckoutTotal      = findViewById(R.id.tvCheckoutTotal);
         progressBarCheckout  = findViewById(R.id.progressBarCheckout);
         btnPay               = findViewById(R.id.btnPay);
@@ -138,6 +167,9 @@ public class CheckoutActivity extends AppCompatActivity {
             radioGroupPayment.clearCheck();
             etCardNumber.setText("");
             tilCardNumber.setVisibility(View.GONE);
+            if (layoutBankTransferProof != null) {
+                layoutBankTransferProof.setVisibility(View.GONE);
+            }
         } else {
             tvCheckoutTotal.setText(getString(R.string.checkout_total_pkr, totalPrice));
             btnPay.setText(getString(R.string.pay_now));
@@ -148,7 +180,7 @@ public class CheckoutActivity extends AppCompatActivity {
     /**
      * Shows or hides the card number field based on the selected payment method.
      * Credit Card and Debit Card require a 16-digit card number.
-     * JazzCash and Apple Pay do not.
+     * Bank Transfer requires a screenshot proof upload.
      */
     private void setupPaymentMethodToggle() {
         if (isFreeEvent()) {
@@ -156,13 +188,34 @@ public class CheckoutActivity extends AppCompatActivity {
         }
 
         radioGroupPayment.setOnCheckedChangeListener((group, checkedId) -> {
+            selectedPaymentMethod = "";
             if (checkedId == R.id.rbCreditCard || checkedId == R.id.rbDebitCard) {
                 tilCardNumber.setVisibility(View.VISIBLE);
+                if (layoutBankTransferProof != null) {
+                    layoutBankTransferProof.setVisibility(View.GONE);
+                }
+                selectedPaymentMethod = checkedId == R.id.rbCreditCard
+                        ? "CREDIT_CARD"
+                        : "DEBIT_CARD";
+            } else if (checkedId == R.id.rbBankTransfer) {
+                tilCardNumber.setVisibility(View.GONE);
+                etCardNumber.setText("");
+                if (layoutBankTransferProof != null) {
+                    layoutBankTransferProof.setVisibility(View.VISIBLE);
+                }
+                selectedPaymentMethod = "BANK_TRANSFER";
             } else {
                 tilCardNumber.setVisibility(View.GONE);
                 etCardNumber.setText("");
+                if (layoutBankTransferProof != null) {
+                    layoutBankTransferProof.setVisibility(View.GONE);
+                }
             }
         });
+
+        if (btnUploadProof != null) {
+            btnUploadProof.setOnClickListener(v -> pickPaymentProof());
+        }
     }
 
     private void setupPayButton() {
@@ -243,6 +296,11 @@ public class CheckoutActivity extends AppCompatActivity {
                 Toast.makeText(this, getString(R.string.invalid_card_number), Toast.LENGTH_SHORT).show();
                 return false;
             }
+        } else if (checkedId == R.id.rbBankTransfer) {
+            if (selectedProofUri == null && TextUtils.isEmpty(uploadedProofUrl)) {
+                Toast.makeText(this, getString(R.string.payment_proof_required), Toast.LENGTH_SHORT).show();
+                return false;
+            }
         }
 
         return true;
@@ -258,13 +316,50 @@ public class CheckoutActivity extends AppCompatActivity {
      * Payment record to Firestore and proceeds with RSVP creation.
      */
     private void processPayment() {
+        if (isFreeEvent()) {
+            Payment payment = new Payment(
+                    null,
+                    effectiveUserId,
+                    eventId,
+                    0.0,
+                    Constants.PAYMENT_CONFIRMED,
+                    "free_" + UUID.randomUUID().toString().replace("-", "").substring(0, 24),
+                    System.currentTimeMillis()
+            );
+            payment.setPaymentMethod("FREE");
+            payment.setProofUrl("");
+
+            paymentRepository.savePayment(payment, new FirestoreCallback() {
+                @Override
+                public void onSuccess(Object result) {
+                    runRsvpTransaction((Payment) result);
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    showLoading(false);
+                    Toast.makeText(CheckoutActivity.this,
+                            getString(R.string.payment_failed_message, e.getMessage()),
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+            return;
+        }
+
+        if (radioGroupPayment.getCheckedRadioButtonId() == R.id.rbBankTransfer) {
+            uploadBankTransferProof();
+            return;
+        }
+
         StripePaymentService.processPayment(effectiveUserId, eventId, totalPrice,
                 new StripePaymentService.PaymentCallback() {
                     @Override
                     public void onSuccess(Payment payment) {
                         // Back on background thread — post Firestore work to main thread
-                        runOnUiThread(() ->
-                                paymentRepository.savePayment(payment, new FirestoreCallback() {
+                        runOnUiThread(() -> {
+                            payment.setPaymentMethod(selectedPaymentMethod);
+                            payment.setProofUrl("");
+                            paymentRepository.savePayment(payment, new FirestoreCallback() {
                                     @Override
                                     public void onSuccess(Object result) {
                                         runRsvpTransaction((Payment) result);
@@ -277,8 +372,8 @@ public class CheckoutActivity extends AppCompatActivity {
                                                 getString(R.string.payment_failed_message, e.getMessage()),
                                                 Toast.LENGTH_SHORT).show();
                                     }
-                                })
-                        );
+                                });
+                        });
                     }
 
                     @Override
@@ -291,6 +386,79 @@ public class CheckoutActivity extends AppCompatActivity {
                         });
                     }
                 });
+    }
+
+    private void pickPaymentProof() {
+        proofPickerLauncher.launch(new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                .build());
+    }
+
+    private void showProofPreview(Uri uri) {
+        if (uri == null) {
+            return;
+        }
+
+        if (ivPaymentProofPreview != null) {
+            Glide.with(this).load(uri).into(ivPaymentProofPreview);
+        }
+        if (tvPaymentProofStatus != null) {
+            tvPaymentProofStatus.setText(getString(R.string.payment_proof_selected));
+        }
+        if (tvPaymentProofHint != null) {
+            tvPaymentProofHint.setText(getString(R.string.payment_proof_selected));
+        }
+    }
+
+    private void uploadBankTransferProof() {
+        if (selectedProofUri == null) {
+            showLoading(false);
+            Toast.makeText(this, getString(R.string.payment_proof_required), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        CloudinaryHelper.uploadImage(selectedProofUri, new CloudinaryHelper.CloudinaryCallback() {
+            @Override
+            public void onSuccess(String imageUrl) {
+                uploadedProofUrl = imageUrl;
+                Payment payment = new Payment(
+                        null,
+                        effectiveUserId,
+                        eventId,
+                        totalPrice,
+                        Constants.PAYMENT_CONFIRMED,
+                        "bank_" + UUID.randomUUID().toString().replace("-", "").substring(0, 24),
+                        System.currentTimeMillis()
+                );
+                payment.setPaymentMethod("BANK_TRANSFER");
+                payment.setProofUrl(imageUrl);
+
+                paymentRepository.savePayment(payment, new FirestoreCallback() {
+                    @Override
+                    public void onSuccess(Object result) {
+                        runOnUiThread(() -> runRsvpTransaction((Payment) result));
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        runOnUiThread(() -> {
+                            showLoading(false);
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.payment_failed_message, e.getMessage()),
+                                    Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                showLoading(false);
+                Toast.makeText(CheckoutActivity.this,
+                        getString(R.string.payment_proof_upload_failed, error),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
@@ -379,6 +547,8 @@ public class CheckoutActivity extends AppCompatActivity {
         paymentMerge.put("paymentStatus", Constants.PAYMENT_CONFIRMED);
         paymentMerge.put("transactionId", payment.getTransactionId());
         paymentMerge.put("paymentRef", payment.getTransactionId());
+        paymentMerge.put("paymentMethod", payment.getPaymentMethod());
+        paymentMerge.put("paymentProofUrl", payment.getProofUrl());
         paymentMerge.put("qrPayload", qrPayload);
         paymentMerge.put("qrExpired", false);
 
@@ -394,6 +564,8 @@ public class CheckoutActivity extends AppCompatActivity {
                     rsvp.setPaymentStatus(Constants.PAYMENT_CONFIRMED);
                     rsvp.setTransactionId(payment.getTransactionId());
                     rsvp.setPaymentRef(payment.getTransactionId());
+                    rsvp.setPaymentMethod(payment.getPaymentMethod());
+                    rsvp.setPaymentProofUrl(payment.getProofUrl());
                     rsvp.setQrPayload(qrPayload);
                     rsvp.setCheckedIn(false);
                     rsvp.setQrExpired(false);
@@ -454,6 +626,8 @@ public class CheckoutActivity extends AppCompatActivity {
         intent.putExtra("eventDate", formattedDate);
         intent.putExtra("transactionId", rsvp.getTransactionId());
         intent.putExtra("qrPayload", rsvp.getQrPayload());
+        intent.putExtra("paymentMethod", rsvp.getPaymentMethod());
+        intent.putExtra("paymentProofUrl", rsvp.getPaymentProofUrl());
         startActivity(intent);
         setResult(RESULT_OK);
         finish();

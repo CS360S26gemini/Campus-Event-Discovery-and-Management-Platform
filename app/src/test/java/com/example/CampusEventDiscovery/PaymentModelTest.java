@@ -41,6 +41,8 @@ public class PaymentModelTest {
         assertNull(p.getStatus());
         assertNull(p.getTransactionId());
         assertEquals(0L, p.getTimestamp());
+        assertNull(p.getPaymentMethod());
+        assertNull(p.getProofUrl());
     }
 
     @Test
@@ -70,6 +72,8 @@ public class PaymentModelTest {
         p.setStatus(Constants.PAYMENT_REJECTED);
         p.setTransactionId("pi_test_ref");
         p.setTimestamp(1234L);
+        p.setPaymentMethod("BANK_TRANSFER");
+        p.setProofUrl("https://example.com/proof.jpg");
 
         assertEquals("p1", p.getPaymentId());
         assertEquals("u1", p.getUserId());
@@ -78,6 +82,8 @@ public class PaymentModelTest {
         assertEquals("REJECTED", p.getStatus());
         assertEquals("pi_test_ref", p.getTransactionId());
         assertEquals(1234L, p.getTimestamp());
+        assertEquals("BANK_TRANSFER", p.getPaymentMethod());
+        assertEquals("https://example.com/proof.jpg", p.getProofUrl());
     }
 
     @Test

@@ -165,6 +165,7 @@
     <string name="ticket_desc_vip">Premium seating and priority access</string>
     <string name="ticket_desc_general">Standard event entry ticket</string>
     <string name="ticket_date_range">Available now</string>
+    <string name="payment_method_bank_transfer">Bank Transfer</string>
     <string name="minus">-</string>
     <string name="plus">+</string>
     <string name="quantity_zero">0</string>
@@ -414,6 +415,20 @@
     <string name="payment_method_credit_card">Credit Card</string>
     <string name="payment_method_debit_card">Debit Card</string>
     <string name="payment_method_apple_pay">Apple Pay</string>
+    <!-- Bank Transfer account details shown to the user before screenshot upload -->
+    <string name="bank_transfer_info_title">Transfer to this account</string>
+    <string name="bank_transfer_bank_name">Bank: HBL (Habib Bank Limited)</string>
+    <string name="bank_transfer_account_name">Account Name: Campus Events Society</string>
+    <string name="bank_transfer_account_number">Account #: 0123-4567890-001</string>
+    <string name="bank_transfer_iban">IBAN: PK36HABB0000123456789001</string>
+    <string name="bank_transfer_note">Transfer the exact amount shown above, then upload a clear screenshot of your receipt.</string>
+
+    <string name="payment_proof_label">Payment Screenshot</string>
+    <string name="upload_payment_proof">Upload Screenshot</string>
+    <string name="payment_proof_not_selected">No screenshot selected yet.</string>
+    <string name="payment_proof_selected">Screenshot selected.</string>
+    <string name="payment_proof_required">Upload a payment screenshot before continuing.</string>
+    <string name="payment_proof_upload_failed">Screenshot upload failed: %1$s</string>
     <string name="invalid_card_number">Card number must be exactly 16 digits</string>
     <string name="already_registered_for_event">You are already registered for this event. Opening your ticket.</string>
     <string name="checkout_rsvp_check_failed">Could not verify registration status. Please try again.</string>

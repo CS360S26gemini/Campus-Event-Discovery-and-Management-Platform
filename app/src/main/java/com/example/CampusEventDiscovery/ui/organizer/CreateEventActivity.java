@@ -29,6 +29,7 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.EventValidator;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -43,14 +44,11 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-
 /**
  * CreateEventActivity.java
  *
  * Organizer event proposal form that writes a pending proposal to Firestore.
- * Updated to support image selection for discovery visuals.
+ * Updated to support Cloudinary uploads for discovery visuals.
  */
 public class CreateEventActivity extends AppCompatActivity {
 
@@ -398,29 +396,22 @@ public class CreateEventActivity extends AppCompatActivity {
         showLoading(true);
 
         if (selectedImageUri != null) {
-            // Upload path matches the team DB schema: event_thumbnails/{userId}_{timestamp}
-            StorageReference storageRef = FirebaseStorage.getInstance().getReference()
-                    .child("event_thumbnails/" + currentUserId + "_" + System.currentTimeMillis() + ".jpg");
+            CloudinaryHelper.uploadImage(selectedImageUri, new CloudinaryHelper.CloudinaryCallback() {
+                @Override
+                public void onSuccess(String imageUrl) {
+                    proposal.setThumbnailUrl(imageUrl);
+                    proposal.setImageUrl(imageUrl); // keep imageUrl in sync for compatibility
+                    saveProposal(proposal);
+                }
 
-            storageRef.putFile(selectedImageUri)
-                    .addOnSuccessListener(taskSnapshot ->
-                            storageRef.getDownloadUrl()
-                                    .addOnSuccessListener(downloadUri -> {
-                                        proposal.setThumbnailUrl(downloadUri.toString());
-                                        saveProposal(proposal);
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        showLoading(false);
-                                        Toast.makeText(CreateEventActivity.this,
-                                                getString(R.string.image_upload_failed, e.getMessage()),
-                                                Toast.LENGTH_SHORT).show();
-                                    }))
-                    .addOnFailureListener(e -> {
-                        showLoading(false);
-                        Toast.makeText(CreateEventActivity.this,
-                                getString(R.string.image_upload_failed, e.getMessage()),
-                                Toast.LENGTH_SHORT).show();
-                    });
+                @Override
+                public void onError(String error) {
+                    showLoading(false);
+                    Toast.makeText(CreateEventActivity.this,
+                            getString(R.string.image_upload_failed, error),
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
         } else {
             proposal.setThumbnailUrl("");
             saveProposal(proposal);

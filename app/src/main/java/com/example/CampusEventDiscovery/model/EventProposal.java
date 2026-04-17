@@ -321,6 +321,14 @@ public class EventProposal {
         this.thumbnailUrl = thumbnailUrl;
     }
 
+    /** Alias for {@link #getThumbnailUrl()} — kept for compatibility with Nausher's branch. */
+    public String getImageUrl() { return thumbnailUrl; }
+
+    /** Sets imageUrl and keeps thumbnailUrl in sync. */
+    public void setImageUrl(String imageUrl) {
+        this.thumbnailUrl = imageUrl;
+    }
+
     /**
      * Gets the organizer ID.
      *

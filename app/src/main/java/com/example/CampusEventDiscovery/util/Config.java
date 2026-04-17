@@ -3,8 +3,7 @@ package com.example.CampusEventDiscovery.util;
 /**
  * Config.java
  *
- * App-wide third-party config values. Keep test keys only —
- * never commit live keys.
+ * App-wide third-party config values. Keep test keys only.
  */
 public final class Config {
 
@@ -16,4 +15,8 @@ public final class Config {
 
     // Stripe test currency for PKR events → charged as USD in test mode
     public static final String STRIPE_CURRENCY = "usd";
+
+    // Cloudinary unsigned upload config used for event images and payment proofs.
+    public static final String CLOUDINARY_CLOUD_NAME = "dcxablsft";
+    public static final String CLOUDINARY_UPLOAD_PRESET = "campus_event_discovery";
 }
