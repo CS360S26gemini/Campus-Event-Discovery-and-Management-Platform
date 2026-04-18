@@ -118,4 +118,8 @@ public class SplashActivity extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
+
+    private boolean canRoute() {
+        return !isFinishing() && !isDestroyed();
+    }
 }

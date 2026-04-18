@@ -416,6 +416,10 @@
     <string name="feedback_failed">Failed to save feedback.</string>
     <string name="feedback_requires_rating">Please select a rating.</string>
     <string name="sos_location_unavailable">Location unavailable. SOS will be sent without coordinates.</string>
+    <string name="sos_label_unknown_reporter">Unknown reporter</string>
+    <string name="sos_status_active">Active</string>
+    <string name="sos_label_event">Event: %1$s</string>
+    <string name="sos_label_reporter">Reporter: %1$s</string>
 
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="select_event_image">Select Event Image</string>
@@ -424,6 +428,10 @@
     <!-- Payment and ticket strings -->
     <string name="payments_title">Payments</string>
     <string name="payment_empty">No payments yet for this event.</string>
+    <string name="payment_missing_event">Event information is missing</string>
+    <string name="payment_load_failed">Failed to load payments</string>
+    <string name="payment_count_label">Payments: %1$d</string>
+    <string name="payment_total_revenue">Total revenue: %1$s</string>
     <string name="price_format">Price: PKR %1$.2f</string>
     <string name="price_free">Free</string>
     <string name="pay_now">Pay Now</string>

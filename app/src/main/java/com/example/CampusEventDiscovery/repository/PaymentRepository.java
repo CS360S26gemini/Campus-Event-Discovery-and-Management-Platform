@@ -2,8 +2,12 @@ package com.example.CampusEventDiscovery.repository;
 
 import com.example.CampusEventDiscovery.callback.FirestoreCallback;
 import com.example.CampusEventDiscovery.model.Payment;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Query;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * PaymentRepository.java
@@ -12,7 +16,6 @@ import com.google.firebase.firestore.QuerySnapshot;
  */
 public class PaymentRepository {
 
-    private static final String COLLECTION_PAYMENTS = "payments";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     /**
@@ -22,7 +25,7 @@ public class PaymentRepository {
      * @param callback The callback to handle success or failure.
      */
     public void savePayment(Payment payment, FirestoreCallback callback) {
-        db.collection(COLLECTION_PAYMENTS)
+        db.collection(Constants.COLLECTION_PAYMENTS)
                 .add(payment)
                 .addOnSuccessListener(documentReference -> {
                     payment.setPaymentId(documentReference.getId());
@@ -38,7 +41,7 @@ public class PaymentRepository {
      * @param callback The callback to handle success or failure.
      */
     public void getPaymentByTransactionId(String txnId, FirestoreCallback callback) {
-        db.collection(COLLECTION_PAYMENTS)
+        db.collection(Constants.COLLECTION_PAYMENTS)
                 .whereEqualTo("transactionId", txnId)
                 .limit(1)
                 .get()
@@ -52,6 +55,28 @@ public class PaymentRepository {
                     } else {
                         callback.onSuccess(null);
                     }
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
+     * Returns all payments for a given event, newest first.
+     */
+    public void getPaymentsForEvent(String eventId, FirestoreCallback callback) {
+        db.collection(Constants.COLLECTION_PAYMENTS)
+                .whereEqualTo("eventId", eventId)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<Payment> payments = new ArrayList<>();
+                    snapshot.getDocuments().forEach(doc -> {
+                        Payment payment = doc.toObject(Payment.class);
+                        if (payment != null) {
+                            payment.setPaymentId(doc.getId());
+                            payments.add(payment);
+                        }
+                    });
+                    callback.onSuccess(payments);
                 })
                 .addOnFailureListener(callback::onFailure);
     }

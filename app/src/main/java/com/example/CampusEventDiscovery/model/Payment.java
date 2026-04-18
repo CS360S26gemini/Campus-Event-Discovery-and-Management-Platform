@@ -18,6 +18,8 @@ public class Payment {
     private String status; // "SUCCESS" or "FAILED"
     private String transactionId;
     private long timestamp;
+    private String paymentMethod;
+    private String proofUrl;
 
     /**
      * Required empty constructor for Firestore deserialization.
@@ -101,5 +103,21 @@ public class Payment {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getProofUrl() {
+        return proofUrl;
+    }
+
+    public void setProofUrl(String proofUrl) {
+        this.proofUrl = proofUrl;
     }
 }
