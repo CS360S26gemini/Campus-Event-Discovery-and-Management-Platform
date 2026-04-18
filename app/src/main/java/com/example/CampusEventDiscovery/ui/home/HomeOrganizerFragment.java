@@ -58,6 +58,7 @@ public class HomeOrganizerFragment extends Fragment {
     private ImageView ivBanner;
     private ImageView ivBannerHeart;
     private ImageView ivBannerShare;
+    private ImageView ivBannerVerified;
     private TextView tvBannerTitle;
     private TextView tvBannerDate;
     private TextView tvBannerVenue;
@@ -101,6 +102,7 @@ public class HomeOrganizerFragment extends Fragment {
         cardFeaturedEvent = featuredCardContainer.findViewById(R.id.cardFeaturedEvent);
         ivBannerHeart = featuredCardContainer.findViewById(R.id.ivBannerHeart);
         ivBannerShare = featuredCardContainer.findViewById(R.id.ivBannerShare);
+        ivBannerVerified = featuredCardContainer.findViewById(R.id.ivBannerVerified);
         tvBannerTitle = featuredCardContainer.findViewById(R.id.tvBannerTitle);
         tvBannerDate = featuredCardContainer.findViewById(R.id.tvBannerDate);
         tvBannerVenue = featuredCardContainer.findViewById(R.id.tvBannerVenue);
@@ -301,6 +303,9 @@ public class HomeOrganizerFragment extends Fragment {
         featuredCardContainer.setVisibility(View.VISIBLE);
 
         tvBannerTitle.setText(safeText(event.getTitle(), getString(R.string.app_name)));
+        if (ivBannerVerified != null) {
+            ivBannerVerified.setVisibility(event.isVerified() ? View.VISIBLE : View.GONE);
+        }
         tvBannerDate.setText(formatDateTime(event.getDate()));
         tvBannerVenue.setText(safeText(event.getLocation(), getString(R.string.placeholder_venue)));
 

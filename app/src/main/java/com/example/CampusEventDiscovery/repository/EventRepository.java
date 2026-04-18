@@ -714,15 +714,20 @@ public class EventRepository {
     }
 
     public void approveProposal(String proposalId, EventProposal proposal, ActionCallback cb) {
+        if (TextUtils.isEmpty(proposalId) || proposal == null) {
+            if (cb != null) cb.onError(new Exception("Invalid proposal"));
+            return;
+        }
+
         WriteBatch batch = db.batch();
 
         DocumentReference proposalRef = db.collection(COLLECTION_EVENT_PROPOSALS).document(proposalId);
-        DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document();
+        DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(proposalId);
         Notification organizerNotification = buildNotification(
                 "Your event was approved",
                 proposal.getTitle() + " is now live.",
                 "event_approved",
-                eventRef.getId()
+                proposalId
         );
 
         batch.update(proposalRef,
@@ -735,7 +740,7 @@ public class EventRepository {
             DocumentReference notificationRef = db.collection(COLLECTION_NOTIFICATIONS)
                     .document(proposal.getOrganizerId())
                     .collection(SUBCOLLECTION_MESSAGES)
-                    .document();
+                    .document("event_approved_" + proposalId);
             batch.set(notificationRef, organizerNotification);
         }
 

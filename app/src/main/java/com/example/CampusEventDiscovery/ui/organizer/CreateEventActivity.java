@@ -81,6 +81,7 @@ public class CreateEventActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private boolean hasSelectedDate;
     private boolean hasSelectedTime;
+    private boolean isSubmitting;
 
     private String currentUserId;
     private String currentOrganizerName = "";
@@ -309,6 +310,10 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     private void submitProposal() {
+        if (isSubmitting) {
+            return;
+        }
+
         String title = etEventTitle.getText().toString().trim();
         String category = actvCategory.getText().toString().trim();
         String venue = etVenue.getText().toString().trim();
@@ -453,6 +458,7 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     private void showLoading(boolean isLoading) {
+        isSubmitting = isLoading;
         progressBarCreateEvent.setVisibility(isLoading ? android.view.View.VISIBLE : android.view.View.GONE);
         btnSubmitEvent.setEnabled(!isLoading);
     }

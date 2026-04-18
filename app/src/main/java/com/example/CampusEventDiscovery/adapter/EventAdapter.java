@@ -110,6 +110,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         if (holder.ivVerified != null) {
             holder.ivVerified.setVisibility(event.isVerified() ? View.VISIBLE : View.GONE);
         }
+        if (holder.chipTitleStatus != null) {
+            holder.chipTitleStatus.setVisibility(View.GONE);
+        }
 
         boolean canToggleFavourite = !TextUtils.isEmpty(currentUserId)
                 && event.getEventId() != null
@@ -255,6 +258,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         TextView tvNewBadge;
         Chip chipCategory;
         Chip chipStatus;
+        Chip chipTitleStatus;
 
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -272,6 +276,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             tvNewBadge = itemView.findViewById(R.id.tvNewBadge);
             chipCategory = itemView.findViewById(R.id.chipCategory);
             chipStatus = itemView.findViewById(R.id.chipStatus);
+            chipTitleStatus = itemView.findViewById(R.id.chipTitleStatus);
         }
     }
 }
