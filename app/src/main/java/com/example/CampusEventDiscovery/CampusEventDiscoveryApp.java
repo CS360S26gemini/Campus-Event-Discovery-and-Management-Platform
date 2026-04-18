@@ -15,6 +15,7 @@ import com.google.firebase.appcheck.FirebaseAppCheck;
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
 import com.example.CampusEventDiscovery.util.ThemeManager;
+import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 
 /**
  * Applies persisted UI preferences and initializes system-wide components.
@@ -31,6 +32,7 @@ public class CampusEventDiscoveryApp extends Application {
         initAppCheck();
         createSosNotificationChannel();
         ThemeManager.applyStoredTheme(this);
+        CloudinaryHelper.init(this);
     }
 
     private void initAppCheck() {

@@ -69,6 +69,9 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
+    // Cloudinary SDK
+    implementation("com.cloudinary:cloudinary-android:3.0.2")
+
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("org.mockito:mockito-core:5.11.0")

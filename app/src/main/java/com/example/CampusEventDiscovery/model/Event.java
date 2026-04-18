@@ -123,4 +123,5 @@ public class Event {
 
     public double getTicketPrice() { return ticketPrice; }
     public void setTicketPrice(double ticketPrice) { this.ticketPrice = ticketPrice; }
+
 }
