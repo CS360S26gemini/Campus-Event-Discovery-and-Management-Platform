@@ -108,6 +108,12 @@
     <string name="manage_events">Manage Events</string>
     <string name="view_event_calendar">View Event Calendar</string>
     <string name="account_settings">Account Settings</string>
+    <string name="profile_details_tab">Profile</string>
+    <string name="change_email_tab">Email</string>
+    <string name="change_password_tab">Password</string>
+    <string name="save_profile">Save Profile</string>
+    <string name="update_email">Update Email</string>
+    <string name="update_password">Update Password</string>
     <string name="account_name_label">Account Name</string>
     <string name="campus_label">Campus</string>
     <string name="campus_hint">Select campus</string>
@@ -119,6 +125,7 @@
     <string name="new_password_hint">Leave blank to keep your current password</string>
     <string name="confirm_new_password_hint">Repeat the new password</string>
     <string name="current_password_required_for_auth_updates">Enter your current password to change email or password.</string>
+    <string name="new_password_required">Enter a new password.</string>
     <string name="account_updated">Account updated.</string>
     <string name="account_update_failed">Update failed: %1$s</string>
     <string name="profile_updated_but_auth_failed">Profile details were saved, but the email/password update failed: %1$s</string>
@@ -330,6 +337,14 @@
     <string name="organizer">Organizer</string>
     <string name="admin">Admin</string>
     <string name="sign_up">Sign up</string>
+    <string name="accept_terms_privacy">I agree to the Terms and Conditions and Privacy Policy.</string>
+    <string name="view_terms">Terms and Conditions</string>
+    <string name="view_privacy_policy">Privacy Policy</string>
+    <string name="terms_required">Please accept the Terms and Conditions and Privacy Policy to continue.</string>
+    <string name="terms_title">Terms and Conditions</string>
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="terms_body">By creating an account, you agree to use Campus Event Discovery responsibly, provide accurate account information, follow event and campus rules, respect organizers and attendees, and avoid misuse such as spam, false registrations, harassment, or unauthorized access. Organizers are responsible for submitting accurate event details and complying with campus approval requirements.</string>
+    <string name="privacy_policy_body">Campus Event Discovery stores your account details, role, campus, interests, saved events, registrations, event activity, and app preferences to provide event discovery and management features. We use this information for authentication, personalization, event operations, notifications, and safety-related workflows. We do not sell your personal information. You can update profile details in Account Settings.</string>
     <string name="maintenance_title">Maintenance Mode</string>
     <string name="maintenance_message">The app is temporarily unavailable while maintenance is in progress.</string>
     <string name="retry">Retry</string>

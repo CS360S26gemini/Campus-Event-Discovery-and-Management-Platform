@@ -27,153 +27,239 @@
             android:orientation="vertical"
             android:padding="24dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/account_name_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp" />
-
-            <EditText
-                android:id="@+id/etFullName"
+            <LinearLayout
+                android:id="@+id/settingsTabs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:backgroundTint="@color/colorPrimary"
-                android:hint="@string/full_name_label"
-                android:textColor="@color/colorOnBackground"
-                android:textColorHint="@color/colorSecondary" />
+                android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="wrap_content"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnProfileTab"
+                    style="@style/AppSecondaryButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:text="@string/profile_details_tab" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEmailTab"
+                    style="@style/AppSecondaryButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="6dp"
+                    android:layout_weight="1"
+                    android:text="@string/change_email_tab" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPasswordTab"
+                    style="@style/AppSecondaryButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:text="@string/change_password_tab" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/profileSettingsPage"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="@string/email_address_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp" />
+                android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/etEmail"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/account_name_label"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etFullName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:hint="@string/full_name_label"
+                    android:padding="14dp"
+                    android:textColor="@color/colorOnBackground"
+                    android:textColorHint="@color/colorSecondary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/primary_campus"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="14sp" />
+
+                <AutoCompleteTextView
+                    android:id="@+id/etUniversity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:hint="@string/campus_hint"
+                    android:inputType="none"
+                    android:padding="14dp"
+                    android:textColor="@color/colorOnBackground"
+                    android:textColorHint="@color/colorSecondary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="Location"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:hint="e.g. Lahore"
+                    android:padding="14dp"
+                    android:textColor="@color/colorOnBackground"
+                    android:textColorHint="@color/colorSecondary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/interests_label"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="14sp" />
+
+                <MultiAutoCompleteTextView
+                    android:id="@+id/etInterests"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:hint="@string/interests_dropdown_hint"
+                    android:padding="14dp"
+                    android:textColor="@color/colorOnBackground"
+                    android:textColorHint="@color/colorSecondary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/emailSettingsPage"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:backgroundTint="@color/colorPrimary"
-                android:hint="@string/email_address_label"
-                android:inputType="textEmailAddress"
-                android:textColor="@color/colorOnBackground"
-                android:textColorHint="@color/colorSecondary" />
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="@string/primary_campus"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <AutoCompleteTextView
-                android:id="@+id/etUniversity"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/email_address_label"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:hint="@string/email_address_label"
+                    android:inputType="textEmailAddress"
+                    android:padding="14dp"
+                    android:textColor="@color/colorOnBackground"
+                    android:textColorHint="@color/colorSecondary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/current_password_label"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etEmailCurrentPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:hint="@string/current_password_hint"
+                    android:inputType="textPassword"
+                    android:padding="14dp"
+                    android:textColor="@color/colorOnBackground"
+                    android:textColorHint="@color/colorSecondary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/passwordSettingsPage"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:backgroundTint="@color/colorPrimary"
-                android:hint="@string/campus_hint"
-                android:inputType="none"
-                android:textColor="@color/colorOnBackground"
-                android:textColorHint="@color/colorSecondary" />
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="Location"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <EditText
-                android:id="@+id/etLocation"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:backgroundTint="@color/colorPrimary"
-                android:hint="e.g. Lahore"
-                android:textColor="@color/colorOnBackground"
-                android:textColorHint="@color/colorSecondary" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/current_password_label"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="14sp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/interests_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp" />
+                <EditText
+                    android:id="@+id/etPasswordCurrentPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:hint="@string/current_password_hint"
+                    android:inputType="textPassword"
+                    android:padding="14dp"
+                    android:textColor="@color/colorOnBackground"
+                    android:textColorHint="@color/colorSecondary" />
 
-            <MultiAutoCompleteTextView
-                android:id="@+id/etInterests"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:backgroundTint="@color/colorPrimary"
-                android:hint="@string/interests_dropdown_hint"
-                android:textColor="@color/colorOnBackground"
-                android:textColorHint="@color/colorSecondary" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/new_password_label"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="14sp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/current_password_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp" />
+                <EditText
+                    android:id="@+id/etNewPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:hint="@string/new_password_hint"
+                    android:inputType="textPassword"
+                    android:padding="14dp"
+                    android:textColor="@color/colorOnBackground"
+                    android:textColorHint="@color/colorSecondary" />
 
-            <EditText
-                android:id="@+id/etCurrentPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:backgroundTint="@color/colorPrimary"
-                android:hint="@string/current_password_hint"
-                android:inputType="textPassword"
-                android:textColor="@color/colorOnBackground"
-                android:textColorHint="@color/colorSecondary" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/confirm_new_password_label"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="14sp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/new_password_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp" />
-
-            <EditText
-                android:id="@+id/etNewPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:backgroundTint="@color/colorPrimary"
-                android:hint="@string/new_password_hint"
-                android:inputType="textPassword"
-                android:textColor="@color/colorOnBackground"
-                android:textColorHint="@color/colorSecondary" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/confirm_new_password_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp" />
-
-            <EditText
-                android:id="@+id/etConfirmPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:backgroundTint="@color/colorPrimary"
-                android:hint="@string/confirm_new_password_hint"
-                android:inputType="textPassword"
-                android:textColor="@color/colorOnBackground"
-                android:textColorHint="@color/colorSecondary" />
+                <EditText
+                    android:id="@+id/etConfirmPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:hint="@string/confirm_new_password_hint"
+                    android:inputType="textPassword"
+                    android:padding="14dp"
+                    android:textColor="@color/colorOnBackground"
+                    android:textColorHint="@color/colorSecondary" />
+            </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSaveSettings"
@@ -182,7 +268,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="48dp"
                 android:padding="14dp"
-                android:text="@string/save" />
+                android:text="@string/save_profile" />
 
             <ProgressBar
                 android:id="@+id/progressBarSettings"

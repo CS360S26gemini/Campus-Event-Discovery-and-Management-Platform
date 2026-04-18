@@ -1,12 +1,14 @@
 package com.example.CampusEventDiscovery.ui.profile;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -14,6 +16,7 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.example.CampusEventDiscovery.MainActivity;
 import com.example.CampusEventDiscovery.R;
@@ -38,12 +41,19 @@ import java.util.List;
 public class AccountSettingsActivity extends AppCompatActivity {
 
     private MaterialToolbar toolbarSettings;
+    private MaterialButton btnProfileTab;
+    private MaterialButton btnEmailTab;
+    private MaterialButton btnPasswordTab;
+    private LinearLayout profileSettingsPage;
+    private LinearLayout emailSettingsPage;
+    private LinearLayout passwordSettingsPage;
     private EditText etFullName;
     private EditText etEmail;
     private AutoCompleteTextView etUniversity;
     private EditText etLocation;
     private MultiAutoCompleteTextView etInterests;
-    private EditText etCurrentPassword;
+    private EditText etEmailCurrentPassword;
+    private EditText etPasswordCurrentPassword;
     private EditText etNewPassword;
     private EditText etConfirmPassword;
     private MaterialButton btnSaveSettings;
@@ -51,6 +61,13 @@ public class AccountSettingsActivity extends AppCompatActivity {
 
     private EventRepository repository;
     private String currentUserId;
+    private SettingsPage activePage = SettingsPage.PROFILE;
+
+    private enum SettingsPage {
+        PROFILE,
+        EMAIL,
+        PASSWORD
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -66,6 +83,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
         setupToolbar();
         setupBackNavigation();
         setupDropdowns();
+        setupTabs();
 
         if (currentUser != null) {
             loadUserData();
@@ -83,12 +101,19 @@ public class AccountSettingsActivity extends AppCompatActivity {
 
     private void bindViews() {
         toolbarSettings = findViewById(R.id.toolbarSettings);
+        btnProfileTab = findViewById(R.id.btnProfileTab);
+        btnEmailTab = findViewById(R.id.btnEmailTab);
+        btnPasswordTab = findViewById(R.id.btnPasswordTab);
+        profileSettingsPage = findViewById(R.id.profileSettingsPage);
+        emailSettingsPage = findViewById(R.id.emailSettingsPage);
+        passwordSettingsPage = findViewById(R.id.passwordSettingsPage);
         etFullName = findViewById(R.id.etFullName);
         etEmail = findViewById(R.id.etEmail);
         etUniversity = findViewById(R.id.etUniversity);
         etLocation = findViewById(R.id.etLocation);
         etInterests = findViewById(R.id.etInterests);
-        etCurrentPassword = findViewById(R.id.etCurrentPassword);
+        etEmailCurrentPassword = findViewById(R.id.etEmailCurrentPassword);
+        etPasswordCurrentPassword = findViewById(R.id.etPasswordCurrentPassword);
         etNewPassword = findViewById(R.id.etNewPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnSaveSettings = findViewById(R.id.btnSaveSettings);
@@ -141,6 +166,40 @@ public class AccountSettingsActivity extends AppCompatActivity {
                 etInterests.showDropDown();
             }
         });
+    }
+
+    private void setupTabs() {
+        btnProfileTab.setOnClickListener(v -> showPage(SettingsPage.PROFILE));
+        btnEmailTab.setOnClickListener(v -> showPage(SettingsPage.EMAIL));
+        btnPasswordTab.setOnClickListener(v -> showPage(SettingsPage.PASSWORD));
+        showPage(SettingsPage.PROFILE);
+    }
+
+    private void showPage(SettingsPage page) {
+        activePage = page;
+
+        profileSettingsPage.setVisibility(page == SettingsPage.PROFILE ? View.VISIBLE : View.GONE);
+        emailSettingsPage.setVisibility(page == SettingsPage.EMAIL ? View.VISIBLE : View.GONE);
+        passwordSettingsPage.setVisibility(page == SettingsPage.PASSWORD ? View.VISIBLE : View.GONE);
+
+        styleTab(btnProfileTab, page == SettingsPage.PROFILE);
+        styleTab(btnEmailTab, page == SettingsPage.EMAIL);
+        styleTab(btnPasswordTab, page == SettingsPage.PASSWORD);
+
+        if (page == SettingsPage.EMAIL) {
+            btnSaveSettings.setText(R.string.update_email);
+        } else if (page == SettingsPage.PASSWORD) {
+            btnSaveSettings.setText(R.string.update_password);
+        } else {
+            btnSaveSettings.setText(R.string.save_profile);
+        }
+    }
+
+    private void styleTab(MaterialButton button, boolean selected) {
+        int background = selected ? R.color.colorPrimary : R.color.colorSecondaryContainer;
+        int text = selected ? R.color.colorOnPrimary : R.color.colorOnSecondaryContainer;
+        button.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, background)));
+        button.setTextColor(ContextCompat.getColor(this, text));
     }
 
     private void navigateBackToProfile() {
@@ -209,9 +268,9 @@ public class AccountSettingsActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String university = etUniversity.getText().toString().trim();
         String location = etLocation.getText().toString().trim();
-        String currentPassword = etCurrentPassword.getText().toString();
-        String newPassword = etNewPassword.getText().toString();
-        String confirmPassword = etConfirmPassword.getText().toString();
+        String currentPassword = getCurrentPasswordForActivePage();
+        String newPassword = activePage == SettingsPage.PASSWORD ? etNewPassword.getText().toString() : "";
+        String confirmPassword = activePage == SettingsPage.PASSWORD ? etConfirmPassword.getText().toString() : "";
         List<String> interests = parseInterests(etInterests.getText().toString());
 
         String validationError = SignupValidator.validateName(fullName);
@@ -222,7 +281,22 @@ public class AccountSettingsActivity extends AppCompatActivity {
             validationError = SignupValidator.validateCampus(university);
         }
 
-        boolean passwordChangeRequested = !TextUtils.isEmpty(newPassword) || !TextUtils.isEmpty(confirmPassword);
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        boolean emailChanged = activePage == SettingsPage.EMAIL
+                && currentUser != null
+                && !TextUtils.equals(email, currentUser.getEmail());
+        boolean passwordChangeRequested = activePage == SettingsPage.PASSWORD
+                && (!TextUtils.isEmpty(newPassword) || !TextUtils.isEmpty(confirmPassword));
+
+        if (validationError == null && activePage == SettingsPage.EMAIL && currentUser != null && !emailChanged) {
+            validationError = "Enter a new email address.";
+        }
+        if (validationError == null
+                && activePage == SettingsPage.PASSWORD
+                && TextUtils.isEmpty(newPassword)
+                && TextUtils.isEmpty(confirmPassword)) {
+            validationError = getString(R.string.new_password_required);
+        }
         if (validationError == null && passwordChangeRequested) {
             validationError = SignupValidator.validatePassword(newPassword);
         }
@@ -235,8 +309,6 @@ public class AccountSettingsActivity extends AppCompatActivity {
             return;
         }
 
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        boolean emailChanged = currentUser != null && !TextUtils.equals(email, currentUser.getEmail());
         boolean requiresAuthUpdate = currentUser != null && (emailChanged || passwordChangeRequested);
 
         if (requiresAuthUpdate && TextUtils.isEmpty(currentPassword)) {
@@ -274,6 +346,16 @@ public class AccountSettingsActivity extends AppCompatActivity {
                             getString(R.string.reauthentication_failed, safeMessage(e.getMessage())),
                             Toast.LENGTH_LONG).show();
                 });
+    }
+
+    private String getCurrentPasswordForActivePage() {
+        if (activePage == SettingsPage.EMAIL) {
+            return etEmailCurrentPassword.getText().toString();
+        }
+        if (activePage == SettingsPage.PASSWORD) {
+            return etPasswordCurrentPassword.getText().toString();
+        }
+        return "";
     }
 
     private void applyAuthUpdates(FirebaseUser currentUser,

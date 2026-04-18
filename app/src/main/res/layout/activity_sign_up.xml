@@ -261,6 +261,48 @@
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
+        <CheckBox
+            android:id="@+id/cbAcceptPolicies"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:buttonTint="@color/colorPrimary"
+            android:text="@string/accept_terms_privacy"
+            android:textColor="@color/colorOnBackground"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/toggleUserType" />
+
+        <LinearLayout
+            android:id="@+id/policyLinks"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cbAcceptPolicies">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewTerms"
+                style="@style/AppOutlinedButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:text="@string/view_terms" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewPrivacy"
+                style="@style/AppOutlinedButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:text="@string/view_privacy_policy" />
+        </LinearLayout>
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSignUp"
             style="@style/AppButtonStyle"
@@ -272,7 +314,7 @@
             android:text="@string/sign_up"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/toggleUserType" />
+            app:layout_constraintTop_toBottomOf="@id/policyLinks" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDevBypass"

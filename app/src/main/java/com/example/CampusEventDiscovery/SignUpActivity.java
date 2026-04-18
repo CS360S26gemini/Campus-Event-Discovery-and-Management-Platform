@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -20,6 +21,8 @@ import com.example.CampusEventDiscovery.util.SignupValidator;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -33,11 +36,14 @@ import java.util.ArrayList;
  */
 public class SignUpActivity extends AppCompatActivity {
 
+    private static final String POLICY_VERSION = "2026-04-18";
+
     private EditText etFullName, etEmail, etPassword, etRepeatPassword;
     private AutoCompleteTextView actvCampus;
     private MultiAutoCompleteTextView etInterests;
     private MaterialButtonToggleGroup toggleUserType;
     private MaterialButton btnSignUp;
+    private CheckBox cbAcceptPolicies;
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -58,7 +64,10 @@ public class SignUpActivity extends AppCompatActivity {
         actvCampus = findViewById(R.id.actvCampus);
         etInterests = findViewById(R.id.etInterests);
         toggleUserType = findViewById(R.id.toggleUserType);
+        cbAcceptPolicies = findViewById(R.id.cbAcceptPolicies);
         btnSignUp = findViewById(R.id.btnSignUp);
+        MaterialButton btnViewTerms = findViewById(R.id.btnViewTerms);
+        MaterialButton btnViewPrivacy = findViewById(R.id.btnViewPrivacy);
         MaterialButton btnDevBypass = findViewById(R.id.btnDevBypass);
 
         setupDropdowns();
@@ -66,6 +75,14 @@ public class SignUpActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
 
         btnSignUp.setOnClickListener(v -> signUpUser());
+        btnViewTerms.setOnClickListener(v -> showPolicyDialog(
+                getString(R.string.terms_title),
+                getString(R.string.terms_body)
+        ));
+        btnViewPrivacy.setOnClickListener(v -> showPolicyDialog(
+                getString(R.string.privacy_policy_title),
+                getString(R.string.privacy_policy_body)
+        ));
         btnDevBypass.setOnClickListener(v -> DevBypassHelper.showRolePicker(this));
     }
 
@@ -96,6 +113,9 @@ public class SignUpActivity extends AppCompatActivity {
         if (validationError == null) {
             validationError = SignupValidator.validateCampus(campus);
         }
+        if (validationError == null) {
+            validationError = SignupValidator.validatePolicyAcceptance(cbAcceptPolicies.isChecked());
+        }
         if (validationError != null) {
             Toast.makeText(this, validationError, Toast.LENGTH_SHORT).show();
             return;
@@ -124,6 +144,9 @@ public class SignUpActivity extends AppCompatActivity {
                             interests,
                             darkMode
                     );
+                    newUser.setAcceptedTerms(true);
+                    newUser.setAcceptedPolicyVersion(POLICY_VERSION);
+                    newUser.setAcceptedTermsAt(Timestamp.now());
 
                     db.collection("users").document(uid).set(newUser)
                             .addOnSuccessListener(unused -> {
@@ -143,6 +166,14 @@ public class SignUpActivity extends AppCompatActivity {
                     btnSignUp.setEnabled(true);
                     Toast.makeText(SignUpActivity.this, buildAuthErrorMessage(e), Toast.LENGTH_LONG).show();
                 });
+    }
+
+    private void showPolicyDialog(String title, String message) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.ok, null)
+                .show();
     }
 
     private void setupDropdowns() {

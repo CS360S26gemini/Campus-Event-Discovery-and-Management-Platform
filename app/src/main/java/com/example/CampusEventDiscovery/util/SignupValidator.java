@@ -25,6 +25,10 @@ public class SignupValidator {
         return null;
     }
 
+    public static String validatePolicyAcceptance(boolean accepted) {
+        return accepted ? null : "Please accept the Terms and Conditions and Privacy Policy to continue.";
+    }
+
     public static String validateName(String name) {
         if (TextUtils.isEmpty(name) || name.trim().isEmpty()) {
             return "Name is required";
