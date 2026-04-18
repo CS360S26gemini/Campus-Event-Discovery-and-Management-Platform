@@ -422,6 +422,8 @@
     <string name="image_upload_failed">Image upload failed: %1$s</string>
 
     <!-- Payment and ticket strings -->
+    <string name="payments_title">Payments</string>
+    <string name="payment_empty">No payments yet for this event.</string>
     <string name="price_format">Price: PKR %1$.2f</string>
     <string name="price_free">Free</string>
     <string name="pay_now">Pay Now</string>
