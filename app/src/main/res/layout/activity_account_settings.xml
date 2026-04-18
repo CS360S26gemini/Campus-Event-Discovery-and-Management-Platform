@@ -30,7 +30,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/full_name_label"
+                android:text="@string/account_name_label"
                 android:textColor="@color/colorOnBackground"
                 android:textSize="14sp" />
 
@@ -52,15 +52,16 @@
                 android:textColor="@color/colorOnBackground"
                 android:textSize="14sp" />
 
-            <TextView
-                android:id="@+id/tvEmail"
+            <EditText
+                android:id="@+id/etEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:padding="12dp"
-                android:text="user@example.com"
-                android:textColor="@color/colorSecondary"
-                android:textSize="16sp" />
+                android:backgroundTint="@color/colorPrimary"
+                android:hint="@string/email_address_label"
+                android:inputType="textEmailAddress"
+                android:textColor="@color/colorOnBackground"
+                android:textColorHint="@color/colorSecondary" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -70,13 +71,14 @@
                 android:textColor="@color/colorOnBackground"
                 android:textSize="14sp" />
 
-            <EditText
+            <AutoCompleteTextView
                 android:id="@+id/etUniversity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:backgroundTint="@color/colorPrimary"
-                android:hint="e.g. LUMS"
+                android:hint="@string/campus_hint"
+                android:inputType="none"
                 android:textColor="@color/colorOnBackground"
                 android:textColorHint="@color/colorSecondary" />
 
@@ -106,13 +108,70 @@
                 android:textColor="@color/colorOnBackground"
                 android:textSize="14sp" />
 
-            <EditText
+            <MultiAutoCompleteTextView
                 android:id="@+id/etInterests"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:backgroundTint="@color/colorPrimary"
-                android:hint="@string/interests_hint"
+                android:hint="@string/interests_dropdown_hint"
+                android:textColor="@color/colorOnBackground"
+                android:textColorHint="@color/colorSecondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/current_password_label"
+                android:textColor="@color/colorOnBackground"
+                android:textSize="14sp" />
+
+            <EditText
+                android:id="@+id/etCurrentPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/colorPrimary"
+                android:hint="@string/current_password_hint"
+                android:inputType="textPassword"
+                android:textColor="@color/colorOnBackground"
+                android:textColorHint="@color/colorSecondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/new_password_label"
+                android:textColor="@color/colorOnBackground"
+                android:textSize="14sp" />
+
+            <EditText
+                android:id="@+id/etNewPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/colorPrimary"
+                android:hint="@string/new_password_hint"
+                android:inputType="textPassword"
+                android:textColor="@color/colorOnBackground"
+                android:textColorHint="@color/colorSecondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/confirm_new_password_label"
+                android:textColor="@color/colorOnBackground"
+                android:textSize="14sp" />
+
+            <EditText
+                android:id="@+id/etConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/colorPrimary"
+                android:hint="@string/confirm_new_password_hint"
+                android:inputType="textPassword"
                 android:textColor="@color/colorOnBackground"
                 android:textColorHint="@color/colorSecondary" />
 

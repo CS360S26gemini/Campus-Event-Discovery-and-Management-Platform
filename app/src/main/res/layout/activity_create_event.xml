@@ -47,7 +47,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="20dp"
-            android:text="Event Image"
+            android:text="@string/event_image_label"
             android:textColor="@color/colorOnBackground"
             android:textSize="14sp" />
 
@@ -121,6 +121,43 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="20dp"
+            android:text="@string/event_time"
+            android:textColor="@color/colorOnBackground"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_card_rounded"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/tvSelectedTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="@string/event_time_hint"
+                android:textColor="@color/colorSecondary"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPickTime"
+                style="@style/AppSecondaryButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/pick_time" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="20dp"
             android:text="@string/event_category"
             android:textColor="@color/colorOnBackground"
             android:textSize="14sp" />
@@ -133,6 +170,7 @@
             android:layout_marginTop="8dp"
             android:background="@drawable/bg_card_rounded"
             android:hint="@string/event_category_hint"
+            android:inputType="none"
             android:padding="14dp"
             android:textColor="@color/colorOnBackground"
             android:textColorHint="@color/colorSecondary" />
@@ -207,7 +245,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="20dp"
-            android:text="Ticket Price (PKR) — leave 0 for free"
+            android:text="@string/ticket_price_optional_label"
             android:textColor="@color/colorOnBackground"
             android:textSize="14sp" />
 

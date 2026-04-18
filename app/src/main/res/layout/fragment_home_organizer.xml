@@ -83,7 +83,8 @@
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
                 android:nestedScrollingEnabled="false"
-                android:paddingTop="4dp" />
+                android:paddingTop="@dimen/spacing_md"
+                android:paddingBottom="@dimen/bottom_nav_safe_padding" />
 
             <TextView
                 android:id="@+id/tvEmpty"
@@ -93,8 +94,11 @@
                 android:layout_marginTop="32dp"
                 android:layout_marginBottom="24dp"
                 android:text="@string/no_events_found"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="?attr/colorOnSurface"
+                android:drawableTop="@drawable/ic_event_outline"
+                android:drawablePadding="@dimen/spacing_md"
+                android:gravity="center"
                 android:visibility="gone" />
 
         </LinearLayout>

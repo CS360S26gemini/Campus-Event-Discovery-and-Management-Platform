@@ -28,9 +28,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * MainActivity.java
  *
@@ -45,9 +42,10 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth auth;
     private EventRepository repository;
 
-    private final Map<String, Fragment> fragmentCache = new HashMap<>();
-
     private String currentRole = "attendee";
+    private String currentNavigationKey;
+    private boolean initialLoadStarted;
+    private boolean suppressBottomNavSelection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,16 +76,12 @@ public class MainActivity extends AppCompatActivity {
         if (intent != null && intent.hasExtra("OPEN_TAB")) {
             String tab = intent.getStringExtra("OPEN_TAB");
             if ("profile".equals(tab)) {
-                loadFragment(getOrCreateFragment("profile"));
-                bottomNavigationView.setSelectedItemId(R.id.nav_profile);
+                navigateTo("profile", R.id.nav_profile);
                 return;
             }
         }
         
-        // If no specific tab requested, ensure we load initial if empty
-        if (getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) == null) {
-            onStart(); // Trigger initial load logic
-        }
+        // No explicit tab requested; the normal onStart lifecycle loads the initial screen.
     }
 
     @Override
@@ -99,6 +93,11 @@ public class MainActivity extends AppCompatActivity {
         if (getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) != null) {
             return;
         }
+
+        if (initialLoadStarted) {
+            return;
+        }
+        initialLoadStarted = true;
 
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser == null) {
@@ -120,12 +119,15 @@ public class MainActivity extends AppCompatActivity {
         repository.getUserData(currentUser.getUid(), new EventRepository.UserCallback() {
             @Override
             public void onSuccess(com.example.CampusEventDiscovery.model.User user) {
+                if (!canUpdateUi()) {
+                    return;
+                }
                 showLoading(false);
 
-                String resolvedRole = UserRoles.sanitize(user.getRole());
+                String resolvedRole = UserRoles.sanitize(user == null ? null : user.getRole());
                 currentRole = resolvedRole.isEmpty() ? UserRoles.ATTENDEE : resolvedRole;
 
-                if (ThemeManager.syncThemePreference(MainActivity.this, user.isDarkMode())) {
+                if (user != null && ThemeManager.syncThemePreference(MainActivity.this, user.isDarkMode())) {
                     return;
                 }
 
@@ -135,6 +137,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(Exception e) {
+                if (!canUpdateUi()) {
+                    return;
+                }
                 showLoading(false);
 
                 currentRole = UserRoles.ATTENDEE;
@@ -147,6 +152,9 @@ public class MainActivity extends AppCompatActivity {
     private void updateBottomNavMenu() {
         Menu menu = bottomNavigationView.getMenu();
         MenuItem actionItem = menu.findItem(R.id.nav_action);
+        if (actionItem == null) {
+            return;
+        }
 
         if (UserRoles.isOrganizer(currentRole)) {
             actionItem.setIcon(R.drawable.ic_add);
@@ -165,18 +173,18 @@ public class MainActivity extends AppCompatActivity {
         if (getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) != null) {
             return;
         }
-
-        Fragment initialFragment;
-        if (UserRoles.isAdmin(currentRole)) {
-            initialFragment = getOrCreateFragment("home_admin");
-        } else if (UserRoles.isOrganizer(currentRole)) {
-            initialFragment = getOrCreateFragment("home_organizer");
-        } else {
-            initialFragment = getOrCreateFragment("home_attendee");
+        if (getSupportFragmentManager().isStateSaved()) {
+            initialLoadStarted = false;
+            return;
         }
 
-        loadFragment(initialFragment);
-        bottomNavigationView.setSelectedItemId(R.id.nav_home);
+        if (UserRoles.isAdmin(currentRole)) {
+            navigateTo("home_admin", R.id.nav_home);
+        } else if (UserRoles.isOrganizer(currentRole)) {
+            navigateTo("home_organizer", R.id.nav_home);
+        } else {
+            navigateTo("home_attendee", R.id.nav_home);
+        }
     }
 
     private void setupBottomNavigation() {
@@ -184,95 +192,108 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean handleBottomNavSelection(@NonNull MenuItem item) {
+        if (suppressBottomNavSelection) {
+            return true;
+        }
+
         int itemId = item.getItemId();
 
         if (itemId == R.id.nav_home) {
             if (UserRoles.isAdmin(currentRole)) {
-                loadFragment(getOrCreateFragment("home_admin"));
+                return navigateTo("home_admin", R.id.nav_home);
             } else if (UserRoles.isOrganizer(currentRole)) {
-                loadFragment(getOrCreateFragment("home_organizer"));
+                return navigateTo("home_organizer", R.id.nav_home);
             } else {
-                loadFragment(getOrCreateFragment("home_attendee"));
+                return navigateTo("home_attendee", R.id.nav_home);
             }
-            return true;
         }
 
         if (itemId == R.id.nav_search) {
-            loadFragment(getOrCreateFragment("search"));
-            return true;
+            return navigateTo("search", R.id.nav_search);
         }
 
         if (itemId == R.id.nav_action) {
             if (UserRoles.isOrganizer(currentRole)) {
                 startActivity(new Intent(this, CreateEventActivity.class));
             } else if (UserRoles.isAdmin(currentRole)) {
-                loadFragment(getOrCreateFragment("home_admin"));
+                return navigateTo("home_admin", R.id.nav_action);
             } else {
-                loadFragment(getOrCreateFragment("my_events"));
+                return navigateTo("my_events", R.id.nav_action);
             }
             return true;
         }
 
         if (itemId == R.id.nav_favourites) {
-            loadFragment(getOrCreateFragment("favourites"));
-            return true;
+            return navigateTo("favourites", R.id.nav_favourites);
         }
 
         if (itemId == R.id.nav_profile) {
-            loadFragment(getOrCreateFragment("profile"));
-            return true;
+            return navigateTo("profile", R.id.nav_profile);
         }
 
         return false;
     }
 
-    private Fragment getOrCreateFragment(String key) {
-        if (fragmentCache.containsKey(key)) {
-            return fragmentCache.get(key);
+    private boolean navigateTo(String key, int selectedItemId) {
+        if (!canUpdateUi() || getSupportFragmentManager().isStateSaved()) {
+            return false;
         }
 
-        Fragment fragment;
+        if (key.equals(currentNavigationKey)
+                && getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) != null) {
+            updateSelectedNavItem(selectedItemId);
+            return true;
+        }
 
+        loadFragment(createFragment(key));
+        currentNavigationKey = key;
+        updateSelectedNavItem(selectedItemId);
+        return true;
+    }
+
+    private Fragment createFragment(String key) {
         switch (key) {
             case "home_admin":
-                fragment = new HomeAdminFragment();
-                break;
+                return new HomeAdminFragment();
 
             case "home_organizer":
-                fragment = new HomeOrganizerFragment();
-                break;
+                return new HomeOrganizerFragment();
 
             case "search":
-                fragment = new SearchFragment();
-                break;
+                return new SearchFragment();
 
             case "calendar":
-                fragment = new EventCalendarFragment();
-                break;
+                return new EventCalendarFragment();
 
             case "my_events":
-                fragment = new MyEventsFragment();
-                break;
+                return new MyEventsFragment();
 
             case "favourites":
-                fragment = new FavouritesFragment();
-                break;
+                return new FavouritesFragment();
 
             case "profile":
-                fragment = new ProfileFragment();
-                break;
+                return new ProfileFragment();
 
             case "home_attendee":
             default:
-                fragment = new HomeFragment();
-                break;
+                return new HomeFragment();
+        }
+    }
+
+    private void updateSelectedNavItem(int selectedItemId) {
+        if (bottomNavigationView.getSelectedItemId() == selectedItemId) {
+            return;
         }
 
-        fragmentCache.put(key, fragment);
-        return fragment;
+        suppressBottomNavSelection = true;
+        bottomNavigationView.setSelectedItemId(selectedItemId);
+        suppressBottomNavSelection = false;
     }
 
     private void loadFragment(Fragment fragment) {
+        if (!canUpdateUi() || getSupportFragmentManager().isStateSaved()) {
+            return;
+        }
         boolean animate = getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) != null;
         NavigationTransitions.replace(
                 getSupportFragmentManager(),
@@ -286,5 +307,9 @@ public class MainActivity extends AppCompatActivity {
     private void showLoading(boolean isLoading) {
         progressBarMain.setVisibility(isLoading ? ProgressBar.VISIBLE : ProgressBar.GONE);
         bottomNavigationView.setEnabled(!isLoading);
+    }
+
+    private boolean canUpdateUi() {
+        return !isFinishing() && !isDestroyed();
     }
 }

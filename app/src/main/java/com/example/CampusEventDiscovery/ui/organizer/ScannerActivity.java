@@ -23,7 +23,6 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
-import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -51,6 +50,8 @@ public class ScannerActivity extends AppCompatActivity {
     private MaterialButton btnStartScanner;
 
     private FirebaseFirestore db;
+    private EventRepository repository;
+    private String expectedEventId;
     private Rsvp currentRsvp;
     private String currentAttendeeName;
 
@@ -71,6 +72,8 @@ public class ScannerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_scanner);
 
         db = FirebaseFirestore.getInstance();
+        repository = new EventRepository();
+        expectedEventId = getIntent().getStringExtra("eventId");
 
         bindViews();
         setupUI();
@@ -139,6 +142,10 @@ public class ScannerActivity extends AppCompatActivity {
             String userId        = json.getString("userId");
             String eventId       = json.getString("eventId");
 
+            if (!TextUtils.isEmpty(expectedEventId) && !expectedEventId.equals(eventId)) {
+                showError(getString(R.string.scanner_rsvp_mismatch));
+                return;
+            }
             lookupRsvp(transactionId, userId, eventId);
         } catch (JSONException e) {
             showError(getString(R.string.scanner_invalid_qr));
@@ -230,33 +237,40 @@ public class ScannerActivity extends AppCompatActivity {
      * code one-time use only.
      */
     private void markAsAttended() {
-        if (currentRsvp == null || currentRsvp.getUserId() == null || currentRsvp.getEventId() == null) return;
+        if (currentRsvp == null
+                || TextUtils.isEmpty(currentRsvp.getUserId())
+                || TextUtils.isEmpty(currentRsvp.getEventId())
+                || TextUtils.isEmpty(currentRsvp.getTransactionId())) {
+            showError(getString(R.string.scanner_invalid_qr));
+            return;
+        }
 
-        db.collection("users").document(currentRsvp.getUserId())
-                .collection("rsvps").document(currentRsvp.getEventId())
-                .update(
-                        "checkedIn", true,
-                        "qrExpired", true,
-                        "checkedInAt", Timestamp.now()
-                )
-                .addOnSuccessListener(aVoid -> {
-                    currentRsvp.setCheckedIn(true);
-                    currentRsvp.setQrExpired(true);
+        repository.checkInAttendeeByScan(
+                currentRsvp.getEventId(),
+                currentRsvp.getUserId(),
+                currentRsvp.getTransactionId(),
+                new EventRepository.ActionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        currentRsvp.setCheckedIn(true);
+                        currentRsvp.setQrExpired(true);
 
-                    tvCheckInStatus.setText(getString(R.string.scanner_checked_in_yes));
-                    btnMarkAttended.setVisibility(View.GONE);
-                    Toast.makeText(this,
-                            getString(R.string.scanner_marked_attended),
-                            Toast.LENGTH_SHORT).show();
+                        tvCheckInStatus.setText(getString(R.string.scanner_checked_in_yes));
+                        btnMarkAttended.setVisibility(View.GONE);
+                        Toast.makeText(ScannerActivity.this,
+                                getString(R.string.scanner_marked_attended),
+                                Toast.LENGTH_SHORT).show();
+                    }
 
-                    // Mirror check-in state on the event's attendees sub-collection
-                    db.collection("events").document(currentRsvp.getEventId())
-                            .collection("attendees").document(currentRsvp.getUserId())
-                            .update("checkedIn", true, "checkedInAt", Timestamp.now());
-                })
-                .addOnFailureListener(e -> Toast.makeText(this,
-                        getString(R.string.scanner_mark_failed),
-                        Toast.LENGTH_SHORT).show());
+                    @Override
+                    public void onError(Exception e) {
+                        String message = e != null && !TextUtils.isEmpty(e.getMessage())
+                                ? e.getMessage()
+                                : getString(R.string.scanner_mark_failed);
+                        showError(message);
+                    }
+                }
+        );
     }
 
     private void showError(String message) {

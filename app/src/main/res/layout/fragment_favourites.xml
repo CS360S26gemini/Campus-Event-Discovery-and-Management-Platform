@@ -47,7 +47,7 @@
             android:layout_marginTop="12dp"
             android:layout_weight="1"
             android:clipToPadding="false"
-            android:paddingBottom="12dp" />
+            android:paddingBottom="@dimen/bottom_nav_safe_padding" />
 
         <TextView
             android:id="@+id/tvEmptyFavourites"
@@ -56,8 +56,11 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="28dp"
             android:text="@string/no_saved_events_center"
-            android:textColor="@color/colorSecondary"
-            android:textSize="14sp"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorOnSurface"
+            android:drawableTop="@drawable/ic_heart_outline"
+            android:drawablePadding="@dimen/spacing_md"
+            android:gravity="center"
             android:visibility="gone" />
     </LinearLayout>
 

@@ -36,6 +36,8 @@
             android:id="@+id/rvPendingApprovals"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="@dimen/bottom_nav_safe_padding"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
         <ProgressBar
@@ -51,7 +53,11 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="@string/no_pending_approvals"
-            android:textColor="@color/colorSecondary"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorOnSurface"
+            android:drawableTop="@drawable/ic_verified"
+            android:drawablePadding="@dimen/spacing_md"
+            android:gravity="center"
             android:visibility="gone" />
     </FrameLayout>
 

@@ -55,8 +55,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="@string/edit_photo"
-                android:textSize="13sp" />
+                android:text="@string/edit_photo_or_avatar"
+                android:textSize="13sp"
+                app:strokeColor="@color/colorOutlineVariant"
+                app:strokeWidth="1dp" />
 
             <TextView
                 android:id="@+id/tvFullName"
@@ -76,6 +78,16 @@
                 android:text="@string/unknown_email"
                 android:textColor="@color/colorSecondary"
                 android:textSize="14sp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipRole"
+                style="@style/AppSuggestionChipStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                android:clickable="false"
+                android:focusable="false"
+                android:text="@string/attendee" />
         </LinearLayout>
 
         <!-- Dark Mode Toggle -->
@@ -91,7 +103,8 @@
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
-            app:strokeColor="@android:color/transparent">
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -128,7 +141,8 @@
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
-            app:strokeColor="@android:color/transparent">
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -145,12 +159,12 @@
                     android:textColor="@color/colorOnBackground"
                     android:textSize="16sp" />
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=">"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="18sp" />
+                    android:contentDescription="@string/my_events_row"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -168,7 +182,8 @@
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
-            app:strokeColor="@android:color/transparent">
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -185,12 +200,12 @@
                     android:textColor="@color/colorOnBackground"
                     android:textSize="16sp" />
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=">"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="18sp" />
+                    android:contentDescription="@string/memories_row"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -207,7 +222,8 @@
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
-            app:strokeColor="@android:color/transparent">
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -224,12 +240,12 @@
                     android:textColor="@color/colorOnBackground"
                     android:textSize="16sp" />
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=">"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="18sp" />
+                    android:contentDescription="@string/manage_events_row"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -246,7 +262,8 @@
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
-            app:strokeColor="@android:color/transparent">
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -263,12 +280,12 @@
                     android:textColor="@color/colorOnBackground"
                     android:textSize="16sp" />
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=">"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="18sp" />
+                    android:contentDescription="@string/view_event_calendar_row"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -285,7 +302,8 @@
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
-            app:strokeColor="@android:color/transparent">
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -302,12 +320,12 @@
                     android:textColor="@color/colorOnBackground"
                     android:textSize="16sp" />
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=">"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="18sp" />
+                    android:contentDescription="@string/notifications_row"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -323,7 +341,8 @@
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
-            app:strokeColor="@android:color/transparent">
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -340,14 +359,28 @@
                     android:textColor="@color/colorOnBackground"
                     android:textSize="16sp" />
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=">"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="18sp" />
+                    android:contentDescription="@string/account_settings_row"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_help"
+            style="@style/AppOutlinedButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="@dimen/spacing_lg"
+            android:minHeight="48dp"
+            android:text="@string/help_support"
+            app:icon="@drawable/ic_help_outline"
+            app:iconGravity="textStart"
+            app:iconTint="?attr/colorPrimary"
+            app:strokeWidth="1dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
@@ -355,8 +388,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="24dp"
-            android:text="@string/logout" />
+            android:layout_marginTop="@dimen/spacing_md"
+            android:minHeight="48dp"
+            android:text="@string/logout"
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp" />
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>

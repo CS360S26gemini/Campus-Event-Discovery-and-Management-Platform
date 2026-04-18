@@ -36,6 +36,10 @@ public final class NavigationTransitions {
             transaction.addToBackStack(fragment.getClass().getSimpleName());
         }
 
-        transaction.commit();
+        if (addToBackStack) {
+            transaction.commit();
+        } else {
+            transaction.commitNow();
+        }
     }
 }

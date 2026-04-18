@@ -8,11 +8,16 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewGroup;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -56,6 +61,9 @@ public class HomeFragment extends Fragment {
 
     private TextView tvWelcome;
     private MaterialButton btnSos;
+    private TextView tvPopularLabel;
+    private HorizontalScrollView popularEventsScroll;
+    private LinearLayout popularEventsContainer;
     private View featuredCardContainer;
     private MaterialCardView cardFeaturedEvent;
     private RecyclerView rvEvents;
@@ -78,6 +86,14 @@ public class HomeFragment extends Fragment {
     private String currentUserId;
     private User currentUser;
     private Event featuredEvent;
+    private final Handler popularCarouselHandler = new Handler(Looper.getMainLooper());
+    private final Runnable popularCarouselRunnable = new Runnable() {
+        @Override
+        public void run() {
+            advancePopularCarousel();
+            popularCarouselHandler.postDelayed(this, 3000L);
+        }
+    };
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 boolean granted = false;
@@ -121,6 +137,9 @@ public class HomeFragment extends Fragment {
 
         tvWelcome = view.findViewById(R.id.tvWelcome);
         btnSos = view.findViewById(R.id.btnSos);
+        tvPopularLabel = view.findViewById(R.id.tvPopularLabel);
+        popularEventsScroll = view.findViewById(R.id.popularEventsScroll);
+        popularEventsContainer = view.findViewById(R.id.popularEventsContainer);
         featuredCardContainer = view.findViewById(R.id.featuredCardContainer);
         rvEvents = view.findViewById(R.id.rvEvents);
         progressBar = view.findViewById(R.id.progressBar);
@@ -145,9 +164,16 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        startPopularCarousel();
         if (getView() != null) {
             loadHomeData();
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        popularCarouselHandler.removeCallbacks(popularCarouselRunnable);
     }
 
     private void setupRecyclerView() {
@@ -220,7 +246,7 @@ public class HomeFragment extends Fragment {
                 if (!isAdded()) return;
                 currentUser = user;
 
-                String name = user.getFullName();
+                String name = user == null ? null : user.getFullName();
                 if (TextUtils.isEmpty(name)) {
                     tvWelcome.setText(getString(R.string.welcome_back));
                 } else {
@@ -366,6 +392,7 @@ public class HomeFragment extends Fragment {
 
         if (isCurrentlySaved) {
             repository.unsaveEvent(currentUserId, event.getEventId(), () -> {
+                if (!isAdded()) return;
                 savedEventIds.remove(event.getEventId());
                 adapter.updateSavedIds(savedEventIds);
                 bindFeaturedEvent(featuredEvent);
@@ -374,6 +401,7 @@ public class HomeFragment extends Fragment {
             repository.saveEvent(currentUserId, event, new EventRepository.ActionCallback() {
                 @Override
                 public void onSuccess() {
+                    if (!isAdded()) return;
                     savedEventIds.add(event.getEventId());
                     adapter.updateSavedIds(savedEventIds);
                     bindFeaturedEvent(featuredEvent);
@@ -381,6 +409,7 @@ public class HomeFragment extends Fragment {
 
                 @Override
                 public void onError(Exception e) {
+                    if (!isAdded()) return;
                     Toast.makeText(requireContext(), "Failed to save event.", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -438,11 +467,13 @@ public class HomeFragment extends Fragment {
                 new EventRepository.ActionCallback() {
                     @Override
                     public void onSuccess() {
+                        if (!isAdded()) return;
                         Toast.makeText(requireContext(), getString(R.string.sos_sent), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(Exception e) {
+                        if (!isAdded()) return;
                         Toast.makeText(requireContext(), "Failed to send SOS.", Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -488,12 +519,103 @@ public class HomeFragment extends Fragment {
 
     private void updateEventList(List<Event> events) {
         adapter.updateData(events);
+        bindPopularEvents(events);
 
         if (events == null || events.isEmpty()) {
             tvEmpty.setVisibility(View.VISIBLE);
         } else {
             tvEmpty.setVisibility(View.GONE);
         }
+    }
+
+    private void bindPopularEvents(List<Event> events) {
+        if (popularEventsContainer == null || popularEventsScroll == null || tvPopularLabel == null) {
+            return;
+        }
+
+        popularEventsContainer.removeAllViews();
+
+        if (events == null || events.isEmpty()) {
+            tvPopularLabel.setVisibility(View.GONE);
+            popularEventsScroll.setVisibility(View.GONE);
+            popularCarouselHandler.removeCallbacks(popularCarouselRunnable);
+            return;
+        }
+
+        tvPopularLabel.setVisibility(View.VISIBLE);
+        popularEventsScroll.setVisibility(View.VISIBLE);
+
+        List<Event> popular = new ArrayList<>(events);
+        popular.sort((first, second) -> Long.compare(second.getRsvpCount(), first.getRsvpCount()));
+        int max = Math.min(5, popular.size());
+
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        for (int i = 0; i < max; i++) {
+            Event event = popular.get(i);
+            View card = inflater.inflate(R.layout.item_event_card_carousel, popularEventsContainer, false);
+            bindPopularCard(card, event, i < max - 1);
+            popularEventsContainer.addView(card);
+        }
+
+        popularEventsScroll.post(() -> popularEventsScroll.scrollTo(0, 0));
+        startPopularCarousel();
+    }
+
+    private void bindPopularCard(View card, Event event, boolean addTrailingGap) {
+        ImageView thumbnail = card.findViewById(R.id.ivCarouselThumbnail);
+        ImageView placeholder = card.findViewById(R.id.ivCarouselPlaceholderIcon);
+        TextView title = card.findViewById(R.id.tvCarouselTitle);
+        TextView date = card.findViewById(R.id.tvCarouselDate);
+        TextView attendees = card.findViewById(R.id.tvCarouselAttendees);
+
+        title.setText(safeText(event.getTitle(), getString(R.string.app_name)));
+        date.setText(formatDateTime(event.getDate()));
+        attendees.setText(event.getRsvpCount() + " registered");
+
+        if (!TextUtils.isEmpty(event.getThumbnailUrl())) {
+            placeholder.setVisibility(View.GONE);
+            Glide.with(requireContext())
+                    .load(event.getThumbnailUrl())
+                    .placeholder(R.drawable.bg_placeholder_image)
+                    .centerCrop()
+                    .into(thumbnail);
+        } else {
+            thumbnail.setImageResource(0);
+            thumbnail.setBackgroundResource(R.drawable.bg_placeholder_image);
+            placeholder.setVisibility(View.VISIBLE);
+        }
+
+        MarginLayoutParams layoutParams = (MarginLayoutParams) card.getLayoutParams();
+        layoutParams.setMarginEnd(addTrailingGap ? dpToPx(12) : 0);
+        card.setLayoutParams(layoutParams);
+        card.setOnClickListener(v -> openEventDetail(event));
+    }
+
+    private void startPopularCarousel() {
+        popularCarouselHandler.removeCallbacks(popularCarouselRunnable);
+        popularCarouselHandler.postDelayed(popularCarouselRunnable, 3000L);
+    }
+
+    private void advancePopularCarousel() {
+        if (popularEventsScroll == null || popularEventsContainer == null || popularEventsContainer.getChildCount() < 2) {
+            return;
+        }
+
+        int maxScroll = Math.max(0, popularEventsContainer.getWidth() - popularEventsScroll.getWidth());
+        if (maxScroll == 0) {
+            return;
+        }
+
+        int cardSpan = getResources().getDimensionPixelSize(R.dimen.event_carousel_card_width) + dpToPx(12);
+        int nextScrollX = popularEventsScroll.getScrollX() + cardSpan;
+        if (nextScrollX >= maxScroll) {
+            nextScrollX = 0;
+        }
+        popularEventsScroll.smoothScrollTo(nextScrollX, 0);
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private void showLoading(boolean isLoading) {

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/profileFragment">
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.CampusEventDiscovery.ui.profile.ProfileFragment"
+        android:label="@string/profile">
+        <action
+            android:id="@+id/action_profile_to_help"
+            app:destination="@id/helpFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/helpFragment"
+        android:name="com.example.CampusEventDiscovery.ui.profile.HelpFragment"
+        android:label="@string/help_support" />
+</navigation>
