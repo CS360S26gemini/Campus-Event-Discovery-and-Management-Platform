@@ -9,6 +9,7 @@ import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.CampusEventDiscovery.repository.EventRepository;
@@ -18,6 +19,7 @@ import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseUser;
 /**
  * SignInActivity.java
  *
@@ -55,7 +57,6 @@ public class SignInActivity extends AppCompatActivity {
     }
 
     private void signInUser() {
-
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
@@ -68,6 +69,7 @@ public class SignInActivity extends AppCompatActivity {
             finish();
             return;
         }
+
         DevSessionManager.clearBypass(this);
 
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
@@ -79,25 +81,93 @@ public class SignInActivity extends AppCompatActivity {
 
         auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
-                    repository.getUserData(authResult.getUser().getUid(), new EventRepository.UserCallback() {
-                        @Override
-                        public void onSuccess(com.example.CampusEventDiscovery.model.User user) {
-                            if (user != null) {
-                                ThemeManager.syncThemePreference(SignInActivity.this, user.isDarkMode());
-                            }
-                            openMain();
-                        }
+                    FirebaseUser signedInUser = authResult.getUser();
+                    if (signedInUser == null) {
+                        btnSignIn.setEnabled(true);
+                        Toast.makeText(this, "Sign in failed: user is null", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-                        @Override
-                        public void onError(Exception e) {
-                            openMain();
-                        }
-                    });
+                    signedInUser.reload()
+                            .addOnSuccessListener(unused -> {
+                                FirebaseUser refreshedUser = auth.getCurrentUser();
+                                if (refreshedUser == null) {
+                                    btnSignIn.setEnabled(true);
+                                    Toast.makeText(
+                                            SignInActivity.this,
+                                            "Sign in failed: account state could not be refreshed.",
+                                            Toast.LENGTH_LONG
+                                    ).show();
+                                    return;
+                                }
+
+                                if (!refreshedUser.isEmailVerified()) {
+                                    handleUnverifiedUser(refreshedUser);
+                                    return;
+                                }
+
+                                repository.getUserData(refreshedUser.getUid(), new EventRepository.UserCallback() {
+                                    @Override
+                                    public void onSuccess(com.example.CampusEventDiscovery.model.User user) {
+                                        ThemeManager.syncThemePreference(SignInActivity.this, user.isDarkMode());
+                                        openMain();
+                                    }
+
+                                    @Override
+                                    public void onError(Exception e) {
+                                        openMain();
+                                    }
+                                });
+                            })
+                            .addOnFailureListener(e -> {
+                                auth.signOut();
+                                btnSignIn.setEnabled(true);
+                                Toast.makeText(
+                                        SignInActivity.this,
+                                        "Could not refresh account status: " + e.getMessage(),
+                                        Toast.LENGTH_LONG
+                                ).show();
+                            });
                 })
                 .addOnFailureListener(e -> {
                     btnSignIn.setEnabled(true);
                     Toast.makeText(this, buildSignInErrorMessage(e), Toast.LENGTH_LONG).show();
                 });
+    }
+
+    private void handleUnverifiedUser(FirebaseUser user) {
+        new AlertDialog.Builder(this)
+                .setTitle("Email not verified")
+                .setMessage("Your email is not verified yet. Do you want us to send the verification email again?")
+                .setPositiveButton("Resend", (dialog, which) -> {
+                    auth.setLanguageCode("en");
+
+                    user.sendEmailVerification()
+                            .addOnSuccessListener(unused -> {
+                                auth.signOut();
+                                btnSignIn.setEnabled(true);
+                                Toast.makeText(
+                                        SignInActivity.this,
+                                        "Verification email sent again. Check your inbox and spam folder.",
+                                        Toast.LENGTH_LONG
+                                ).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                auth.signOut();
+                                btnSignIn.setEnabled(true);
+                                Toast.makeText(
+                                        SignInActivity.this,
+                                        "Could not resend verification email: " + e.getMessage(),
+                                        Toast.LENGTH_LONG
+                                ).show();
+                            });
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    auth.signOut();
+                    btnSignIn.setEnabled(true);
+                })
+                .setCancelable(false)
+                .show();
     }
 
     private void openMain() {

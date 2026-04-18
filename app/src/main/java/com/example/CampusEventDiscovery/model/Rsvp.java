@@ -24,6 +24,7 @@ public class Rsvp {
     private String paymentMethod;
     private String paymentProofUrl;
     private String qrPayload;
+    private String qrCodeToken;
     private boolean checkedIn;
     private boolean qrExpired;
     private Timestamp rsvpAt;
@@ -91,6 +92,9 @@ public class Rsvp {
 
     public String getQrPayload() { return qrPayload; }
     public void setQrPayload(String qrPayload) { this.qrPayload = qrPayload; }
+
+    public String getQrCodeToken() { return qrCodeToken; }
+    public void setQrCodeToken(String qrCodeToken) { this.qrCodeToken = qrCodeToken; }
 
     public boolean isCheckedIn() { return checkedIn; }
     public void setCheckedIn(boolean checkedIn) { this.checkedIn = checkedIn; }

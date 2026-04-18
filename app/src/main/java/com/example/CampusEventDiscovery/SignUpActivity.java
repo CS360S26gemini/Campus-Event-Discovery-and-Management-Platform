@@ -22,6 +22,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -71,6 +72,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     private void signUpUser() {
         DevSessionManager.clearBypass(this);
+
         String fullName = etFullName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
@@ -108,12 +110,14 @@ public class SignUpActivity extends AppCompatActivity {
 
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
-                    if (authResult.getUser() == null) {
+                    FirebaseUser firebaseUser = authResult.getUser();
+                    if (firebaseUser == null) {
                         btnSignUp.setEnabled(true);
                         Toast.makeText(SignUpActivity.this, "Auth error: User is null", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    String uid = authResult.getUser().getUid();
+
+                    String uid = firebaseUser.getUid();
                     User newUser = new User(
                             fullName,
                             email,
@@ -127,22 +131,47 @@ public class SignUpActivity extends AppCompatActivity {
 
                     db.collection("users").document(uid).set(newUser)
                             .addOnSuccessListener(unused -> {
-                                ThemeManager.applyThemePreference(SignUpActivity.this, darkMode);
-                                Toast.makeText(SignUpActivity.this, "Account created!", Toast.LENGTH_SHORT).show();
-                                Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(intent);
-                                finish();
+                                auth.setLanguageCode("en");
+
+                                firebaseUser.sendEmailVerification()
+                                        .addOnSuccessListener(emailUnused -> {
+                                            auth.signOut();
+                                            redirectToSignIn(
+                                                    "Account created. Verification email sent. Please verify your email before signing in.",
+                                                    darkMode
+                                            );
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            auth.signOut();
+                                            redirectToSignIn(
+                                                    "Account created, but the verification email could not be sent right now. Please sign in again to resend verification.",
+                                                    darkMode
+                                            );
+                                        });
                             })
                             .addOnFailureListener(e -> {
                                 btnSignUp.setEnabled(true);
-                                Toast.makeText(SignUpActivity.this, "Database error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(
+                                        SignUpActivity.this,
+                                        "Database error: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT
+                                ).show();
                             });
                 })
                 .addOnFailureListener(e -> {
                     btnSignUp.setEnabled(true);
                     Toast.makeText(SignUpActivity.this, buildAuthErrorMessage(e), Toast.LENGTH_LONG).show();
                 });
+    }
+
+    private void redirectToSignIn(String message, boolean darkMode) {
+        ThemeManager.applyThemePreference(this, darkMode);
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+
+        Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void setupDropdowns() {
