@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#B00020"
+    android:background="@color/colorError"
     android:padding="24dp">
 
     <ImageView
@@ -22,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="EMERGENCY ALERT"
+        android:text="@string/sos_alert_title"
         android:textColor="@android:color/white"
         android:textSize="28sp"
         android:textStyle="bold"
@@ -35,7 +35,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Reporter: Loading..."
+        android:text="@string/sos_alert_reporter_loading"
         android:textColor="@android:color/white"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -48,23 +48,25 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:gravity="center"
-        android:text="Description: No details provided."
+        android:text="@string/sos_alert_description_empty"
         android:textColor="@android:color/white"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvSosReporter" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnDismiss"
+        style="@style/AppOutlinedButtonStyle"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_marginBottom="32dp"
-        android:backgroundTint="@android:color/white"
-        android:text="DISMISS"
-        android:textColor="#B00020"
+        android:backgroundTint="@color/colorOnError"
+        android:text="@string/dismiss"
+        android:textColor="@color/colorError"
         android:textSize="18sp"
         android:textStyle="bold"
+        app:strokeColor="@color/colorOnError"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

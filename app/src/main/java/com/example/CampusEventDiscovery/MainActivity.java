@@ -25,6 +25,7 @@ import com.example.CampusEventDiscovery.util.NavigationTransitions;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -37,6 +38,7 @@ import com.google.firebase.auth.FirebaseUser;
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNavigationView;
+    private ExtendedFloatingActionButton fabCreateEvent;
     private ProgressBar progressBarMain;
 
     private FirebaseAuth auth;
@@ -53,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        fabCreateEvent = findViewById(R.id.fabCreateEvent);
         progressBarMain = findViewById(R.id.progressBarMain);
 
         auth = FirebaseAuth.getInstance();
@@ -157,14 +160,18 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (UserRoles.isOrganizer(currentRole)) {
-            actionItem.setIcon(R.drawable.ic_add);
-            actionItem.setTitle(R.string.create_event);
+            actionItem.setVisible(false);
+            fabCreateEvent.setVisibility(ExtendedFloatingActionButton.VISIBLE);
         } else if (UserRoles.isAdmin(currentRole)) {
+            actionItem.setVisible(true);
             actionItem.setIcon(R.drawable.ic_verified);
             actionItem.setTitle(R.string.approvals);
+            fabCreateEvent.setVisibility(ExtendedFloatingActionButton.GONE);
         } else {
+            actionItem.setVisible(true);
             actionItem.setIcon(R.drawable.ic_pin);
             actionItem.setTitle(R.string.my_events_row);
+            fabCreateEvent.setVisibility(ExtendedFloatingActionButton.GONE);
         }
     }
 
@@ -189,6 +196,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener(this::handleBottomNavSelection);
+        fabCreateEvent.setOnClickListener(v -> startActivity(new Intent(this, CreateEventActivity.class)));
     }
 
     private boolean handleBottomNavSelection(@NonNull MenuItem item) {

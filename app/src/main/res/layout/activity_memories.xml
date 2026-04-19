@@ -7,13 +7,12 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarMemories"
+        style="@style/AppToolbarStyle"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorSurface"
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/ic_back"
-        app:title="@string/memories_title"
-        app:titleTextColor="@color/colorOnBackground" />
+        app:title="@string/memories_title" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMemories"

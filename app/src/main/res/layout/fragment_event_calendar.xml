@@ -22,6 +22,7 @@
             android:paddingHorizontal="16dp">
 
             <ImageButton
+                style="@style/AppImageButtonStyle"
                 android:id="@+id/btnBackCalendar"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
@@ -52,6 +53,7 @@
             android:paddingHorizontal="16dp">
 
             <ImageButton
+                style="@style/AppImageButtonStyle"
                 android:id="@+id/btnPrevMonth"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
@@ -72,6 +74,7 @@
                 android:textStyle="bold" />
 
             <ImageButton
+                style="@style/AppImageButtonStyle"
                 android:id="@+id/btnNextMonth"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
@@ -89,9 +92,9 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="16dp"
             app:cardBackgroundColor="@color/colorSurface"
-            app:cardCornerRadius="20dp"
+            app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
-            app:strokeColor="@color/dividerColor"
+            app:strokeColor="@color/colorOutlineVariant"
             app:strokeWidth="1dp">
 
             <LinearLayout

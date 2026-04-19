@@ -18,6 +18,7 @@ import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.ui.event.PaymentConfirmationActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -36,7 +37,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
     private ImageButton btnBack, btnShare;
     private TextView tvTitle, tvDateTime, tvVenue, tvRegCount;
     private ProgressBar pbRegistrations;
-    private MaterialButton btnWhoIsComing, btnAnnouncement;
+    private MaterialButton btnWhoIsComing, btnAnnouncement, btnPayments;
 
     private EventRepository repository;
     private String eventId;
@@ -79,6 +80,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
         pbRegistrations = findViewById(R.id.pbRegistrations);
         btnWhoIsComing = findViewById(R.id.btnWhoIsComing);
         btnAnnouncement = findViewById(R.id.btnAnnouncement);
+        btnPayments = findViewById(R.id.btnPayments);
     }
 
     private void setupListeners() {
@@ -90,6 +92,12 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
             startActivity(intent);
         });
         btnAnnouncement.setOnClickListener(v -> showAnnouncementDialog());
+        btnPayments.setOnClickListener(v -> {
+            Intent intent = new Intent(this, PaymentConfirmationActivity.class);
+            intent.putExtra("eventId", eventId);
+            intent.putExtra("eventTitle", currentEvent != null ? currentEvent.getTitle() : "");
+            startActivity(intent);
+        });
     }
 
     private void loadEventDetails() {

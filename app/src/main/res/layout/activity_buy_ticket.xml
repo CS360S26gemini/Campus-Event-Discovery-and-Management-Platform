@@ -8,12 +8,11 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarBuyTicket"
+        style="@style/AppToolbarStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorSurface"
         app:navigationIcon="@drawable/ic_back"
-        app:title="@string/buy_ticket_title"
-        app:titleTextColor="@color/colorOnBackground" />
+        app:title="@string/buy_ticket_title" />
 
     <LinearLayout
         android:layout_width="match_parent"

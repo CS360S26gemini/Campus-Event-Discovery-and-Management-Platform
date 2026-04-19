@@ -10,7 +10,7 @@
     android:foreground="?attr/selectableItemBackground"
     android:minHeight="88dp"
     app:cardBackgroundColor="?attr/colorSurface"
-    app:cardCornerRadius="8dp"
+    app:cardCornerRadius="@dimen/event_card_radius"
     app:cardElevation="0dp"
     app:rippleColor="@color/colorPrimaryRipple"
     app:strokeColor="?attr/colorOutlineVariant"

@@ -3,7 +3,9 @@ package com.example.CampusEventDiscovery.ui.myevents;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +34,7 @@ import com.example.CampusEventDiscovery.ui.organizer.OrganizerEventDetailActivit
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -56,6 +59,7 @@ public class MyEventsFragment extends Fragment {
     private static final String ARG_SHOW_BACK_BUTTON = "show_back_button";
 
     private MaterialToolbar toolbarMyEvents;
+    private TextInputEditText etMyEventsSearch;
     
     private TextView tvSection1Header, tvSection2Header, tvSection3Header;
     private TextView tvEmptySection1, tvEmptySection2, tvEmptySection3;
@@ -77,6 +81,7 @@ public class MyEventsFragment extends Fragment {
 
     private String currentUserId;
     private String userRole = UserRoles.ATTENDEE;
+    private String searchQuery = "";
 
     public MyEventsFragment() {
         // Required empty public constructor
@@ -111,6 +116,7 @@ public class MyEventsFragment extends Fragment {
 
         bindViews(view);
         setupToolbar();
+        setupSearch();
         setupRecyclerViews();
         
         loadUserRoleAndData();
@@ -126,6 +132,7 @@ public class MyEventsFragment extends Fragment {
 
     private void bindViews(View view) {
         toolbarMyEvents = view.findViewById(R.id.toolbarMyEvents);
+        etMyEventsSearch = view.findViewById(R.id.etMyEventsSearch);
         
         tvSection1Header = view.findViewById(R.id.tvSection1Header);
         tvSection2Header = view.findViewById(R.id.tvSection2Header);
@@ -163,6 +170,19 @@ public class MyEventsFragment extends Fragment {
                 toolbarMyEvents.setNavigationOnClickListener(null);
             }
         }
+    }
+
+    private void setupSearch() {
+        etMyEventsSearch.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                searchQuery = s == null ? "" : s.toString().trim();
+                applyFilters();
+            }
+        });
     }
 
     private void setupRecyclerViews() {
@@ -492,15 +512,66 @@ public class MyEventsFragment extends Fragment {
             }
         }
         adapter.updateSavedIds(targetIds);
-        adapter.updateData(new ArrayList<>(targetList));
+        List<Event> filtered = filterEvents(targetList);
+        adapter.updateData(filtered);
         
-        emptyView.setVisibility(targetList.isEmpty() ? View.VISIBLE : View.GONE);
+        emptyView.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         progressBar.setVisibility(View.GONE);
         
         // Handle visibility of the whole section if needed
-        if (rvSection1.getAdapter() == adapter) rvSection1.setVisibility(targetList.isEmpty() ? View.GONE : View.VISIBLE);
-        if (rvSection2.getAdapter() == adapter) rvSection2.setVisibility(targetList.isEmpty() ? View.GONE : View.VISIBLE);
-        if (rvSection3.getAdapter() == adapter) rvSection3.setVisibility(targetList.isEmpty() ? View.GONE : View.VISIBLE);
+        if (rvSection1.getAdapter() == adapter) rvSection1.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
+        if (rvSection2.getAdapter() == adapter) rvSection2.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
+        if (rvSection3.getAdapter() == adapter) rvSection3.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private void applyFilters() {
+        if (adapter1 == null || adapter2 == null || adapter3 == null) {
+            return;
+        }
+
+        List<Event> filtered1 = filterEvents(list1);
+        List<Event> filtered2 = filterEvents(list2);
+        List<Event> filtered3 = filterEvents(list3);
+
+        adapter1.updateData(filtered1);
+        adapter2.updateData(filtered2);
+        adapter3.updateData(filtered3);
+
+        tvEmptySection1.setVisibility(filtered1.isEmpty() ? View.VISIBLE : View.GONE);
+        rvSection1.setVisibility(filtered1.isEmpty() ? View.GONE : View.VISIBLE);
+        tvEmptySection2.setVisibility(filtered2.isEmpty() ? View.VISIBLE : View.GONE);
+        rvSection2.setVisibility(filtered2.isEmpty() ? View.GONE : View.VISIBLE);
+
+        boolean showThirdSection = tvSection3Header.getVisibility() == View.VISIBLE;
+        tvEmptySection3.setVisibility(showThirdSection && filtered3.isEmpty() ? View.VISIBLE : View.GONE);
+        rvSection3.setVisibility(showThirdSection && !filtered3.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private List<Event> filterEvents(List<Event> source) {
+        if (TextUtils.isEmpty(searchQuery)) {
+            return new ArrayList<>(source);
+        }
+
+        String needle = searchQuery.toLowerCase();
+        List<Event> filtered = new ArrayList<>();
+        for (Event event : source) {
+            if (event == null) {
+                continue;
+            }
+
+            String haystack = (safeText(event.getTitle())
+                    + " " + safeText(event.getLocation())
+                    + " " + safeText(event.getCategory())
+                    + " " + safeText(event.getStatus())).toLowerCase();
+            if (haystack.contains(needle)) {
+                filtered.add(event);
+            }
+        }
+        return filtered;
+    }
+
+    private String safeText(String value) {
+        return value == null ? "" : value;
     }
 
     private Event proposalToEvent(EventProposal p) {

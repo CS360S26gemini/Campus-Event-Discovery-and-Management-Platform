@@ -4,13 +4,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.appcompat.widget.Toolbar
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarSos"
+        style="@style/AppToolbarStyle"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#B00020"
-        android:title="SOS Dashboard"
-        android:titleTextColor="@android:color/white"
+        app:title="@string/sos_dashboard_title"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -26,9 +25,9 @@
         android:id="@+id/tvSosEmpty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="No SOS alerts yet."
+        android:text="@string/sos_empty"
         android:textSize="16sp"
-        android:textColor="#757575"
+        android:textColor="@color/colorOnSurfaceVariant"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/toolbarSos"
         app:layout_constraintBottom_toBottomOf="parent"

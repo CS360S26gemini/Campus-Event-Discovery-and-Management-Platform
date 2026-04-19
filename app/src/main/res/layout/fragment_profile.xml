@@ -100,7 +100,7 @@
             android:clickable="true"
             android:focusable="true"
             app:cardBackgroundColor="@color/colorSurface"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
             app:strokeColor="@color/colorOutlineVariant"
@@ -138,7 +138,7 @@
             android:clickable="true"
             android:focusable="true"
             app:cardBackgroundColor="@color/colorSurface"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
             app:strokeColor="@color/colorOutlineVariant"
@@ -179,7 +179,7 @@
             android:focusable="true"
             android:visibility="gone"
             app:cardBackgroundColor="@color/colorSurface"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
             app:strokeColor="@color/colorOutlineVariant"
@@ -219,7 +219,7 @@
             android:focusable="true"
             android:visibility="gone"
             app:cardBackgroundColor="@color/colorSurface"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
             app:strokeColor="@color/colorOutlineVariant"
@@ -249,6 +249,126 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/rowCreateEvent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="14dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="@dimen/event_card_radius"
+            app:cardElevation="0dp"
+            app:rippleColor="@color/colorPrimaryRipple"
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/create_event"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="16sp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/create_event"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/rowScanTickets"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="14dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="@dimen/event_card_radius"
+            app:cardElevation="0dp"
+            app:rippleColor="@color/colorPrimaryRipple"
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/scan_tickets"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="16sp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/scan_tickets"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/rowSosDashboard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="14dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/colorSurface"
+            app:cardCornerRadius="@dimen/event_card_radius"
+            app:cardElevation="0dp"
+            app:rippleColor="@color/colorPrimaryRipple"
+            app:strokeColor="@color/colorOutlineVariant"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/open_sos_dashboard"
+                    android:textColor="@color/colorOnBackground"
+                    android:textSize="16sp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/open_sos_dashboard"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurfaceVariant" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Calendar Row -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/rowCalendar"
@@ -259,7 +379,7 @@
             android:clickable="true"
             android:focusable="true"
             app:cardBackgroundColor="@color/colorSurface"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
             app:strokeColor="@color/colorOutlineVariant"
@@ -299,7 +419,7 @@
             android:clickable="true"
             android:focusable="true"
             app:cardBackgroundColor="@color/colorSurface"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
             app:strokeColor="@color/colorOutlineVariant"
@@ -338,7 +458,7 @@
             android:clickable="true"
             android:focusable="true"
             app:cardBackgroundColor="@color/colorSurface"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
             app:rippleColor="@color/colorPrimaryRipple"
             app:strokeColor="@color/colorOutlineVariant"

@@ -12,13 +12,11 @@
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbarCreateEvent"
+            style="@style/AppToolbarStyle"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/colorSurface"
             app:navigationIcon="@drawable/ic_back"
-            app:navigationIconTint="@color/colorOnSurface"
-            app:title="@string/create_event_header"
-            app:titleTextColor="@color/colorOnSurface" />
+            app:title="@string/create_event_header" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -172,7 +170,7 @@
             </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                style="@style/AppTextInputDropdownStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_md"

@@ -36,7 +36,10 @@ import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.calendar.EventCalendarFragment;
 import com.example.CampusEventDiscovery.ui.myevents.MyEventsFragment;
+import com.example.CampusEventDiscovery.ui.organizer.CreateEventActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ManageEventsActivity;
+import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
+import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.example.CampusEventDiscovery.util.AvatarRenderer;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.NavigationTransitions;
@@ -104,6 +107,9 @@ public class ProfileFragment extends Fragment {
     private View rowMyEvents;
     private View rowMemories;
     private View rowManageEvents;
+    private View rowCreateEvent;
+    private View rowScanTickets;
+    private View rowSosDashboard;
     private View rowCalendar;
     private View rowNotifications;
     private View rowAccountSettings;
@@ -176,6 +182,9 @@ public class ProfileFragment extends Fragment {
         rowMyEvents = view.findViewById(R.id.rowMyEvents);
         rowMemories = view.findViewById(R.id.rowMemories);
         rowManageEvents = view.findViewById(R.id.rowManageEvents);
+        rowCreateEvent = view.findViewById(R.id.rowCreateEvent);
+        rowScanTickets = view.findViewById(R.id.rowScanTickets);
+        rowSosDashboard = view.findViewById(R.id.rowSosDashboard);
         rowCalendar = view.findViewById(R.id.rowCalendar);
         rowNotifications = view.findViewById(R.id.rowNotifications);
         rowAccountSettings = view.findViewById(R.id.rowAccountSettings);
@@ -210,6 +219,15 @@ public class ProfileFragment extends Fragment {
             Intent intent = new Intent(requireContext(), ManageEventsActivity.class);
             startActivity(intent);
         }));
+
+        rowCreateEvent.setOnClickListener(v -> runAfterTouchFeedback(v, () ->
+                startActivity(new Intent(requireContext(), CreateEventActivity.class))));
+
+        rowScanTickets.setOnClickListener(v -> runAfterTouchFeedback(v, () ->
+                startActivity(new Intent(requireContext(), ScannerActivity.class))));
+
+        rowSosDashboard.setOnClickListener(v -> runAfterTouchFeedback(v, () ->
+                startActivity(new Intent(requireContext(), SOSDashboardActivity.class))));
 
         rowCalendar.setOnClickListener(v -> runAfterTouchFeedback(v, () ->
                 NavigationTransitions.replace(
@@ -536,9 +554,7 @@ public class ProfileFragment extends Fragment {
             switchDarkMode.setOnCheckedChangeListener(null);
             switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
             bindDarkModeListener();
-            rowMyEvents.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
-            rowMemories.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
-            rowManageEvents.setVisibility(UserRoles.isOrganizer(currentRole) ? View.VISIBLE : View.GONE);
+            bindRoleNavigationRows();
             bindAvatar(currentAvatarConfig);
             bindProfileVisualButtonState(true);
             return;
@@ -556,9 +572,7 @@ public class ProfileFragment extends Fragment {
             bindAvatar(currentAvatarConfig);
             bindRoleBadge();
             switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
-            rowMyEvents.setVisibility(View.GONE);
-            rowMemories.setVisibility(View.GONE);
-            rowManageEvents.setVisibility(View.GONE);
+            hideRoleNavigationRows();
             bindProfileVisualButtonState(false);
             return;
         }
@@ -596,9 +610,7 @@ public class ProfileFragment extends Fragment {
                 currentAvatarEnabled = user.isAvatarEnabled();
                 currentAvatarConfig = AvatarConfig.fromMap(user.getAvatarConfig(), currentDisplayName, currentRole);
                 bindRoleBadge();
-                rowMyEvents.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
-                rowMemories.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
-                rowManageEvents.setVisibility(UserRoles.isOrganizer(currentRole) ? View.VISIBLE : View.GONE);
+                bindRoleNavigationRows();
 
                 switchDarkMode.setOnCheckedChangeListener(null);
                 switchDarkMode.setChecked(user.isDarkMode());
@@ -627,9 +639,7 @@ public class ProfileFragment extends Fragment {
         } else {
             tvEmail.setText(getString(R.string.unknown_email));
         }
-        rowMyEvents.setVisibility(View.GONE);
-        rowMemories.setVisibility(View.GONE);
-        rowManageEvents.setVisibility(View.GONE);
+        hideRoleNavigationRows();
         currentRole = UserRoles.ATTENDEE;
         currentAvatarConfig = AvatarConfig.defaultsFor(currentDisplayName, currentRole);
         bindAvatar(currentAvatarConfig);
@@ -650,6 +660,27 @@ public class ProfileFragment extends Fragment {
         }
 
         bindAvatar(currentAvatarConfig);
+    }
+
+    private void bindRoleNavigationRows() {
+        boolean attendee = UserRoles.isAttendee(currentRole);
+        boolean organizer = UserRoles.isOrganizer(currentRole);
+
+        rowMyEvents.setVisibility(attendee ? View.VISIBLE : View.GONE);
+        rowMemories.setVisibility(attendee ? View.VISIBLE : View.GONE);
+        rowManageEvents.setVisibility(organizer ? View.VISIBLE : View.GONE);
+        rowCreateEvent.setVisibility(organizer ? View.VISIBLE : View.GONE);
+        rowScanTickets.setVisibility(organizer ? View.VISIBLE : View.GONE);
+        rowSosDashboard.setVisibility(organizer ? View.VISIBLE : View.GONE);
+    }
+
+    private void hideRoleNavigationRows() {
+        rowMyEvents.setVisibility(View.GONE);
+        rowMemories.setVisibility(View.GONE);
+        rowManageEvents.setVisibility(View.GONE);
+        rowCreateEvent.setVisibility(View.GONE);
+        rowScanTickets.setVisibility(View.GONE);
+        rowSosDashboard.setVisibility(View.GONE);
     }
 
     private void bindPhoto(String profilePicUrl) {

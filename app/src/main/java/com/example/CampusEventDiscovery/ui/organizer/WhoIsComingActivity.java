@@ -43,6 +43,7 @@ public class WhoIsComingActivity extends AppCompatActivity {
 
     private ImageButton btnBack;
     private TextView tvTitle;
+    private TextView tvEventContext;
     private EditText etSearchParticipants;
     private RecyclerView rvParticipants;
     private TextView tvEmptyParticipants;
@@ -67,8 +68,13 @@ public class WhoIsComingActivity extends AppCompatActivity {
 
         bindViews();
         btnBack.setOnClickListener(v -> finish());
-        tvTitle.setText(TextUtils.isEmpty(eventTitle)
-                ? getString(R.string.who_is_coming) : eventTitle);
+        tvTitle.setText(R.string.who_is_coming);
+        if (TextUtils.isEmpty(eventTitle)) {
+            tvEventContext.setVisibility(View.GONE);
+        } else {
+            tvEventContext.setText(getString(R.string.event_context_label, eventTitle));
+            tvEventContext.setVisibility(View.VISIBLE);
+        }
 
         setupRecyclerView();
         setupSearch();
@@ -92,6 +98,7 @@ public class WhoIsComingActivity extends AppCompatActivity {
     private void bindViews() {
         btnBack              = findViewById(R.id.btnBack);
         tvTitle              = findViewById(R.id.tvTitle);
+        tvEventContext       = findViewById(R.id.tvEventContext);
         etSearchParticipants = findViewById(R.id.etSearchParticipants);
         rvParticipants       = findViewById(R.id.rvParticipants);
         tvEmptyParticipants  = findViewById(R.id.tvEmptyParticipants);

@@ -25,6 +25,9 @@ import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
 import com.example.CampusEventDiscovery.ui.organizer.CreateEventActivity;
+import com.example.CampusEventDiscovery.ui.organizer.ManageEventsActivity;
+import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
+import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.button.MaterialButton;
@@ -49,6 +52,9 @@ public class HomeOrganizerFragment extends Fragment {
 
     private TextView tvOrganizerWelcome;
     private MaterialButton btnCreateEvent;
+    private MaterialButton btnManageEvents;
+    private MaterialButton btnScanTickets;
+    private MaterialButton btnSosDashboard;
     private View featuredCardContainer;
     private MaterialCardView cardFeaturedEvent;
     private RecyclerView rvEvents;
@@ -92,6 +98,9 @@ public class HomeOrganizerFragment extends Fragment {
 
         tvOrganizerWelcome = view.findViewById(R.id.tvOrganizerWelcome);
         btnCreateEvent = view.findViewById(R.id.btnCreateEvent);
+        btnManageEvents = view.findViewById(R.id.btnManageEvents);
+        btnScanTickets = view.findViewById(R.id.btnScanTickets);
+        btnSosDashboard = view.findViewById(R.id.btnSosDashboard);
         featuredCardContainer = view.findViewById(R.id.featuredCardContainer);
         rvEvents = view.findViewById(R.id.rvEvents);
         progressBar = view.findViewById(R.id.progressBar);
@@ -154,6 +163,12 @@ public class HomeOrganizerFragment extends Fragment {
             Intent intent = new Intent(requireContext(), CreateEventActivity.class);
             startActivity(intent);
         });
+        btnManageEvents.setOnClickListener(v ->
+                startActivity(new Intent(requireContext(), ManageEventsActivity.class)));
+        btnScanTickets.setOnClickListener(v ->
+                startActivity(new Intent(requireContext(), ScannerActivity.class)));
+        btnSosDashboard.setOnClickListener(v ->
+                startActivity(new Intent(requireContext(), SOSDashboardActivity.class)));
     }
 
     private void loadHomeData() {

@@ -25,6 +25,18 @@
         app:layout_constraintStart_toStartOf="@id/fragmentContainer"
         app:layout_constraintEnd_toEndOf="@id/fragmentContainer" />
 
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabCreateEvent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing_md"
+        android:layout_marginBottom="@dimen/spacing_md"
+        android:text="@string/create_event"
+        android:visibility="gone"
+        app:icon="@drawable/ic_add"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         style="@style/AppBottomNavigationStyle"

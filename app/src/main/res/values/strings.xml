@@ -310,6 +310,14 @@
     <string name="view_event_calendar_row">View Event Calendar</string>
     <string name="account_settings_row">Account Settings</string>
     <string name="my_events_row">My Events</string>
+    <string name="organizer_tools">Organizer Tools</string>
+    <string name="organizer_tools_subtitle">Create, scan, review alerts, and manage live events.</string>
+    <string name="scan_tickets">Scan Tickets</string>
+    <string name="open_sos_dashboard">SOS Dashboard</string>
+    <string name="view_payments">View Payments</string>
+    <string name="event_context_label">Event: %1$s</string>
+    <string name="search_your_events">Search your events</string>
+    <string name="search_managed_events">Search managed events</string>
 
     <!-- Auth Screens -->
     <string name="welcome_title">Welcome!</string>
@@ -433,10 +441,20 @@
     <string name="sos_status_active">Active</string>
     <string name="sos_label_event">Event: %1$s</string>
     <string name="sos_label_reporter">Reporter: %1$s</string>
+    <string name="sos_dashboard_title">SOS Dashboard</string>
+    <string name="sos_empty">No SOS alerts yet.</string>
+    <string name="sos_alert_title">Emergency Alert</string>
+    <string name="sos_alert_reporter_loading">Reporter: Loading...</string>
+    <string name="sos_alert_description_empty">Description: No details provided.</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="sos_alert_sent_title">SOS Alert Sent</string>
+    <string name="sos_alert_sent_message">Help is on the way. Security has been notified.</string>
+    <string name="close">Close</string>
 
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="select_event_image">Select Event Image</string>
     <string name="image_upload_failed">Image upload failed: %1$s</string>
+    <string name="scan_ticket_title">Scan Ticket</string>
 
     <!-- Payment and ticket strings -->
     <string name="payments_title">Payments</string>
@@ -453,6 +471,10 @@
     <string name="txn_id_format">Txn ID: %1$s</string>
     <string name="done">Done</string>
     <string name="scanner_result">Scanner Result</string>
+    <string name="scanner_attendee_placeholder">Attendee: ...</string>
+    <string name="scanner_event_placeholder">Event: ...</string>
+    <string name="scanner_payment_placeholder">Payment: ...</string>
+    <string name="scanner_status_placeholder">Status: ...</string>
     <string name="scanner_attendee_format">Attendee: %1$s</string>
     <string name="scanner_event_format">Event: %1$s</string>
     <string name="scanner_payment_format">Payment: %1$s</string>

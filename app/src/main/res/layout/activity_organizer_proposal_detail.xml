@@ -8,13 +8,11 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarProposalDetail"
+        style="@style/AppToolbarStyle"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorSurface"
         app:navigationIcon="@drawable/ic_back"
-        app:navigationIconTint="@color/colorOnBackground"
-        app:title="@string/proposal_details_title"
-        app:titleTextColor="@color/colorOnBackground" />
+        app:title="@string/proposal_details_title" />
 
     <ScrollView
         android:layout_width="match_parent"
