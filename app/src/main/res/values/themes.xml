@@ -164,6 +164,22 @@
         <item name="shapeAppearance">@style/ShapeAppearance.App.Small</item>
     </style>
 
+    <style name="AppTextInputBoxStyle" parent="@style/AppTextInputOutlinedStyle">
+        <item name="boxBackgroundColor">@color/colorSurface</item>
+        <item name="boxStrokeColor">@color/colorOutline</item>
+        <item name="boxStrokeErrorColor">@color/colorError</item>
+        <item name="counterTextColor">@color/colorOnSurfaceVariant</item>
+        <item name="helperTextTextColor">@color/colorOnSurfaceVariant</item>
+        <item name="android:textColorHint">@color/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="AppSectionLabel">
+        <item name="android:textColor">@color/colorOnSurfaceVariant</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
     <style name="AppSuggestionChipStyle" parent="Widget.Material3.Chip.Suggestion">
         <item name="chipBackgroundColor">@color/colorSurfaceVariant</item>
         <item name="android:textColor">@color/colorOnSurfaceVariant</item>

@@ -33,6 +33,7 @@ public final class DevSessionManager {
     }
 
     public static boolean shouldUseBypass(Context context) {
+        if (!com.example.CampusEventDiscovery.BuildConfig.DEBUG) return false;
         return isBypassEnabled(context) && FirebaseAuth.getInstance().getCurrentUser() == null;
     }
 

@@ -73,7 +73,6 @@ public class HomeFragment extends Fragment {
     private ImageView ivBanner;
     private ImageView ivBannerHeart;
     private ImageView ivBannerShare;
-    private ImageView ivBannerVerified;
     private TextView tvBannerTitle;
     private TextView tvBannerDate;
     private TextView tvBannerVenue;
@@ -150,7 +149,6 @@ public class HomeFragment extends Fragment {
         cardFeaturedEvent = featuredCardContainer.findViewById(R.id.cardFeaturedEvent);
         ivBannerHeart = featuredCardContainer.findViewById(R.id.ivBannerHeart);
         ivBannerShare = featuredCardContainer.findViewById(R.id.ivBannerShare);
-        ivBannerVerified = featuredCardContainer.findViewById(R.id.ivBannerVerified);
         tvBannerTitle = featuredCardContainer.findViewById(R.id.tvBannerTitle);
         tvBannerDate = featuredCardContainer.findViewById(R.id.tvBannerDate);
         tvBannerVenue = featuredCardContainer.findViewById(R.id.tvBannerVenue);
@@ -353,9 +351,6 @@ public class HomeFragment extends Fragment {
         featuredCardContainer.setVisibility(View.VISIBLE);
 
         tvBannerTitle.setText(safeText(event.getTitle(), getString(R.string.app_name)));
-        if (ivBannerVerified != null) {
-            ivBannerVerified.setVisibility(event.isVerified() ? View.VISIBLE : View.GONE);
-        }
         tvBannerDate.setText(formatDateTime(event.getDate()));
         tvBannerVenue.setText(safeText(event.getLocation(), getString(R.string.placeholder_venue)));
 
@@ -569,15 +564,11 @@ public class HomeFragment extends Fragment {
     private void bindPopularCard(View card, Event event, boolean addTrailingGap) {
         ImageView thumbnail = card.findViewById(R.id.ivCarouselThumbnail);
         ImageView placeholder = card.findViewById(R.id.ivCarouselPlaceholderIcon);
-        ImageView verified = card.findViewById(R.id.ivCarouselVerified);
         TextView title = card.findViewById(R.id.tvCarouselTitle);
         TextView date = card.findViewById(R.id.tvCarouselDate);
         TextView attendees = card.findViewById(R.id.tvCarouselAttendees);
 
         title.setText(safeText(event.getTitle(), getString(R.string.app_name)));
-        if (verified != null) {
-            verified.setVisibility(event.isVerified() ? View.VISIBLE : View.GONE);
-        }
         date.setText(formatDateTime(event.getDate()));
         attendees.setText(event.getRsvpCount() + " registered");
 

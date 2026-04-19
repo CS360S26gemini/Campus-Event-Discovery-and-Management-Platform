@@ -89,15 +89,4 @@ public class SignupValidatorTest {
         assertNotNull("Should return error for admin role signup",
                 SignupValidator.validate("Admin", "admin@example.com", "Password123!", "Password123!", "admin"));
     }
-
-    @Test
-    public void validatePolicyAcceptance_unchecked_returnsError() {
-        assertNotNull("Should require terms and privacy acceptance",
-                SignupValidator.validatePolicyAcceptance(false));
-    }
-
-    @Test
-    public void validatePolicyAcceptance_checked_returnsNull() {
-        assertNull(SignupValidator.validatePolicyAcceptance(true));
-    }
 }

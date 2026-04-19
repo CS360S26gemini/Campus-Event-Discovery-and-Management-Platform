@@ -2,19 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
 
-    <!-- Required for Firebase Storage putFile(Uri) on Android 12 and below -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-    <!-- Required for Firebase Storage putFile(Uri) on Android 13+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
@@ -27,6 +29,30 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CampusEventDiscovery">
 
+        <service
+            android:name=".util.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- Cloudinary Upload Service -->
+        <service
+            android:name="com.cloudinary.android.uploadwidget.UploadWidgetService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.sos.SOSAlertActivity"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:showOnLockScreen="true"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+        <activity
+            android:name="com.example.CampusEventDiscovery.ui.admin.AdminHomeActivity"
+            android:exported="false" />
         <activity
             android:name="com.example.CampusEventDiscovery.MaintenanceActivity"
             android:exported="false" />
@@ -84,6 +110,14 @@
 
         <activity
             android:name="com.example.CampusEventDiscovery.ui.event.EventDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.CampusEventDiscovery.ui.sos.SosActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity"
             android:exported="false" />
 
         <activity

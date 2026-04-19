@@ -1,0 +1,11 @@
+[api]
+enabled = true
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+
+[functions.create-payment-intent]
+verify_jwt = false

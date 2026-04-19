@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackground">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingBottom="32dp">
+        android:background="@color/colorSurface">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbarCreateEvent"
@@ -17,353 +16,311 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/colorSurface"
             app:navigationIcon="@drawable/ic_back"
-            app:navigationIconTint="@color/colorOnBackground"
+            app:navigationIconTint="@color/colorOnSurface"
             app:title="@string/create_event_header"
-            app:titleTextColor="@color/colorOnBackground" />
+            app:titleTextColor="@color/colorOnSurface" />
+    </com.google.android.material.appbar.AppBarLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="24dp"
-            android:text="@string/event_title"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/etEventTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:hint="@string/event_title_hint"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/event_image_label"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="8dp">
-
-            <ImageView
-                android:id="@+id/ivEventThumbnail"
-                android:layout_width="80dp"
-                android:layout_height="60dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/placeholder_event"
-                android:background="@color/colorSurface" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSelectImage"
-                style="@style/AppSecondaryButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:text="@string/select_event_image" />
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/event_date"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="8dp">
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_lg">
 
             <TextView
-                android:id="@+id/tvSelectedDate"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:text="@string/event_date_hint"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
+                android:text="@string/create_event_header"
+                android:textAppearance="?attr/textAppearanceHeadlineLarge"
+                android:textColor="@color/colorOnBackground" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPickDate"
-                style="@style/AppSecondaryButtonStyle"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:hint="@string/event_title">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etEventTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapSentences" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/AppMaterialCardView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/spacing_md">
+
+                    <ImageView
+                        android:id="@+id/ivEventThumbnail"
+                        android:layout_width="88dp"
+                        android:layout_height="68dp"
+                        android:background="@color/colorSurfaceVariant"
+                        android:contentDescription="@string/event_image_label"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/placeholder_event" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/spacing_md"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/event_image_label"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="@color/colorOnSurface" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSelectImage"
+                            style="@style/AppSecondaryButtonStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_sm"
+                            android:text="@string/select_event_image" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:orientation="horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMaterialCardView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/spacing_sm"
+                    android:layout_weight="1">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_md">
+
+                        <TextView
+                            android:id="@+id/tvSelectedDate"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/event_date_hint"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="@color/colorOnSurfaceVariant" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnPickDate"
+                            style="@style/AppOutlinedButtonStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_sm"
+                            android:text="@string/pick_date" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMaterialCardView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/spacing_sm"
+                    android:layout_weight="1">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_md">
+
+                        <TextView
+                            android:id="@+id/tvSelectedTime"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/event_time_hint"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="@color/colorOnSurfaceVariant" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnPickTime"
+                            style="@style/AppOutlinedButtonStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_sm"
+                            android:text="@string/pick_time" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/event_category">
+
+                <AutoCompleteTextView
+                    android:id="@+id/actvCategory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:textColor="@color/colorOnSurface" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/venue">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etVenue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="textPostalAddress" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/description">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textCapSentences" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/capacity_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etCapacity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/ticket_price_optional_label">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTicketPrice"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="numberDecimal" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/tags_label">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTags"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/sponsors_label">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSponsors"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/food_stalls_label">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etFoodStalls"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/trailer_url_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTrailerUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
+                    android:inputType="textUri" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ProgressBar
+                android:id="@+id/progressBarCreateEvent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/pick_date" />
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/event_time"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="8dp">
-
-            <TextView
-                android:id="@+id/tvSelectedTime"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:text="@string/event_time_hint"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPickTime"
-                style="@style/AppSecondaryButtonStyle"
-                android:layout_width="wrap_content"
+                android:id="@+id/btnSubmitEvent"
+                style="@style/AppButtonStyle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/pick_time" />
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:text="@string/submit" />
         </LinearLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/event_category"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <AutoCompleteTextView
-            android:id="@+id/actvCategory"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:hint="@string/event_category_hint"
-            android:inputType="none"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/venue"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/etVenue"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:hint="@string/venue_hint"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/description"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/etDescription"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:gravity="top|start"
-            android:hint="@string/description_hint"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/capacity_hint"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/etCapacity"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:hint="500"
-            android:inputType="number"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/ticket_price_optional_label"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/etTicketPrice"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:hint="0"
-            android:inputType="numberDecimal"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/tags_label"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/etTags"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:hint="@string/tags_hint"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/sponsors_label"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/etSponsors"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:hint="@string/sponsors_hint"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/food_stalls_label"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/etFoodStalls"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:hint="@string/food_stalls_hint"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/trailer_url_hint"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/etTrailerUrl"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_card_rounded"
-            android:hint="https://youtube.com/..."
-            android:inputType="textUri"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
-
-        <ProgressBar
-            android:id="@+id/progressBarCreateEvent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="22dp"
-            android:visibility="gone" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSubmitEvent"
-            style="@style/AppButtonStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="32dp"
-            android:padding="14dp"
-            android:text="@string/submit" />
-    </LinearLayout>
-
-</ScrollView>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -28,6 +28,7 @@ public class EventProposal {
     private List<String> foodStalls;
     private String trailerUrl;
     private String thumbnailUrl;
+    private String imageUrl; // Added for Cloudinary integration
     private String organizerId;
     private String organizerName;
     private String status;
@@ -47,24 +48,6 @@ public class EventProposal {
 
     /**
      * Full constructor for creating EventProposal objects in code.
-     *
-     * @param proposalId Helper field for Firestore document ID.
-     * @param title Proposal title.
-     * @param description Proposal description.
-     * @param category Proposal category.
-     * @param tags Proposal tags.
-     * @param date Proposed event date.
-     * @param location Proposed event location.
-     * @param capacity Proposed event capacity.
-     * @param sponsors Proposal sponsors.
-     * @param foodStalls Proposal food stalls.
-     * @param trailerUrl Proposal trailer URL.
-     * @param organizerId Organizer user ID.
-     * @param organizerName Organizer name.
-     * @param status Proposal status.
-     * @param adminNote Admin review note.
-     * @param submittedAt Submission timestamp.
-     * @param reviewedAt Review timestamp.
      */
     public EventProposal(String proposalId,
                          String title,
@@ -104,346 +87,64 @@ public class EventProposal {
         this.ticketPrice = ticketPrice;
     }
 
-    /**
-     * Gets the helper Firestore proposal document ID.
-     *
-     * @return Proposal document ID.
-     */
     @Exclude
-    public String getProposalId() {
-        return proposalId;
-    }
+    public String getProposalId() { return proposalId; }
+    public void setProposalId(String proposalId) { this.proposalId = proposalId; }
 
-    /**
-     * Sets the helper Firestore proposal document ID.
-     *
-     * @param proposalId Proposal document ID.
-     */
-    public void setProposalId(String proposalId) {
-        this.proposalId = proposalId;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    /**
-     * Gets the proposal title.
-     *
-     * @return Proposal title.
-     */
-    public String getTitle() {
-        return title;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    /**
-     * Sets the proposal title.
-     *
-     * @param title Proposal title.
-     */
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
-    /**
-     * Gets the proposal description.
-     *
-     * @return Proposal description.
-     */
-    public String getDescription() {
-        return description;
-    }
+    public List<String> getTags() { return tags; }
+    public void setTags(List<String> tags) { this.tags = tags; }
 
-    /**
-     * Sets the proposal description.
-     *
-     * @param description Proposal description.
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public Timestamp getDate() { return date; }
+    public void setDate(Timestamp date) { this.date = date; }
 
-    /**
-     * Gets the proposal category.
-     *
-     * @return Proposal category.
-     */
-    public String getCategory() {
-        return category;
-    }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
 
-    /**
-     * Sets the proposal category.
-     *
-     * @param category Proposal category.
-     */
-    public void setCategory(String category) {
-        this.category = category;
-    }
+    public long getCapacity() { return capacity; }
+    public void setCapacity(long capacity) { this.capacity = capacity; }
 
-    /**
-     * Gets the proposal tags.
-     *
-     * @return Proposal tags list.
-     */
-    public List<String> getTags() {
-        return tags;
-    }
+    public List<String> getSponsors() { return sponsors; }
+    public void setSponsors(List<String> sponsors) { this.sponsors = sponsors; }
 
-    /**
-     * Sets the proposal tags.
-     *
-     * @param tags Proposal tags list.
-     */
-    public void setTags(List<String> tags) {
-        this.tags = tags;
-    }
+    public List<String> getFoodStalls() { return foodStalls; }
+    public void setFoodStalls(List<String> foodStalls) { this.foodStalls = foodStalls; }
 
-    /**
-     * Gets the proposed event date.
-     *
-     * @return Proposed date timestamp.
-     */
-    public Timestamp getDate() {
-        return date;
-    }
+    public String getTrailerUrl() { return trailerUrl; }
+    public void setTrailerUrl(String trailerUrl) { this.trailerUrl = trailerUrl; }
 
-    /**
-     * Sets the proposed event date.
-     *
-     * @param date Proposed date timestamp.
-     */
-    public void setDate(Timestamp date) {
-        this.date = date;
-    }
+    public String getThumbnailUrl() { return thumbnailUrl; }
+    public void setThumbnailUrl(String thumbnailUrl) { this.thumbnailUrl = thumbnailUrl; }
 
-    /**
-     * Gets the proposed location.
-     *
-     * @return Proposed location.
-     */
-    public String getLocation() {
-        return location;
-    }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    /**
-     * Sets the proposed location.
-     *
-     * @param location Proposed location.
-     */
-    public void setLocation(String location) {
-        this.location = location;
-    }
+    public String getOrganizerId() { return organizerId; }
+    public void setOrganizerId(String organizerId) { this.organizerId = organizerId; }
 
-    /**
-     * Gets the proposed capacity.
-     *
-     * @return Proposed capacity.
-     */
-    public long getCapacity() {
-        return capacity;
-    }
+    public String getOrganizerName() { return organizerName; }
+    public void setOrganizerName(String organizerName) { this.organizerName = organizerName; }
 
-    /**
-     * Sets the proposed capacity.
-     *
-     * @param capacity Proposed capacity.
-     */
-    public void setCapacity(long capacity) {
-        this.capacity = capacity;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    /**
-     * Gets the sponsors list.
-     *
-     * @return Sponsors list.
-     */
-    public List<String> getSponsors() {
-        return sponsors;
-    }
+    public String getAdminNote() { return adminNote; }
+    public void setAdminNote(String adminNote) { this.adminNote = adminNote; }
 
-    /**
-     * Sets the sponsors list.
-     *
-     * @param sponsors Sponsors list.
-     */
-    public void setSponsors(List<String> sponsors) {
-        this.sponsors = sponsors;
-    }
+    public Timestamp getSubmittedAt() { return submittedAt; }
+    public void setSubmittedAt(Timestamp submittedAt) { this.submittedAt = submittedAt; }
 
-    /**
-     * Gets the food stalls list.
-     *
-     * @return Food stalls list.
-     */
-    public List<String> getFoodStalls() {
-        return foodStalls;
-    }
+    public Timestamp getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(Timestamp reviewedAt) { this.reviewedAt = reviewedAt; }
 
-    /**
-     * Sets the food stalls list.
-     *
-     * @param foodStalls Food stalls list.
-     */
-    public void setFoodStalls(List<String> foodStalls) {
-        this.foodStalls = foodStalls;
-    }
-
-    /**
-     * Gets the trailer URL.
-     *
-     * @return Trailer URL.
-     */
-    public String getTrailerUrl() {
-        return trailerUrl;
-    }
-
-    /**
-     * Sets the trailer URL.
-     *
-     * @param trailerUrl Trailer URL.
-     */
-    public void setTrailerUrl(String trailerUrl) {
-        this.trailerUrl = trailerUrl;
-    }
-
-    /**
-     * Gets the thumbnail/banner image URL for this event proposal.
-     *
-     * @return Thumbnail URL (Firebase Storage download URL).
-     */
-    public String getThumbnailUrl() {
-        return thumbnailUrl;
-    }
-
-    /**
-     * Sets the thumbnail/banner image URL for this event proposal.
-     *
-     * @param thumbnailUrl Firebase Storage download URL.
-     */
-    public void setThumbnailUrl(String thumbnailUrl) {
-        this.thumbnailUrl = thumbnailUrl;
-    }
-
-    /**
-     * Gets the organizer ID.
-     *
-     * @return Organizer ID.
-     */
-    public String getOrganizerId() {
-        return organizerId;
-    }
-
-    /**
-     * Sets the organizer ID.
-     *
-     * @param organizerId Organizer ID.
-     */
-    public void setOrganizerId(String organizerId) {
-        this.organizerId = organizerId;
-    }
-
-    /**
-     * Gets the organizer name.
-     *
-     * @return Organizer name.
-     */
-    public String getOrganizerName() {
-        return organizerName;
-    }
-
-    /**
-     * Sets the organizer name.
-     *
-     * @param organizerName Organizer name.
-     */
-    public void setOrganizerName(String organizerName) {
-        this.organizerName = organizerName;
-    }
-
-    /**
-     * Gets the proposal status.
-     *
-     * @return Proposal status.
-     */
-    public String getStatus() {
-        return status;
-    }
-
-    /**
-     * Sets the proposal status.
-     *
-     * @param status Proposal status.
-     */
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    /**
-     * Gets the admin note.
-     *
-     * @return Admin note.
-     */
-    public String getAdminNote() {
-        return adminNote;
-    }
-
-    /**
-     * Sets the admin note.
-     *
-     * @param adminNote Admin note.
-     */
-    public void setAdminNote(String adminNote) {
-        this.adminNote = adminNote;
-    }
-
-    /**
-     * Gets the submitted-at timestamp.
-     *
-     * @return Submission timestamp.
-     */
-    public Timestamp getSubmittedAt() {
-        return submittedAt;
-    }
-
-    /**
-     * Sets the submitted-at timestamp.
-     *
-     * @param submittedAt Submission timestamp.
-     */
-    public void setSubmittedAt(Timestamp submittedAt) {
-        this.submittedAt = submittedAt;
-    }
-
-    /**
-     * Gets the reviewed-at timestamp.
-     *
-     * @return Review timestamp.
-     */
-    public Timestamp getReviewedAt() {
-        return reviewedAt;
-    }
-
-    /**
-     * Sets the reviewed-at timestamp.
-     *
-     * @param reviewedAt Review timestamp.
-     */
-    public void setReviewedAt(Timestamp reviewedAt) {
-        this.reviewedAt = reviewedAt;
-    }
-
-    /**
-     * Gets the ticket price set by the organizer.
-     *
-     * @return Ticket price (0.0 for free events).
-     */
-    public double getTicketPrice() {
-        return ticketPrice;
-    }
-
-    /**
-     * Sets the ticket price for the event.
-     *
-     * @param ticketPrice Ticket price (0.0 for free events).
-     */
-    public void setTicketPrice(double ticketPrice) {
-        this.ticketPrice = ticketPrice;
-    }
+    public double getTicketPrice() { return ticketPrice; }
+    public void setTicketPrice(double ticketPrice) { this.ticketPrice = ticketPrice; }
 }

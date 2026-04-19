@@ -71,27 +71,22 @@
                 android:layout_marginBottom="@dimen/spacing_sm"
                 android:visibility="gone" />
 
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="28dp">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tvTitle"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:ellipsize="end"
                     android:maxLines="2"
                     android:text="@string/app_name"
                     android:textAppearance="?attr/textAppearanceTitleLarge"
-                    android:textColor="?attr/colorOnSurface"
-                    app:layout_constrainedWidth="true"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@id/ivVerified"
-                    app:layout_constraintHorizontal_bias="0"
-                    app:layout_constraintHorizontal_chainStyle="packed"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <ImageView
                     android:id="@+id/ivVerified"
@@ -100,26 +95,8 @@
                     android:layout_marginStart="@dimen/spacing_sm"
                     android:contentDescription="@string/verified"
                     android:src="@drawable/ic_verified"
-                    android:visibility="gone"
-                    app:layout_constraintBottom_toBottomOf="@id/tvTitle"
-                    app:layout_constraintEnd_toStartOf="@id/chipTitleStatus"
-                    app:layout_constraintStart_toEndOf="@id/tvTitle"
-                    app:layout_constraintTop_toTopOf="@id/tvTitle" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipTitleStatus"
-                    style="@style/AppSuggestionChipStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_sm"
-                    android:clickable="false"
-                    android:focusable="false"
-                    android:visibility="gone"
-                    app:layout_constraintBottom_toBottomOf="@id/tvTitle"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/ivVerified"
-                    app:layout_constraintTop_toTopOf="@id/tvTitle" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

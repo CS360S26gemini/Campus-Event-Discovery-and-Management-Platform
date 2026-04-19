@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * User.java
  *
- * Model class representing a user document from the Firestore users collection.
+ * Model class representing a user document from the Firestore users collection.g
  * Aligned with the database design in /docs/db/initial_db.txt.
  */
 public class User {
@@ -27,9 +27,6 @@ public class User {
     private String fcmToken;
     private Map<String, Object> googleCalendarToken;
     private Timestamp createdAt;
-    private boolean acceptedTerms;
-    private String acceptedPolicyVersion;
-    private Timestamp acceptedTermsAt;
 
     /**
      * Required empty constructor for Firestore deserialization.
@@ -63,7 +60,6 @@ public class User {
         this.darkMode = darkMode;
         this.googleCalendarToken = new HashMap<>();
         this.createdAt = Timestamp.now();
-        this.acceptedTerms = false;
     }
 
     // Getters and Setters
@@ -170,29 +166,5 @@ public class User {
 
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public boolean isAcceptedTerms() {
-        return acceptedTerms;
-    }
-
-    public void setAcceptedTerms(boolean acceptedTerms) {
-        this.acceptedTerms = acceptedTerms;
-    }
-
-    public String getAcceptedPolicyVersion() {
-        return acceptedPolicyVersion;
-    }
-
-    public void setAcceptedPolicyVersion(String acceptedPolicyVersion) {
-        this.acceptedPolicyVersion = acceptedPolicyVersion;
-    }
-
-    public Timestamp getAcceptedTermsAt() {
-        return acceptedTermsAt;
-    }
-
-    public void setAcceptedTermsAt(Timestamp acceptedTermsAt) {
-        this.acceptedTermsAt = acceptedTermsAt;
     }
 }

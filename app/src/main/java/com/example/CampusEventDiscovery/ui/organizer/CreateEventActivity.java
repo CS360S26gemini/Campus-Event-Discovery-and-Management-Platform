@@ -29,6 +29,7 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.EventValidator;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -43,14 +44,11 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-
 /**
  * CreateEventActivity.java
  *
  * Organizer event proposal form that writes a pending proposal to Firestore.
- * Updated to support image selection for discovery visuals.
+ * Integrated with Cloudinary for image uploads.
  */
 public class CreateEventActivity extends AppCompatActivity {
 
@@ -81,7 +79,7 @@ public class CreateEventActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private boolean hasSelectedDate;
     private boolean hasSelectedTime;
-    private boolean isSubmitting;
+    private boolean submitInProgress;
 
     private String currentUserId;
     private String currentOrganizerName = "";
@@ -158,11 +156,6 @@ public class CreateEventActivity extends AppCompatActivity {
         btnSelectImage.setOnClickListener(v -> checkMediaPermissionAndPick());
     }
 
-    /**
-     * Checks for the appropriate media read permission before opening the
-     * image picker. On Android 13+ (API 33+) this is READ_MEDIA_IMAGES;
-     * on older versions it is READ_EXTERNAL_STORAGE.
-     */
     private void checkMediaPermissionAndPick() {
         String permission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                 ? Manifest.permission.READ_MEDIA_IMAGES
@@ -176,10 +169,6 @@ public class CreateEventActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Opens the system image picker. Only called after storage permission
-     * has been confirmed.
-     */
     private void launchImagePicker() {
         Intent intent = new Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -310,7 +299,7 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     private void submitProposal() {
-        if (isSubmitting) {
+        if (submitInProgress) {
             return;
         }
 
@@ -400,33 +389,29 @@ public class CreateEventActivity extends AppCompatActivity {
         proposal.setSubmittedAt(Timestamp.now());
         proposal.setReviewedAt(null);
 
+        submitInProgress = true;
         showLoading(true);
 
         if (selectedImageUri != null) {
-            // Upload path matches the team DB schema: event_thumbnails/{userId}_{timestamp}
-            StorageReference storageRef = FirebaseStorage.getInstance().getReference()
-                    .child("event_thumbnails/" + currentUserId + "_" + System.currentTimeMillis() + ".jpg");
+            // [cloudinary] upload image instead of using Firebase Storage
+            CloudinaryHelper.uploadImage(selectedImageUri, new CloudinaryHelper.CloudinaryCallback() {
+                @Override
+                public void onSuccess(String imageUrl) {
+                    proposal.setImageUrl(imageUrl);
+                    proposal.setThumbnailUrl(imageUrl); // Sync both for compatibility
+                    saveProposal(proposal);
+                }
 
-            storageRef.putFile(selectedImageUri)
-                    .addOnSuccessListener(taskSnapshot ->
-                            storageRef.getDownloadUrl()
-                                    .addOnSuccessListener(downloadUri -> {
-                                        proposal.setThumbnailUrl(downloadUri.toString());
-                                        saveProposal(proposal);
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        showLoading(false);
-                                        Toast.makeText(CreateEventActivity.this,
-                                                getString(R.string.image_upload_failed, e.getMessage()),
-                                                Toast.LENGTH_SHORT).show();
-                                    }))
-                    .addOnFailureListener(e -> {
-                        showLoading(false);
-                        Toast.makeText(CreateEventActivity.this,
-                                getString(R.string.image_upload_failed, e.getMessage()),
-                                Toast.LENGTH_SHORT).show();
-                    });
+                @Override
+                public void onError(String error) {
+                    showLoading(false);
+                    Toast.makeText(CreateEventActivity.this,
+                            "Image upload failed: " + error,
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
         } else {
+            proposal.setImageUrl("");
             proposal.setThumbnailUrl("");
             saveProposal(proposal);
         }
@@ -458,7 +443,7 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     private void showLoading(boolean isLoading) {
-        isSubmitting = isLoading;
+        submitInProgress = isLoading;
         progressBarCreateEvent.setVisibility(isLoading ? android.view.View.VISIBLE : android.view.View.GONE);
         btnSubmitEvent.setEnabled(!isLoading);
     }

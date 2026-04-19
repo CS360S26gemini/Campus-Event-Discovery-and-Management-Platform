@@ -37,6 +37,7 @@ public class Event {
     private String status = "pending"; // Default status
     private Timestamp createdAt;
     private double ticketPrice;
+    private String imageUrl; // Cloudinary upload URL — mirrors thumbnailUrl for compatibility
 
     public Event() {
     }
@@ -75,8 +76,20 @@ public class Event {
     public long getCheckedInCount() { return checkedInCount; }
     public void setCheckedInCount(long checkedInCount) { this.checkedInCount = checkedInCount; }
 
+    /** Alias for {@link #getCheckedInCount()} — kept for compatibility with Nausher's branch. */
+    @Exclude
+    public long getAttendedCount() { return checkedInCount; }
+    public void setAttendedCount(long attendedCount) { this.checkedInCount = attendedCount; }
+
     public String getThumbnailUrl() { return thumbnailUrl; }
     public void setThumbnailUrl(String thumbnailUrl) { this.thumbnailUrl = thumbnailUrl; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+        // Keep thumbnailUrl in sync so both fields always reflect the same image
+        if (imageUrl != null) this.thumbnailUrl = imageUrl;
+    }
 
     public String getTrailerUrl() { return trailerUrl; }
     public void setTrailerUrl(String trailerUrl) { this.trailerUrl = trailerUrl; }
@@ -110,4 +123,5 @@ public class Event {
 
     public double getTicketPrice() { return ticketPrice; }
     public void setTicketPrice(double ticketPrice) { this.ticketPrice = ticketPrice; }
+
 }

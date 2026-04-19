@@ -75,7 +75,6 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
         if (holder.ivVerified != null) holder.ivVerified.setVisibility(View.GONE);
         if (holder.ivHeart != null) holder.ivHeart.setVisibility(View.GONE);
         if (holder.ivShare != null) holder.ivShare.setVisibility(View.GONE);
-        if (holder.chipStatus != null) holder.chipStatus.setVisibility(View.GONE);
 
         if (holder.tvNewBadge != null) {
             holder.tvNewBadge.setVisibility(View.GONE);
@@ -143,28 +142,26 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
     }
 
     private void bindProposalStatus(PendingViewHolder holder, Event event) {
-        Chip statusChip = holder.chipTitleStatus != null ? holder.chipTitleStatus : holder.chipStatus;
-        if (statusChip == null) {
+        if (holder.chipStatus == null) {
             return;
         }
 
         String statusText = resolveStatusBadge(holder.itemView, event);
-        statusChip.setText(statusText);
-        statusChip.setVisibility(View.VISIBLE);
+        holder.chipStatus.setText(statusText);
 
         String status = event == null || event.getStatus() == null
                 ? ""
                 : event.getStatus().trim().toLowerCase(Locale.getDefault());
 
         if ("rejected".equals(status)) {
-            statusChip.setChipBackgroundColorResource(R.color.colorErrorContainer);
-            statusChip.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.colorOnErrorContainer));
+            holder.chipStatus.setChipBackgroundColorResource(R.color.colorErrorContainer);
+            holder.chipStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.colorOnErrorContainer));
         } else if ("approved".equals(status)) {
-            statusChip.setChipBackgroundColorResource(R.color.colorPrimaryContainer);
-            statusChip.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.colorOnPrimaryContainer));
+            holder.chipStatus.setChipBackgroundColorResource(R.color.colorPrimaryContainer);
+            holder.chipStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.colorOnPrimaryContainer));
         } else {
-            statusChip.setChipBackgroundColorResource(R.color.colorSecondaryContainer);
-            statusChip.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.colorOnSecondaryContainer));
+            holder.chipStatus.setChipBackgroundColorResource(R.color.colorSecondaryContainer);
+            holder.chipStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.colorOnSecondaryContainer));
         }
     }
 
@@ -183,7 +180,6 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
         TextView tvNewBadge;
         Chip chipCategory;
         Chip chipStatus;
-        Chip chipTitleStatus;
 
         public PendingViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -201,7 +197,6 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
             tvNewBadge = itemView.findViewById(R.id.tvNewBadge);
             chipCategory = itemView.findViewById(R.id.chipCategory);
             chipStatus = itemView.findViewById(R.id.chipStatus);
-            chipTitleStatus = itemView.findViewById(R.id.chipTitleStatus);
         }
     }
 }

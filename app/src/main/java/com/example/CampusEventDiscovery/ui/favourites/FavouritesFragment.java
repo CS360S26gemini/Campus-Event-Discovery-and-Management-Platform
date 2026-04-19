@@ -119,8 +119,7 @@ public class FavouritesFragment extends Fragment {
                     public void onItemLongClick(Event event) {
                         // no-op for favourites screen
                     }
-                },
-                true
+                }
         );
 
         rvFavourites.setLayoutManager(new LinearLayoutManager(requireContext()));
