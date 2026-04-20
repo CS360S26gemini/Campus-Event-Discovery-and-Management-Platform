@@ -1,0 +1,78 @@
+package com.example.CampusEventDiscovery.model;
+
+import com.google.firebase.Timestamp;
+
+/**
+ * EventAttendee.java
+ *
+ * Model class representing an attendee document under events/{eventId}/attendees/{userId}.
+ */
+public class EventAttendee {
+
+    private String userId;
+    private String fullName;
+    private String qrToken;
+    private boolean checkedIn;
+    private Timestamp checkedInAt;
+    private boolean blacklisted;
+    private Timestamp blacklistedAt;
+
+    public EventAttendee() {
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getQrToken() {
+        return qrToken;
+    }
+
+    public void setQrToken(String qrToken) {
+        this.qrToken = qrToken;
+    }
+
+    public boolean isCheckedIn() {
+        return checkedIn;
+    }
+
+    public void setCheckedIn(boolean checkedIn) {
+        this.checkedIn = checkedIn;
+    }
+
+    public Timestamp getCheckedInAt() {
+        return checkedInAt;
+    }
+
+    public void setCheckedInAt(Timestamp checkedInAt) {
+        this.checkedInAt = checkedInAt;
+    }
+
+    public boolean isBlacklisted() {
+        return blacklisted;
+    }
+
+    public void setBlacklisted(boolean blacklisted) {
+        this.blacklisted = blacklisted;
+    }
+
+    public Timestamp getBlacklistedAt() {
+        return blacklistedAt;
+    }
+
+    public void setBlacklistedAt(Timestamp blacklistedAt) {
+        this.blacklistedAt = blacklistedAt;
+    }
+}
