@@ -2,12 +2,10 @@ package com.example.CampusEventDiscovery;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +21,8 @@ import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
@@ -39,7 +39,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     private EditText etFullName, etEmail, etPassword, etRepeatPassword;
     private AutoCompleteTextView actvCampus;
-    private MultiAutoCompleteTextView etInterests;
+    private ChipGroup chipGroupInterests;
     private MaterialButtonToggleGroup toggleUserType;
     private CheckBox cbTerms;
     private MaterialButton btnSignUp;
@@ -62,7 +62,7 @@ public class SignUpActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         etRepeatPassword = findViewById(R.id.etRepeatPassword);
         actvCampus = findViewById(R.id.actvCampus);
-        etInterests = findViewById(R.id.etInterests);
+        chipGroupInterests = findViewById(R.id.chipGroupInterests);
         toggleUserType = findViewById(R.id.toggleUserType);
         cbTerms = findViewById(R.id.cbTerms);
         btnSignUp = findViewById(R.id.btnSignUp);
@@ -94,7 +94,6 @@ public class SignUpActivity extends AppCompatActivity {
         String password = etPassword.getText().toString().trim();
         String repeatPassword = etRepeatPassword.getText().toString().trim();
         String campus = actvCampus.getText().toString().trim();
-        String interestsRaw = etInterests.getText().toString().trim();
 
         String role = toggleUserType.getCheckedButtonId() == R.id.btnOrganizer ? "organizer" : "attendee";
 
@@ -125,7 +124,11 @@ public class SignUpActivity extends AppCompatActivity {
         }
 
         boolean darkMode = ThemeManager.isDarkModeEnabled(this);
-        ArrayList<String> interests = parseInterests(interestsRaw);
+        ArrayList<String> interests = getSelectedInterestsFromChips();
+        if (!SignupValidator.hasMinimumSelectedInterests(interests)) {
+            Toast.makeText(this, getString(R.string.select_at_least_three_interests), Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         btnSignUp.setEnabled(false);
 
@@ -212,22 +215,6 @@ public class SignUpActivity extends AppCompatActivity {
         if (campusOptions.length > 0) {
             actvCampus.setText(campusOptions[0], false);
         }
-
-        String[] interestOptions = getResources().getStringArray(R.array.interest_options);
-        ArrayAdapter<String> interestsAdapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_dropdown_item_1line,
-                interestOptions
-        );
-        etInterests.setAdapter(interestsAdapter);
-        etInterests.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
-        etInterests.setThreshold(1);
-        etInterests.setOnClickListener(v -> etInterests.showDropDown());
-        etInterests.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                etInterests.showDropDown();
-            }
-        });
     }
 
     private void showPolicyDialog(String title, String body) {
@@ -238,17 +225,18 @@ public class SignUpActivity extends AppCompatActivity {
                 .show();
     }
 
-    private ArrayList<String> parseInterests(String raw) {
+    private ArrayList<String> getSelectedInterestsFromChips() {
         ArrayList<String> interests = new ArrayList<>();
-        if (TextUtils.isEmpty(raw)) {
+        if (chipGroupInterests == null) {
             return interests;
         }
 
-        String[] tokens = raw.split(",");
-        for (String token : tokens) {
-            String value = token == null ? "" : token.trim();
-            if (!TextUtils.isEmpty(value) && !interests.contains(value)) {
-                interests.add(value);
+        for (int i = 0; i < chipGroupInterests.getChildCount(); i++) {
+            if (chipGroupInterests.getChildAt(i) instanceof Chip) {
+                Chip chip = (Chip) chipGroupInterests.getChildAt(i);
+                if (chip.isChecked()) {
+                    interests.add(chip.getText().toString());
+                }
             }
         }
         return interests;

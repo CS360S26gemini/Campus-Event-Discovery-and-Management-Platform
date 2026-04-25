@@ -3,6 +3,8 @@ package com.example.CampusEventDiscovery.util;
 import android.text.TextUtils;
 import android.util.Patterns;
 
+import java.util.List;
+
 public class SignupValidator {
 
     public static String validate(String name, String email, String password,
@@ -89,5 +91,9 @@ public class SignupValidator {
             return "Please select a campus";
         }
         return null;
+    }
+
+    public static boolean hasMinimumSelectedInterests(List<String> interests) {
+        return interests != null && interests.size() >= 3;
     }
 }

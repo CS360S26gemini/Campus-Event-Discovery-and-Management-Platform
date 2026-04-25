@@ -31,6 +31,7 @@ import com.example.CampusEventDiscovery.ui.event.EventFeedbackActivity;
 import com.example.CampusEventDiscovery.ui.event.OrganizerProposalDetailActivity;
 import com.example.CampusEventDiscovery.ui.event.TicketActivity;
 import com.example.CampusEventDiscovery.ui.organizer.OrganizerEventDetailActivity;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -383,8 +384,8 @@ public class MyEventsFragment extends Fragment {
 
         showLoading(progressBarSection2, true);
         String stored = requireContext()
-                .getSharedPreferences("recently_viewed", android.content.Context.MODE_PRIVATE)
-                .getString("event_ids", "");
+                .getSharedPreferences(Constants.PREFS_RECENTLY_VIEWED, android.content.Context.MODE_PRIVATE)
+                .getString(Constants.PREFS_RECENTLY_VIEWED_KEY, "");
 
         if (TextUtils.isEmpty(stored)) {
             updateList(list2, ids2, adapter2, new ArrayList<>(), tvEmptySection2, progressBarSection2);

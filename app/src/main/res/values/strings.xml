@@ -45,6 +45,13 @@
     <string name="arts">Arts</string>
     <string name="business">Business</string>
     <string name="food_bev">Food &amp; Bev</string>
+    <string name="social">Social</string>
+    <string name="recommended_for_you">Recommended for You</string>
+    <string name="trending_on_campus">Trending on Campus</string>
+    <string name="based_on_interest">Based on your interest in %1$s</string>
+    <string name="popular_events_across_campus">Popular events across campus</string>
+    <string name="select_at_least_three_interests">Please select at least 3 interests.</string>
+    <string name="interests_chip_helper">Select at least 3 interests.</string>
 
     <string name="events_count_label">%1$d Events</string>
     <string name="search_placeholder_empty">Search results will appear here.</string>

@@ -21,6 +21,7 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.EventShareHelper;
 import com.example.CampusEventDiscovery.util.ThemeManager;
@@ -405,8 +406,8 @@ public class EventDetailActivity extends AppCompatActivity {
             return;
         }
 
-        String prefsName = "recently_viewed";
-        String key = "event_ids";
+        String prefsName = Constants.PREFS_RECENTLY_VIEWED;
+        String key = Constants.PREFS_RECENTLY_VIEWED_KEY;
 
         String existing = getSharedPreferences(prefsName, MODE_PRIVATE).getString(key, "");
         LinkedList<String> ids = new LinkedList<>();

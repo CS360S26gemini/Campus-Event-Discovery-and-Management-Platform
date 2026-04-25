@@ -44,26 +44,39 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/tvPopularLabel"
+                android:id="@+id/tvRecommendedLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="20dp"
-                android:layout_marginBottom="@dimen/spacing_sm"
-                android:text="@string/popular_events"
+                android:text="@string/recommended_for_you"
                 android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                android:textColor="?attr/colorOnSurface" />
+                android:textColor="?attr/colorOnSurface"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvRecommendedSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="@dimen/spacing_xs"
+                android:layout_marginBottom="@dimen/spacing_sm"
+                android:text="@string/popular_events_across_campus"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:visibility="gone" />
 
             <HorizontalScrollView
-                android:id="@+id/popularEventsScroll"
+                android:id="@+id/recommendedEventsScroll"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
                 android:overScrollMode="never"
-                android:scrollbars="none">
+                android:scrollbars="none"
+                android:visibility="gone">
 
                 <LinearLayout
-                    android:id="@+id/popularEventsContainer"
+                    android:id="@+id/recommendedEventsContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"

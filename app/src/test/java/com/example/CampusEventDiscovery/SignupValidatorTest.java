@@ -14,6 +14,8 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.util.Arrays;
+
 /**
  * SignupValidatorTest.java
  *
@@ -88,5 +90,15 @@ public class SignupValidatorTest {
     public void validate_adminRole_notAllowedViaSignup_returnsError() {
         assertNotNull("Should return error for admin role signup",
                 SignupValidator.validate("Admin", "admin@example.com", "Password123!", "Password123!", "admin"));
+    }
+
+    @Test
+    public void validateInterests_fewerThanThreeRejected() {
+        assertEquals(false, SignupValidator.hasMinimumSelectedInterests(Arrays.asList("Music", "Sports")));
+    }
+
+    @Test
+    public void validateInterests_exactlyThreeAccepted() {
+        assertEquals(true, SignupValidator.hasMinimumSelectedInterests(Arrays.asList("Music", "Sports", "Career")));
     }
 }
