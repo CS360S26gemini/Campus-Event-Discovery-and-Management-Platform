@@ -26,6 +26,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.widget.NestedScrollView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -73,6 +74,7 @@ public class ProfileFragment extends Fragment {
 
     private static final String TAG = "ProfileFragment";
     private static final long TAP_FEEDBACK_DELAY_MS = 140L;
+    private static final String STATE_SCROLL_Y = "profileScrollY";
     private static final int PROFILE_AVATAR_SIZE_DP = 96;
     private static final int DIALOG_AVATAR_SIZE_DP = 112;
     private static final int[] SKIN_SWATCHES = {
@@ -105,6 +107,7 @@ public class ProfileFragment extends Fragment {
     };
 
     private CircleImageView ivProfile;
+    private NestedScrollView profileScrollView;
     private MaterialButton tvEditPhoto;
     private TextView tvFullName;
     private TextView tvEmail;
@@ -141,6 +144,8 @@ public class ProfileFragment extends Fragment {
     private boolean currentAvatarEnabled;
     private boolean hasSavedAvatar;
     private AvatarConfig currentAvatarConfig;
+    private int pendingScrollY;
+    private static int lastKnownScrollY;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -153,6 +158,9 @@ public class ProfileFragment extends Fragment {
         if (savedInstanceState != null) {
             currentRole = savedInstanceState.getString("currentRole", UserRoles.ATTENDEE);
             currentDisplayName = savedInstanceState.getString("currentDisplayName", "");
+            pendingScrollY = savedInstanceState.getInt(STATE_SCROLL_Y, lastKnownScrollY);
+        } else {
+            pendingScrollY = lastKnownScrollY;
         }
 
         imagePickerLauncher = registerForActivityResult(
@@ -173,6 +181,8 @@ public class ProfileFragment extends Fragment {
         super.onSaveInstanceState(outState);
         outState.putString("currentRole", currentRole);
         outState.putString("currentDisplayName", currentDisplayName);
+        preserveScrollPosition();
+        outState.putInt(STATE_SCROLL_Y, pendingScrollY);
     }
 
     @Nullable
@@ -204,6 +214,13 @@ public class ProfileFragment extends Fragment {
         
         loadProfile();
         setupSosBadgeListener();
+        restoreScrollPositionSoon();
+    }
+
+    @Override
+    public void onPause() {
+        preserveScrollPosition();
+        super.onPause();
     }
 
     @Override
@@ -216,6 +233,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void bindViews(View view) {
+        profileScrollView = view.findViewById(R.id.profileScrollView);
         ivProfile = view.findViewById(R.id.ivProfile);
         tvEditPhoto = view.findViewById(R.id.tvEditPhoto);
         tvFullName = view.findViewById(R.id.tvFullName);
@@ -653,6 +671,7 @@ public class ProfileFragment extends Fragment {
             bindAvatar(currentAvatarConfig);
             bindProfileVisualButtonState(true);
             setupSosBadgeListener();
+            restoreScrollPositionSoon();
             return;
         }
 
@@ -667,9 +686,12 @@ public class ProfileFragment extends Fragment {
             currentAvatarConfig = AvatarConfig.defaultsFor(currentDisplayName, currentRole);
             bindAvatar(currentAvatarConfig);
             bindRoleBadge();
+            switchDarkMode.setOnCheckedChangeListener(null);
             switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
+            bindDarkModeListener();
             hideRoleNavigationRows();
             bindProfileVisualButtonState(false);
+            restoreScrollPositionSoon();
             return;
         }
 
@@ -715,6 +737,7 @@ public class ProfileFragment extends Fragment {
                 bindProfileImage(user);
                 bindProfileVisualButtonState(true);
                 setupSosBadgeListener();
+                restoreScrollPositionSoon();
             }
 
             @Override
@@ -741,8 +764,11 @@ public class ProfileFragment extends Fragment {
         currentAvatarConfig = AvatarConfig.defaultsFor(currentDisplayName, currentRole);
         bindAvatar(currentAvatarConfig);
         bindRoleBadge();
+        switchDarkMode.setOnCheckedChangeListener(null);
         switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
+        bindDarkModeListener();
         bindProfileVisualButtonState(currentUserId != null);
+        restoreScrollPositionSoon();
     }
 
     private void bindProfileImage(User user) {
@@ -824,6 +850,7 @@ public class ProfileFragment extends Fragment {
     private void bindDarkModeListener() {
         switchDarkMode.setOnCheckedChangeListener(null);
         switchDarkMode.setOnCheckedChangeListener((CompoundButton buttonView, boolean isChecked) -> {
+            preserveScrollPosition();
             ThemeManager.applyThemePreference(requireContext(), isChecked);
             if (FirebaseAuth.getInstance().getCurrentUser() != null) {
                 repository.updateDarkMode(currentUserId, isChecked);
@@ -866,6 +893,7 @@ public class ProfileFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.accent_color)
                 .setSingleChoiceItems(labels, ThemeManager.getAccentPreference(requireContext()), (dialog, which) -> {
+                    preserveScrollPosition();
                     ThemeManager.setAccentPreference(requireContext(), which);
                     bindAccentPreference();
                     dialog.dismiss();
@@ -884,6 +912,31 @@ public class ProfileFragment extends Fragment {
         BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNavigationView);
         ThemeManager.applyAccentToMainNavigation(requireContext(), bottomNavigationView, null);
         ThemeManager.applyAccentToActivity(requireActivity());
+    }
+
+    private void preserveScrollPosition() {
+        if (profileScrollView == null) {
+            return;
+        }
+        pendingScrollY = profileScrollView.getScrollY();
+        lastKnownScrollY = pendingScrollY;
+    }
+
+    private void restoreScrollPositionSoon() {
+        if (profileScrollView == null || pendingScrollY <= 0) {
+            return;
+        }
+
+        profileScrollView.post(() -> {
+            if (profileScrollView != null) {
+                profileScrollView.scrollTo(0, pendingScrollY);
+            }
+        });
+        profileScrollView.postDelayed(() -> {
+            if (profileScrollView != null) {
+                profileScrollView.scrollTo(0, pendingScrollY);
+            }
+        }, 120L);
     }
 
     private void runAfterTouchFeedback(View sourceView, Runnable action) {
