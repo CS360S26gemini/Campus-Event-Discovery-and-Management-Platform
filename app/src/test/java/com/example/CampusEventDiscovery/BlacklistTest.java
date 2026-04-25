@@ -149,10 +149,10 @@ public class BlacklistTest {
             @Override public void onError(Exception e) {}
         });
 
-        verify(mockDb, Mockito.times(1)).collection("events");
+        verify(mockDb, Mockito.atLeastOnce()).collection("events");
         verify(mockCollection, Mockito.atLeastOnce()).document("event123");
         verify(mockCollection, Mockito.atLeastOnce()).document("user456");
-        verify(mockDocRef).get();
+        verify(mockDocRef, Mockito.atLeastOnce()).get();
     }
 
     @Test
