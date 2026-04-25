@@ -9,6 +9,7 @@ import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.model.Memory;
 import com.example.CampusEventDiscovery.model.Notification;
 import com.example.CampusEventDiscovery.model.User;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
@@ -1013,6 +1014,35 @@ public class EventRepository {
                             attendee -> attendee.getFullName() == null ? "" : attendee.getFullName().toLowerCase()
                     ));
                     cb.onSuccess(list);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    public void isUserBlacklisted(String eventId, String userId, BooleanCallback cb) {
+        Task<DocumentSnapshot> eventBlacklistTask = db.collection(Constants.COLLECTION_EVENTS)
+                .document(eventId)
+                .collection(Constants.SUBCOLLECTION_BLACKLIST)
+                .document(userId)
+                .get();
+
+        Task<DocumentSnapshot> platformBlacklistTask = db.collection(Constants.COLLECTION_PLATFORM_BLACKLIST)
+                .document(userId)
+                .get();
+
+        Tasks.whenAllComplete(eventBlacklistTask, platformBlacklistTask)
+                .addOnSuccessListener(completedTasks -> {
+                    if (!eventBlacklistTask.isSuccessful()) {
+                        cb.onError(new Exception(eventBlacklistTask.getException()));
+                        return;
+                    }
+                    if (!platformBlacklistTask.isSuccessful()) {
+                        cb.onError(new Exception(platformBlacklistTask.getException()));
+                        return;
+                    }
+
+                    DocumentSnapshot eventBlacklistSnapshot = eventBlacklistTask.getResult();
+                    DocumentSnapshot platformBlacklistSnapshot = platformBlacklistTask.getResult();
+                    cb.onSuccess(eventBlacklistSnapshot.exists() || platformBlacklistSnapshot.exists());
                 })
                 .addOnFailureListener(cb::onError);
     }
