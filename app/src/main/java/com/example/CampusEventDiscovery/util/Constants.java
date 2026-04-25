@@ -19,6 +19,9 @@ public final class Constants {
 
     public static final String SUBCOLLECTION_MESSAGES = "messages";
 
+    public static final String EXTRA_DESTINATION_TAB = "destinationTab";
+    public static final String DESTINATION_TAB_CALENDAR = "calendar";
+
     // RSVP payment statuses
     public static final String PAYMENT_PENDING   = "PENDING";
     public static final String PAYMENT_CONFIRMED = "CONFIRMED";

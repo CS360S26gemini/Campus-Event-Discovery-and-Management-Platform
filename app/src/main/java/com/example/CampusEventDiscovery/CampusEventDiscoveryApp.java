@@ -23,6 +23,7 @@ import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 public class CampusEventDiscoveryApp extends Application {
 
     public static final String SOS_CHANNEL_ID = "SOS_ALERTS_CHANNEL";
+    public static final String REMINDER_CHANNEL_ID = "event_reminders";
 
     @Override
     public void onCreate() {
@@ -31,6 +32,7 @@ public class CampusEventDiscoveryApp extends Application {
 
         initAppCheck();
         createSosNotificationChannel();
+        createReminderNotificationChannel();
         ThemeManager.applyStoredTheme(this);
         ThemeManager.installAccentLifecycle(this);
         CloudinaryHelper.init(this);
@@ -69,6 +71,22 @@ public class CampusEventDiscoveryApp extends Application {
             channel.setVibrationPattern(new long[]{0, 1000, 500, 1000, 500, 1000});
             channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
             channel.setBypassDnd(true);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private void createReminderNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Event Reminders";
+            String description = "Daily reminders for registered events";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(REMINDER_CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
 
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             if (notificationManager != null) {

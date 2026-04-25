@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.ui.favourites.FavouritesFragment;
 import com.example.CampusEventDiscovery.ui.home.HomeAdminFragment;
 import com.example.CampusEventDiscovery.ui.home.HomeFragment;
@@ -54,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     // List of keys representing main screens where bottom navigation should be visible.
     private static final List<String> MAIN_SCREEN_KEYS = Arrays.asList(
-            "home_admin", "home_organizer", "home_attendee", "search", "favourites", "profile", "my_events"
+            "home_admin", "home_organizer", "home_attendee", "search", "calendar", "favourites", "profile", "my_events"
     );
 
     @Override
@@ -104,6 +105,13 @@ public class MainActivity extends AppCompatActivity {
             if ("profile".equals(tab)) {
                 navigateTo("profile", R.id.nav_profile);
                 return;
+            }
+        }
+
+        if (intent != null && intent.hasExtra(Constants.EXTRA_DESTINATION_TAB)) {
+            String destinationTab = intent.getStringExtra(Constants.EXTRA_DESTINATION_TAB);
+            if (Constants.DESTINATION_TAB_CALENDAR.equals(destinationTab)) {
+                navigateTo("calendar", R.id.nav_action);
             }
         }
     }
