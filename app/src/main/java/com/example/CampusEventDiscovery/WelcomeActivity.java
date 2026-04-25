@@ -7,8 +7,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.CampusEventDiscovery.util.DevBypassHelper;
-import com.google.android.material.button.MaterialButton;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.google.android.material.button.MaterialButton;
 
 /**
  * WelcomeActivity.java
@@ -19,25 +19,25 @@ public class WelcomeActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.example.CampusEventDiscovery.util.ThemeManager.applyAccentTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
 
-        MaterialButton btnSignIn = findViewById(R.id.btnSignIn);
-        MaterialButton btnCreateAccount = findViewById(R.id.btnCreateAccount);
+        MaterialButton btnLogIn = findViewById(R.id.btnLogIn);
+        MaterialButton btnSignUp = findViewById(R.id.btnSignUp);
         MaterialButton btnDevBypass = findViewById(R.id.btnDevBypass);
 
-        btnSignIn.setOnClickListener(v -> {
-            DevSessionManager.clearBypass(this);
-            Intent intent = new Intent(WelcomeActivity.this, SignInActivity.class);
-            startActivity(intent);
-        });
-
-        btnCreateAccount.setOnClickListener(v -> {
-            DevSessionManager.clearBypass(this);
-            Intent intent = new Intent(WelcomeActivity.this, SignUpActivity.class);
-            startActivity(intent);
-        });
+        btnLogIn.setOnClickListener(v -> openAuthScreen(SignInActivity.class));
+        btnSignUp.setOnClickListener(v -> openAuthScreen(SignUpActivity.class));
 
         btnDevBypass.setOnClickListener(v -> DevBypassHelper.showRolePicker(this));
+    }
+
+    private void openAuthScreen(Class<?> destinationActivity) {
+        DevSessionManager.clearBypass(this);
+
+        Intent intent = new Intent(this, destinationActivity);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
     }
 }

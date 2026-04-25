@@ -1,10 +1,14 @@
-@"
 .idea/
 *.iml
 .gradle/
-local.properties
+.gradle-local/
 build/
+local.properties
 captures/
 .externalNativeBuild/
 .cxx/
-"@ | Set-Content .gitignore
+bin/
+gen/
+*.apk
+*.aar
+*.jar

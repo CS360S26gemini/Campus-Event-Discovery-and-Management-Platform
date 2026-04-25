@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -16,11 +15,11 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.DevBypassHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.ThemeManager;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
-
 /**
  * SignInActivity.java
  *
@@ -31,30 +30,32 @@ public class SignInActivity extends AppCompatActivity {
     private EditText etEmail, etPassword;
     private Switch switchRememberMe;
     private MaterialButton btnSignIn, btnDevBypass;
-    private ImageButton btnBack;
 
     private FirebaseAuth auth;
     private EventRepository repository;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.example.CampusEventDiscovery.util.ThemeManager.applyAccentTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
         auth = FirebaseAuth.getInstance();
         repository = new EventRepository();
 
-        btnBack = findViewById(R.id.btnBack);
+        MaterialToolbar toolbarSignIn = findViewById(R.id.toolbarSignIn);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         switchRememberMe = findViewById(R.id.switchRememberMe);
         btnSignIn = findViewById(R.id.btnSignIn);
         btnDevBypass = findViewById(R.id.btnDevBypass);
+        MaterialButton btnCreateAccountLink = findViewById(R.id.btnCreateAccountLink);
 
-        btnBack.setOnClickListener(v -> finish());
+        toolbarSignIn.setNavigationOnClickListener(v -> finish());
 
         btnSignIn.setOnClickListener(v -> signInUser());
         btnDevBypass.setOnClickListener(v -> DevBypassHelper.showRolePicker(this));
+        btnCreateAccountLink.setOnClickListener(v -> openSignUp());
     }
 
     private void signInUser() {
@@ -177,6 +178,12 @@ public class SignInActivity extends AppCompatActivity {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void openSignUp() {
+        Intent intent = new Intent(this, SignUpActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
     }
 
     private String buildSignInErrorMessage(Exception exception) {
