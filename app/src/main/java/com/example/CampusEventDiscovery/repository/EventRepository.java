@@ -8,6 +8,7 @@ import com.example.CampusEventDiscovery.model.EventAttendee;
 import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.model.Memory;
 import com.example.CampusEventDiscovery.model.Notification;
+import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.model.User;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -108,6 +109,11 @@ public class EventRepository {
 
     public interface MemoryListCallback {
         void onSuccess(List<Memory> memories);
+        void onError(Exception e);
+    }
+
+    public interface RsvpListCallback {
+        void onSuccess(List<Rsvp> rsvps);
         void onError(Exception e);
     }
 
@@ -504,16 +510,57 @@ public class EventRepository {
                           List<String> photoUrls,
                           int rating,
                           ActionCallback cb) {
+        if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(eventId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Invalid user or event ID"));
+            return;
+        }
+
         Map<String, Object> memory = new HashMap<>();
         memory.put("eventId", eventId);
         memory.put("eventTitle", eventTitle);
-        memory.put("photoUrls", photoUrls);
         memory.put("attendedAt", Timestamp.now());
+        memory.put("updatedAt", Timestamp.now());
         memory.put("rating", rating);
+
+        if (photoUrls != null && !photoUrls.isEmpty()) {
+            memory.put("photoUrls", FieldValue.arrayUnion(photoUrls.toArray()));
+        }
 
         db.collection(COLLECTION_USERS).document(userId)
                 .collection(SUBCOLLECTION_MEMORIES)
-                .add(memory)
+                .document(eventId)
+                .set(memory, SetOptions.merge())
+                .addOnSuccessListener(unused -> {
+                    if (cb != null) cb.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
+    public void addMemoryPhotos(String userId,
+                                String eventId,
+                                String eventTitle,
+                                Timestamp attendedAt,
+                                List<String> photoUrls,
+                                ActionCallback cb) {
+        if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(eventId)
+                || photoUrls == null || photoUrls.isEmpty()) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Invalid memory photo data"));
+            return;
+        }
+
+        Map<String, Object> memory = new HashMap<>();
+        memory.put("eventId", eventId);
+        memory.put("eventTitle", eventTitle);
+        memory.put("attendedAt", attendedAt != null ? attendedAt : Timestamp.now());
+        memory.put("updatedAt", Timestamp.now());
+        memory.put("photoUrls", FieldValue.arrayUnion(photoUrls.toArray()));
+
+        db.collection(COLLECTION_USERS).document(userId)
+                .collection(SUBCOLLECTION_MEMORIES)
+                .document(eventId)
+                .set(memory, SetOptions.merge())
                 .addOnSuccessListener(unused -> {
                     if (cb != null) cb.onSuccess();
                 })
@@ -537,6 +584,44 @@ public class EventRepository {
                         }
                     }
                     cb.onSuccess(memories);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    public void getAttendedRsvpsForMemories(String userId, RsvpListCallback cb) {
+        if (TextUtils.isEmpty(userId)) {
+            cb.onSuccess(new ArrayList<>());
+            return;
+        }
+
+        db.collection(COLLECTION_USERS)
+                .document(userId)
+                .collection(SUBCOLLECTION_RSVPS)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Rsvp> rsvps = new ArrayList<>();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        Rsvp rsvp = doc.toObject(Rsvp.class);
+                        if (rsvp == null) {
+                            continue;
+                        }
+                        rsvp.setRsvpId(doc.getId());
+                        String status = rsvp.getStatus();
+                        if ("cancelled".equalsIgnoreCase(status)) {
+                            continue;
+                        }
+
+                        if (rsvp.isCheckedIn()) {
+                            rsvps.add(rsvp);
+                        }
+                    }
+
+                    Collections.sort(rsvps, (a, b) -> {
+                        Date aDate = a.getDate() != null ? a.getDate().toDate() : new Date(0L);
+                        Date bDate = b.getDate() != null ? b.getDate().toDate() : new Date(0L);
+                        return bDate.compareTo(aDate);
+                    });
+                    cb.onSuccess(rsvps);
                 })
                 .addOnFailureListener(cb::onError);
     }

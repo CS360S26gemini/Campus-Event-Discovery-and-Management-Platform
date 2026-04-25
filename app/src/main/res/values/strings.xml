@@ -383,11 +383,18 @@
     <string name="notifications_row">Notifications</string>
     <string name="no_notifications">No notifications yet</string>
     <string name="unread_notification">Unread</string>
-    <string name="memories_title">My Memories</string>
+    <string name="memories_title">Memory Folders</string>
     <string name="memories_row">My Memories</string>
-    <string name="no_memories">No memories yet</string>
+    <string name="no_memories">No attended events yet</string>
     <string name="memory_rating">Rating: %1$d/5</string>
     <string name="memory_photo_count">%1$d photo(s)</string>
+    <string name="create_memory_album">Create album</string>
+    <string name="add_more_photos">Add photos</string>
+    <string name="memory_photos_saved">Photos added to memories</string>
+    <string name="memory_photos_failed">Could not add photos</string>
+    <string name="select_memory_photos">Select photos</string>
+    <string name="memory_album_empty">No photos in this event folder yet.</string>
+    <string name="memory_uploading_photos">Uploading photos...</string>
 
     <!-- Admin Screens -->
     <string name="admin_header">Admin Dashboard</string>
@@ -516,7 +523,7 @@
     <string name="app_preferences_section">App Preferences</string>
     <string name="support_section">Support</string>
     <string name="my_events_subtitle">View RSVPs, tickets, and recently viewed events.</string>
-    <string name="memories_subtitle">Browse photos and moments from past events.</string>
+    <string name="memories_subtitle">View event folders for events you attended.</string>
     <string name="manage_events_subtitle">Review approved, pending, and rejected events.</string>
     <string name="create_event_subtitle">Submit a new event proposal for approval.</string>
     <string name="scan_tickets_subtitle">Check in attendees by QR code.</string>
