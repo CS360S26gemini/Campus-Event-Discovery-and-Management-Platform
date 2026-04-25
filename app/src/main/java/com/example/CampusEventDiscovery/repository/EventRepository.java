@@ -934,6 +934,11 @@ public class EventRepository {
             long currentCheckedInCount = currentCheckedInCountLong != null ? currentCheckedInCountLong : 0L;
             long removedCount = 0L;
             long removedCheckedInCount = 0L;
+            List<EventAttendee> validAttendees = new ArrayList<>();
+            List<DocumentReference> attendeeRefs = new ArrayList<>();
+            List<DocumentReference> blacklistRefs = new ArrayList<>();
+            List<DocumentReference> userRsvpRefs = new ArrayList<>();
+            List<DocumentSnapshot> attendeeSnaps = new ArrayList<>();
 
             for (EventAttendee attendee : attendees) {
                 if (attendee == null || TextUtils.isEmpty(attendee.getUserId())) {
@@ -948,14 +953,30 @@ public class EventRepository {
                         .collection(SUBCOLLECTION_RSVPS)
                         .document(eventId);
 
+                validAttendees.add(attendee);
+                attendeeRefs.add(attendeeRef);
+                blacklistRefs.add(blacklistRef);
+                userRsvpRefs.add(userRsvpRef);
+                attendeeSnaps.add(transaction.get(attendeeRef));
+            }
+
+            for (int i = 0; i < validAttendees.size(); i++) {
+                EventAttendee attendee = validAttendees.get(i);
+                DocumentReference attendeeRef = attendeeRefs.get(i);
+                DocumentReference blacklistRef = blacklistRefs.get(i);
+                DocumentReference userRsvpRef = userRsvpRefs.get(i);
+                DocumentSnapshot attendeeSnap = attendeeSnaps.get(i);
+                String attendeeEmail = attendeeSnap.getString("email");
+
                 Map<String, Object> blacklistData = new HashMap<>();
-                blacklistData.put("userId", attendeeUserId);
+                blacklistData.put("userId", attendee.getUserId());
                 blacklistData.put("fullName", attendee.getFullName());
+                blacklistData.put("email", attendeeEmail != null ? attendeeEmail : "");
                 blacklistData.put("qrToken", attendee.getQrToken());
                 blacklistData.put("blacklistedAt", Timestamp.now());
+                blacklistData.put("createdAt", Timestamp.now());
                 transaction.set(blacklistRef, blacklistData);
 
-                DocumentSnapshot attendeeSnap = transaction.get(attendeeRef);
                 if (attendeeSnap.exists()) {
                     Boolean attendeeCheckedIn = attendeeSnap.getBoolean("checkedIn");
                     if (attendeeCheckedIn != null && attendeeCheckedIn) {
@@ -1016,6 +1037,80 @@ public class EventRepository {
                     cb.onSuccess(list);
                 })
                 .addOnFailureListener(cb::onError);
+    }
+
+    public void getUserByEmail(String email, UserCallback cb) {
+        if (TextUtils.isEmpty(email)) {
+            cb.onError(new Exception("Email is required"));
+            return;
+        }
+        db.collection(COLLECTION_USERS)
+                .whereEqualTo("email", email.trim().toLowerCase())
+                .limit(1)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (snapshots == null || snapshots.isEmpty()) {
+                        cb.onError(new Exception("No user found with that email"));
+                        return;
+                    }
+                    DocumentSnapshot doc = snapshots.getDocuments().get(0);
+                    User user = doc.toObject(User.class);
+                    if (user == null) {
+                        cb.onError(new Exception("No user found with that email"));
+                        return;
+                    }
+                    cb.onSuccess(user);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    public void blacklistUserByEmail(String eventId, String emailInput, String blacklistedByUserId, String reason, ActionCallback cb) {
+        if (TextUtils.isEmpty(eventId) || TextUtils.isEmpty(emailInput)) {
+            if (cb != null) cb.onError(new Exception("Event ID and email are required"));
+            return;
+        }
+
+        db.collection(COLLECTION_USERS)
+                .whereEqualTo("email", emailInput.trim().toLowerCase())
+                .limit(1)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (snapshots == null || snapshots.isEmpty()) {
+                        if (cb != null) cb.onError(new Exception("No user found with that email"));
+                        return;
+                    }
+                    DocumentSnapshot doc = snapshots.getDocuments().get(0);
+                    String userId = doc.getId();
+                    User user = doc.toObject(User.class);
+
+                    DocumentReference blacklistRef = db.collection(COLLECTION_EVENTS)
+                            .document(eventId)
+                            .collection(SUBCOLLECTION_BLACKLIST)
+                            .document(userId);
+
+                    blacklistRef.get().addOnSuccessListener(snapshot -> {
+                        if (snapshot.exists()) {
+                            if (cb != null) cb.onError(new Exception("User is already blacklisted from this event"));
+                            return;
+                        }
+
+                        Map<String, Object> blacklistData = new HashMap<>();
+                        blacklistData.put("userId", userId);
+                        blacklistData.put("fullName", user != null && user.getFullName() != null ? user.getFullName() : "");
+                        blacklistData.put("email", user != null && user.getEmail() != null ? user.getEmail() : emailInput.trim());
+                        blacklistData.put("reason", reason != null ? reason : "");
+                        blacklistData.put("blacklistedBy", blacklistedByUserId != null ? blacklistedByUserId : "");
+                        blacklistData.put("blacklistedAt", Timestamp.now());
+                        blacklistData.put("createdAt", Timestamp.now());
+                        blacklistData.put("proactive", true);
+
+                        blacklistRef.set(blacklistData)
+                                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+
+                    }).addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+                })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
     public void isUserBlacklisted(String eventId, String userId, BooleanCallback cb) {
