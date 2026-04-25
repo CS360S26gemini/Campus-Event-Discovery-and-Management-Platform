@@ -20,6 +20,7 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -55,6 +56,7 @@ public class ScannerActivity extends AppCompatActivity {
     private Rsvp currentRsvp;
     private String currentAttendeeName;
     private String currentAttendeeUserId;
+    private boolean walkthroughMode;
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -76,9 +78,13 @@ public class ScannerActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         repository = new EventRepository();
         expectedEventId = getIntent().getStringExtra("eventId");
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
 
         bindViews();
         setupUI();
+        if (walkthroughMode) {
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "scanner");
+        }
     }
 
     private void bindViews() {
@@ -100,6 +106,10 @@ public class ScannerActivity extends AppCompatActivity {
     }
 
     private void checkCameraPermission() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: camera scanner was not opened.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
             startScanning();

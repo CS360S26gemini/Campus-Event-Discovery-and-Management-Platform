@@ -33,6 +33,7 @@ import com.example.CampusEventDiscovery.ui.event.TicketActivity;
 import com.example.CampusEventDiscovery.ui.organizer.OrganizerEventDetailActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -120,6 +121,7 @@ public class MyEventsFragment extends Fragment {
         setupRecyclerViews();
         
         loadUserRoleAndData();
+        WalkthroughManager.maybeShow(requireActivity(), view, "my_events");
     }
 
     @Override
@@ -127,6 +129,7 @@ public class MyEventsFragment extends Fragment {
         super.onResume();
         if (getView() != null) {
             loadUserRoleAndData();
+            WalkthroughManager.maybeShow(requireActivity(), getView(), "my_events");
         }
     }
 
@@ -350,6 +353,10 @@ public class MyEventsFragment extends Fragment {
 
     private void loadRsvps() {
         showLoading(progressBarSection1, true);
+        if (WalkthroughManager.isActive()) {
+            updateList(list1, ids1, adapter1, WalkthroughManager.getDemoEvents(), tvEmptySection1, progressBarSection1);
+            return;
+        }
         if (currentUserId == null) {
             updateList(list1, ids1, adapter1, new ArrayList<>(), tvEmptySection1, progressBarSection1);
             return;

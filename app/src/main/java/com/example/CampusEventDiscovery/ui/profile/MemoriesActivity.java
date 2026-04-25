@@ -26,6 +26,7 @@ import com.example.CampusEventDiscovery.model.Memory;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -82,7 +83,18 @@ public class MemoriesActivity extends AppCompatActivity {
         bindViews();
         setupToolbar();
         setupRecyclerView();
-        loadMemories();
+        if (WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive()) {
+            bindMemories(java.util.Collections.singletonList(new Memory(
+                    WalkthroughManager.getDemoEvent().getEventId(),
+                    WalkthroughManager.getDemoEvent().getTitle(),
+                    new ArrayList<>(),
+                    WalkthroughManager.getDemoEvent().getDate(),
+                    0
+            )));
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "memories");
+        } else {
+            loadMemories();
+        }
     }
 
     private void bindViews() {

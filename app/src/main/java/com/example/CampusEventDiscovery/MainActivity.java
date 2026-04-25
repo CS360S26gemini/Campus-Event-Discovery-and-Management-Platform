@@ -18,6 +18,7 @@ import com.example.CampusEventDiscovery.ui.home.HomeAdminFragment;
 import com.example.CampusEventDiscovery.ui.home.HomeFragment;
 import com.example.CampusEventDiscovery.ui.home.HomeOrganizerFragment;
 import com.example.CampusEventDiscovery.ui.organizer.CreateEventActivity;
+import com.example.CampusEventDiscovery.ui.profile.HelpFragment;
 import com.example.CampusEventDiscovery.ui.profile.ProfileFragment;
 import com.example.CampusEventDiscovery.ui.search.SearchFragment;
 import com.example.CampusEventDiscovery.ui.calendar.EventCalendarFragment;
@@ -26,6 +27,7 @@ import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.NavigationTransitions;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -105,6 +107,15 @@ public class MainActivity extends AppCompatActivity {
                 navigateTo("profile", R.id.nav_profile);
                 return;
             }
+        }
+
+        if (intent != null && intent.getBooleanExtra("OPEN_HELP", false)) {
+            openHelpSupport();
+            return;
+        }
+
+        if (intent != null && intent.getBooleanExtra(WalkthroughManager.EXTRA_WALKTHROUGH_MODE, false)) {
+            openWalkthroughScreen(intent.getStringExtra("WALKTHROUGH_SCREEN"));
         }
     }
 
@@ -273,6 +284,45 @@ public class MainActivity extends AppCompatActivity {
         updateSelectedNavItem(selectedItemId);
         updateBottomNavVisibility(key);
         return true;
+    }
+
+    public void openWalkthroughScreen(String screen) {
+        if (screen == null) {
+            return;
+        }
+        switch (screen) {
+            case "search":
+                navigateTo("search", R.id.nav_search);
+                break;
+            case "my_events":
+                navigateTo("my_events", R.id.nav_action);
+                break;
+            case "memories":
+            case "profile":
+                navigateTo("profile", R.id.nav_profile);
+                break;
+            case "home_admin":
+            case "home_organizer":
+            case "home_attendee":
+            default:
+                navigateTo(screen, R.id.nav_home);
+                break;
+        }
+    }
+
+    private void openHelpSupport() {
+        if (!canUpdateUi() || getSupportFragmentManager().isStateSaved()) {
+            return;
+        }
+        NavigationTransitions.replace(
+                getSupportFragmentManager(),
+                R.id.fragmentContainer,
+                new HelpFragment(),
+                true,
+                true
+        );
+        currentNavigationKey = "help";
+        updateBottomNavVisibility(currentNavigationKey);
     }
 
     private void updateBottomNavVisibility(String key) {

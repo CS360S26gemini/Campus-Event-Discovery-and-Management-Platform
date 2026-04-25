@@ -1,44 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="@dimen/spacing_xl">
+    android:background="@color/colorBackground"
+    android:fillViewport="true">
 
-    <ImageView
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:contentDescription="@string/help_support"
-        android:src="@drawable/ic_help_outline"
-        app:tint="?attr/colorPrimary" />
-
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_lg"
-        android:gravity="center"
-        android:text="@string/help_support"
-        android:textAppearance="?attr/textAppearanceHeadlineMedium"
-        android:textColor="?attr/colorOnSurface" />
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_md">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:gravity="center"
-        android:text="@string/help_support_placeholder"
-        android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="?attr/colorOnSurfaceVariant" />
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarHelp"
+            style="@style/AppToolbarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_back"
+            app:title="@string/help_support" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnGotIt"
-        style="@style/AppButtonStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_xl"
-        android:minHeight="48dp"
-        android:text="@string/got_it" />
-</LinearLayout>
+        <TextView
+            android:id="@+id/tvHelpIntro"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:text="@string/help_walkthrough_intro"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <LinearLayout
+            android:id="@+id/containerHelpGuides"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:orientation="vertical" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

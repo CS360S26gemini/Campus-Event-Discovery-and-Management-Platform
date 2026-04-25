@@ -153,6 +153,12 @@
     <string name="help_support">Help &amp; Support</string>
     <string name="help_support_placeholder">We\'re building this section. Full help documentation, FAQs, and support contact will be available here soon.</string>
     <string name="got_it">Got it</string>
+    <string name="help_walkthrough_intro">Choose a safe walkthrough. The guide uses the app\'s real screens with local demo data and does not change backend records.</string>
+    <string name="start_walkthrough">Start walkthrough</string>
+    <string name="walkthrough_next">Next</string>
+    <string name="walkthrough_back">Back</string>
+    <string name="walkthrough_exit">Exit</string>
+    <string name="walkthrough_done">Done</string>
 
     <string name="send_sos_title">Send SOS?</string>
     <string name="send_sos_message">This will alert campus security.</string>

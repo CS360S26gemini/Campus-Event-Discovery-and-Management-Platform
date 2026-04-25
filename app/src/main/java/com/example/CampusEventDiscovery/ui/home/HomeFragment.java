@@ -40,6 +40,7 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.ThemeManager;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
@@ -160,6 +161,7 @@ public class HomeFragment extends Fragment {
         setupRecyclerView();
         setupSosButton();
         loadHomeData();
+        WalkthroughManager.maybeShow(requireActivity(), view, "home_attendee");
     }
 
     @Override
@@ -168,6 +170,7 @@ public class HomeFragment extends Fragment {
         startPopularCarousel();
         if (getView() != null) {
             loadHomeData();
+            WalkthroughManager.maybeShow(requireActivity(), getView(), "home_attendee");
         }
     }
 

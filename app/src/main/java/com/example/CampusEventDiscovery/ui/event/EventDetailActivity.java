@@ -25,6 +25,7 @@ import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.EventShareHelper;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -72,6 +73,7 @@ public class EventDetailActivity extends AppCompatActivity {
     private Event currentEvent;
     private Rsvp currentRsvp;
     private final Set<String> savedEventIds = new HashSet<>();
+    private boolean walkthroughMode;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -80,6 +82,7 @@ public class EventDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_event_detail);
 
         repository = new EventRepository();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         currentUserId = currentUser != null ? currentUser.getUid() : DevSessionManager.getEffectiveUserId(this);
@@ -95,10 +98,17 @@ public class EventDetailActivity extends AppCompatActivity {
         }
 
         setupStaticListeners();
-        loadSavedState();
-        loadCurrentUserRole();
-        loadEventDetails();
-        checkRsvpStatus();
+        if (walkthroughMode) {
+            currentUserRole = UserRoles.ATTENDEE;
+            currentEvent = WalkthroughManager.getDemoEvent();
+            bindEvent(currentEvent);
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "event_detail");
+        } else {
+            loadSavedState();
+            loadCurrentUserRole();
+            loadEventDetails();
+            checkRsvpStatus();
+        }
     }
 
     private void bindViews() {
@@ -170,6 +180,10 @@ public class EventDetailActivity extends AppCompatActivity {
         tvViewOnMap.setOnClickListener(v -> openMap());
 
         btnTickets.setOnClickListener(v -> {
+            if (walkthroughMode) {
+                Toast.makeText(this, "Walkthrough mode: no RSVP was created.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (currentEvent == null || !UserRoles.isAttendee(currentUserRole)) {
                 Toast.makeText(this, getString(R.string.attendee_only_registration_message), Toast.LENGTH_SHORT).show();
                 return;

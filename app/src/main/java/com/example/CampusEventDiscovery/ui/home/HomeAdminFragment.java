@@ -25,6 +25,7 @@ import com.example.CampusEventDiscovery.ui.organizer.CreateEventActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ManageEventsActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
 import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 
@@ -79,12 +80,26 @@ public class HomeAdminFragment extends Fragment {
         setupToolActions();
         setupRecyclerView();
         setupApprovalToggle();
+        if (WalkthroughManager.isActive()) {
+            approvalEvents.clear();
+            approvalEvents.add(WalkthroughManager.getDemoEvent());
+            adapter.updateData(new ArrayList<>(approvalEvents));
+            tvEmptyAdmin.setVisibility(View.GONE);
+        }
+        WalkthroughManager.maybeShow(requireActivity(), view, "home_admin");
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        if (WalkthroughManager.isActive()) {
+            WalkthroughManager.maybeShow(requireActivity(), getView(), "home_admin");
+            return;
+        }
         loadApprovals();
+        if (getView() != null) {
+            WalkthroughManager.maybeShow(requireActivity(), getView(), "home_admin");
+        }
     }
 
     private void setupToolActions() {

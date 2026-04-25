@@ -18,6 +18,7 @@ import com.example.CampusEventDiscovery.model.SosAlert;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -65,7 +66,14 @@ public class SOSDashboardActivity extends AppCompatActivity {
                 ? firebaseUser.getUid()
                 : DevSessionManager.getEffectiveUserId(this);
 
-        resolveRoleAndLoad();
+        if (WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive()) {
+            pbLoading.setVisibility(View.GONE);
+            tvEmpty.setText("Walkthrough mode: active SOS alerts would appear here.");
+            tvEmpty.setVisibility(View.VISIBLE);
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "sos_dashboard");
+        } else {
+            resolveRoleAndLoad();
+        }
     }
 
     private void resolveRoleAndLoad() {

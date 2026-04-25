@@ -23,6 +23,7 @@ import com.example.CampusEventDiscovery.repository.PaymentRepository;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.MockPaymentService;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
@@ -72,6 +73,7 @@ public class CheckoutActivity extends AppCompatActivity {
     private String eventVenue;
     private double totalPrice;
     private String effectiveUserId;
+    private boolean walkthroughMode;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -82,6 +84,7 @@ public class CheckoutActivity extends AppCompatActivity {
         eventRepository = new EventRepository();
         paymentRepository = new PaymentRepository();
         db = FirebaseFirestore.getInstance();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
 
         bindViews();
         readIntentExtras();
@@ -89,8 +92,13 @@ public class CheckoutActivity extends AppCompatActivity {
         setupToolbar();
         bindStaticUi();
         setupPaymentMethodToggle();
-        enforceAttendeeAccess();
+        if (!walkthroughMode) {
+            enforceAttendeeAccess();
+        }
         setupPayButton();
+        if (walkthroughMode) {
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "checkout");
+        }
     }
 
     private void bindViews() {
@@ -175,6 +183,10 @@ public class CheckoutActivity extends AppCompatActivity {
      * redirected to their existing ticket without a new charge.
      */
     private void attemptPayment() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: no registration or payment was created.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (!validateForm()) return;
 
         if (effectiveUserId == null) {

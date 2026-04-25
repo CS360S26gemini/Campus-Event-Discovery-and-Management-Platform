@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.CampusEventDiscovery.MainActivity;
 import com.example.CampusEventDiscovery.R;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.example.CampusEventDiscovery.util.QRCodeHelper;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -48,6 +49,7 @@ public class TicketActivity extends AppCompatActivity {
 
         bindViews();
         setupUI();
+        WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "ticket");
     }
 
     private void bindViews() {

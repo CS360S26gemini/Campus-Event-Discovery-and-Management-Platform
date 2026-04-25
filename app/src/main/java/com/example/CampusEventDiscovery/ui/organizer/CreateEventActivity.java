@@ -32,6 +32,7 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.EventValidator;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
@@ -83,6 +84,7 @@ public class CreateEventActivity extends AppCompatActivity {
 
     private String currentUserId;
     private String currentOrganizerName = "";
+    private boolean walkthroughMode;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -110,6 +112,7 @@ public class CreateEventActivity extends AppCompatActivity {
         setContentView(R.layout.activity_create_event);
 
         repository = new EventRepository();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
         selectedDateCalendar = Calendar.getInstance();
         selectedDateCalendar.set(Calendar.SECOND, 0);
         selectedDateCalendar.set(Calendar.MILLISECOND, 0);
@@ -125,6 +128,14 @@ public class CreateEventActivity extends AppCompatActivity {
         setupTimePicker();
         preloadOrganizerName();
         setupSubmitButton();
+        if (walkthroughMode) {
+            etEventTitle.setText(WalkthroughManager.getDemoProposal().getTitle());
+            etVenue.setText(WalkthroughManager.getDemoProposal().getLocation());
+            etDescription.setText(WalkthroughManager.getDemoProposal().getDescription());
+            etCapacity.setText("150");
+            etTicketPrice.setText("0");
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "create_event");
+        }
     }
 
     private void bindViews() {
@@ -300,6 +311,10 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     private void submitProposal() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: proposal was not submitted.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (submitInProgress) {
             return;
         }

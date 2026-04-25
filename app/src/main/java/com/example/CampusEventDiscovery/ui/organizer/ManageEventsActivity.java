@@ -23,6 +23,7 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.OrganizerProposalDetailActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -62,6 +63,7 @@ public class ManageEventsActivity extends AppCompatActivity {
     private final List<Event> pendingEvents = new ArrayList<>();
     private final List<Event> rejectedEvents = new ArrayList<>();
     private String searchQuery = "";
+    private boolean walkthroughMode;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,6 +72,7 @@ public class ManageEventsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_manage_events);
 
         repository = new EventRepository();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         currentUserId = currentUser != null
@@ -83,13 +86,24 @@ public class ManageEventsActivity extends AppCompatActivity {
         setupToolbar();
         setupSearch();
         setupRecyclerViews();
-        loadRoleAndData();
+        if (walkthroughMode) {
+            toolbarManageEvents.setTitle(R.string.manage_events);
+            bindApprovedEvents(WalkthroughManager.getDemoEvents());
+            bindProposalSections(new ArrayList<>());
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "manage_events");
+        } else {
+            loadRoleAndData();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadRoleAndData();
+        if (walkthroughMode) {
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "manage_events");
+        } else {
+            loadRoleAndData();
+        }
     }
 
     private void bindViews() {

@@ -28,6 +28,7 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.ThemeManager;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.chip.Chip;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -123,6 +124,7 @@ public class SearchFragment extends Fragment {
         loadSavedEvents();
         chipAll.setChecked(true);
         performSearch();
+        WalkthroughManager.maybeShow(requireActivity(), view, "search");
     }
 
     @Override
@@ -131,6 +133,7 @@ public class SearchFragment extends Fragment {
         if (getView() != null) {
             loadSavedEvents();
             performSearch();
+            WalkthroughManager.maybeShow(requireActivity(), getView(), "search");
         }
     }
 
@@ -148,6 +151,9 @@ public class SearchFragment extends Fragment {
 
                         Intent intent = new Intent(requireContext(), EventDetailActivity.class);
                         intent.putExtra("eventId", event.getEventId());
+                        if (WalkthroughManager.isActive()) {
+                            intent.putExtra(WalkthroughManager.EXTRA_WALKTHROUGH_MODE, true);
+                        }
                         startActivity(intent);
                     }
 
@@ -267,6 +273,18 @@ public class SearchFragment extends Fragment {
         showLoading(true);
 
         String query = etSearch.getText().toString().trim();
+
+        if (WalkthroughManager.isActive()) {
+            showLoading(false);
+            List<Event> sortedEvents = sortEvents(WalkthroughManager.getDemoEvents(), query);
+            adapter.updateData(sortedEvents);
+            tvEventsCount.setText(getString(R.string.events_count_label, sortedEvents.size()));
+            tvEmptySearch.setVisibility(sortedEvents.isEmpty() ? View.VISIBLE : View.GONE);
+            if (getView() != null) {
+                WalkthroughManager.maybeShow(requireActivity(), getView(), "search");
+            }
+            return;
+        }
 
         repository.searchEvents(query, selectedCategory, new EventRepository.EventListCallback() {
             @Override
