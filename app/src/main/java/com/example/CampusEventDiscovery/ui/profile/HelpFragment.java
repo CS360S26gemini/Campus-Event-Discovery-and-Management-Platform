@@ -50,7 +50,13 @@ public class HelpFragment extends Fragment {
         currentUserId = user != null ? user.getUid() : DevSessionManager.getEffectiveUserId(requireContext());
 
         MaterialToolbar toolbar = view.findViewById(R.id.toolbarHelp);
-        toolbar.setNavigationOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        toolbar.setNavigationOnClickListener(v -> {
+            if (requireActivity() instanceof com.example.CampusEventDiscovery.MainActivity) {
+                ((com.example.CampusEventDiscovery.MainActivity) requireActivity()).returnFromHelp();
+            } else {
+                requireActivity().getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
         containerHelpGuides = view.findViewById(R.id.containerHelpGuides);
         resolveRole();
     }

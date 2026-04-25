@@ -314,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
         if (!canUpdateUi() || getSupportFragmentManager().isStateSaved()) {
             return;
         }
+        navigateTo("profile", R.id.nav_profile);
         NavigationTransitions.replace(
                 getSupportFragmentManager(),
                 R.id.fragmentContainer,
@@ -323,6 +324,16 @@ public class MainActivity extends AppCompatActivity {
         );
         currentNavigationKey = "help";
         updateBottomNavVisibility(currentNavigationKey);
+    }
+
+    public void returnFromHelp() {
+        if (!canUpdateUi() || getSupportFragmentManager().isStateSaved()) {
+            return;
+        }
+        getSupportFragmentManager().popBackStackImmediate();
+        currentNavigationKey = "profile";
+        updateSelectedNavItem(R.id.nav_profile);
+        updateBottomNavVisibility("profile");
     }
 
     private void updateBottomNavVisibility(String key) {

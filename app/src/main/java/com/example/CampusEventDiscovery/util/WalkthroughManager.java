@@ -150,6 +150,7 @@ public final class WalkthroughManager {
     private static void complete(Activity activity) {
         cancel(activity);
         Intent intent = new Intent(activity, MainActivity.class);
+        intent.putExtra("OPEN_TAB", "profile");
         intent.putExtra("OPEN_HELP", true);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         activity.startActivity(intent);
