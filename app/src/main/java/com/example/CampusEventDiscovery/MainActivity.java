@@ -18,6 +18,7 @@ import com.example.CampusEventDiscovery.ui.home.HomeAdminFragment;
 import com.example.CampusEventDiscovery.ui.home.HomeFragment;
 import com.example.CampusEventDiscovery.ui.home.HomeOrganizerFragment;
 import com.example.CampusEventDiscovery.ui.organizer.CreateEventActivity;
+import com.example.CampusEventDiscovery.ui.organizer.OrganizerVendorsFragment;
 import com.example.CampusEventDiscovery.ui.profile.ProfileFragment;
 import com.example.CampusEventDiscovery.ui.search.SearchFragment;
 import com.example.CampusEventDiscovery.ui.calendar.EventCalendarFragment;
@@ -54,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     // List of keys representing main screens where bottom navigation should be visible.
     private static final List<String> MAIN_SCREEN_KEYS = Arrays.asList(
-            "home_admin", "home_organizer", "home_attendee", "search", "favourites", "profile", "my_events"
+            "home_admin", "home_organizer", "home_attendee", "search", "favourites", "vendors", "profile", "my_events"
     );
 
     @Override
@@ -188,6 +189,14 @@ public class MainActivity extends AppCompatActivity {
             actionItem.setIcon(R.drawable.ic_pin);
             actionItem.setTitle(R.string.my_events_row);
         }
+        MenuItem favouritesItem = menu.findItem(R.id.nav_favourites);
+        MenuItem vendorsItem = menu.findItem(R.id.nav_vendors);
+        if (favouritesItem != null) {
+            favouritesItem.setVisible(!UserRoles.isOrganizer(currentRole));
+        }
+        if (vendorsItem != null) {
+            vendorsItem.setVisible(UserRoles.isOrganizer(currentRole));
+        }
         ThemeManager.applyAccentToMainNavigation(this, bottomNavigationView, null);
         ThemeManager.applyAccentToActivity(this);
     }
@@ -247,6 +256,10 @@ public class MainActivity extends AppCompatActivity {
             return navigateTo("favourites", R.id.nav_favourites);
         }
 
+        if (itemId == R.id.nav_vendors) {
+            return navigateTo("vendors", R.id.nav_vendors);
+        }
+
         if (itemId == R.id.nav_profile) {
             return navigateTo("profile", R.id.nav_profile);
         }
@@ -297,6 +310,8 @@ public class MainActivity extends AppCompatActivity {
                 return new MyEventsFragment();
             case "favourites":
                 return new FavouritesFragment();
+            case "vendors":
+                return new com.example.CampusEventDiscovery.ui.organizer.OrganizerVendorsFragment();
             case "profile":
                 return new ProfileFragment();
             case "home_attendee":

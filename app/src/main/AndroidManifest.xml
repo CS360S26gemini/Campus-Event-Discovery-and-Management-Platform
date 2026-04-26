@@ -68,6 +68,7 @@
         <activity
             android:name="com.example.CampusEventDiscovery.ui.organizer.WhoIsComingActivity"
             android:exported="false" />
+        <activity android:name=".ui.organizer.VendorManagementActivity" />
         <activity
             android:name="com.example.CampusEventDiscovery.ui.organizer.OrganizerEventDetailActivity"
             android:exported="false" />

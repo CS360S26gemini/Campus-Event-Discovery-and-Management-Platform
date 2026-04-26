@@ -17,6 +17,11 @@
         android:title="@string/my_events_row" />
 
     <item
+        android:id="@+id/nav_vendors"
+        android:icon="@drawable/ic_person"
+        android:title="@string/vendors" />
+
+    <item
         android:id="@+id/nav_favourites"
         android:icon="@drawable/ic_heart_outline"
         android:title="@string/favourites" />
