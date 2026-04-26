@@ -19,6 +19,10 @@ public class Payment {
     private String transactionId;
     private long timestamp;
 
+    // Added for Ticket Tiers support
+    private String tierId;
+    private String tierName;
+
     /**
      * Required empty constructor for Firestore deserialization.
      */
@@ -27,14 +31,6 @@ public class Payment {
 
     /**
      * Full constructor for creating Payment objects.
-     *
-     * @param paymentId Helper field for Firestore document ID.
-     * @param userId User who made the payment.
-     * @param eventId Event being paid for.
-     * @param amount Amount paid.
-     * @param status Payment status.
-     * @param transactionId Randomly generated transaction ID.
-     * @param timestamp Payment timestamp.
      */
     public Payment(String paymentId, String userId, String eventId, double amount, String status, String transactionId, long timestamp) {
         this.paymentId = paymentId;
@@ -102,4 +98,29 @@ public class Payment {
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
+<<<<<<< Updated upstream
+=======
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getProofUrl() {
+        return proofUrl;
+    }
+
+    public void setProofUrl(String proofUrl) {
+        this.proofUrl = proofUrl;
+    }
+
+    public String getTierId() { return tierId; }
+    public void setTierId(String tierId) { this.tierId = tierId; }
+
+    public String getTierName() { return tierName; }
+    public void setTierName(String tierName) { this.tierName = tierName; }
+>>>>>>> Stashed changes
 }

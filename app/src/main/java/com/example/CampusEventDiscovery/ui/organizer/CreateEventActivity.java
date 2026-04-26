@@ -11,10 +11,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +34,7 @@ import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.CloudinaryHelper;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.EventValidator;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -41,14 +46,16 @@ import com.google.firebase.auth.FirebaseUser;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * CreateEventActivity.java
  *
  * Organizer event proposal form that writes a pending proposal to Firestore.
- * Integrated with Cloudinary for image uploads.
+ * Integrated with Cloudinary for image uploads and Campus Map location selection.
  */
 public class CreateEventActivity extends AppCompatActivity {
 
@@ -61,10 +68,17 @@ public class CreateEventActivity extends AppCompatActivity {
     private MaterialButton btnPickDate;
     private MaterialButton btnPickTime;
     private AutoCompleteTextView actvCategory;
+    private AutoCompleteTextView actvBuilding;
+    private EditText etLocationDetail;
     private EditText etVenue;
     private EditText etDescription;
     private EditText etCapacity;
+    private CheckBox cbUseTiers;
+    private View tilTicketPrice;
     private EditText etTicketPrice;
+    private LinearLayout llTierBuilderContainer;
+    private LinearLayout llTiersList;
+    private MaterialButton btnAddTier;
     private EditText etTags;
     private EditText etSponsors;
     private EditText etFoodStalls;
@@ -119,9 +133,11 @@ public class CreateEventActivity extends AppCompatActivity {
         setupToolbar();
         setupImagePicker();
         setupCategoryDropdown();
+        setupBuildingDropdown();
         setupDatePicker();
         setupTimePicker();
         preloadOrganizerName();
+        setupTierBuilder();
         setupSubmitButton();
     }
 
@@ -135,10 +151,17 @@ public class CreateEventActivity extends AppCompatActivity {
         btnPickDate = findViewById(R.id.btnPickDate);
         btnPickTime = findViewById(R.id.btnPickTime);
         actvCategory = findViewById(R.id.actvCategory);
+        actvBuilding = findViewById(R.id.actvBuilding);
+        etLocationDetail = findViewById(R.id.etLocationDetail);
         etVenue = findViewById(R.id.etVenue);
         etDescription = findViewById(R.id.etDescription);
         etCapacity = findViewById(R.id.etCapacity);
+        cbUseTiers = findViewById(R.id.cbUseTiers);
+        tilTicketPrice = findViewById(R.id.tilTicketPrice);
         etTicketPrice = findViewById(R.id.etTicketPrice);
+        llTierBuilderContainer = findViewById(R.id.llTierBuilderContainer);
+        llTiersList = findViewById(R.id.llTiersList);
+        btnAddTier = findViewById(R.id.btnAddTier);
         etTags = findViewById(R.id.etTags);
         etSponsors = findViewById(R.id.etSponsors);
         etFoodStalls = findViewById(R.id.etFoodStalls);
@@ -186,6 +209,33 @@ public class CreateEventActivity extends AppCompatActivity {
         actvCategory.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
                 actvCategory.showDropDown();
+            }
+        });
+    }
+
+    private void setupBuildingDropdown() {
+        String[] buildings = {
+                Constants.MAP_LOC_HSS,
+                Constants.MAP_LOC_SSE,
+                Constants.MAP_LOC_SAHSOL,
+                Constants.MAP_LOC_SPORTS_COMPLEX,
+                Constants.MAP_LOC_PARKING_LOT,
+                Constants.MAP_LOC_REDC,
+                Constants.MAP_LOC_CRICKET_GROUND,
+                Constants.MAP_LOC_SDSB,
+                Constants.MAP_LOC_IST,
+                Constants.MAP_LOC_MASJID
+        };
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_dropdown_item_1line,
+                buildings
+        );
+        actvBuilding.setAdapter(adapter);
+        actvBuilding.setOnClickListener(v -> actvBuilding.showDropDown());
+        actvBuilding.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                actvBuilding.showDropDown();
             }
         });
     }
@@ -293,6 +343,42 @@ public class CreateEventActivity extends AppCompatActivity {
         });
     }
 
+    private void setupTierBuilder() {
+        cbUseTiers.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            tilTicketPrice.setVisibility(isChecked ? View.GONE : View.VISIBLE);
+            llTierBuilderContainer.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            if (isChecked && llTiersList.getChildCount() == 0) {
+                addNewTierView();
+            }
+        });
+
+        btnAddTier.setOnClickListener(v -> addNewTierView());
+    }
+
+    private void addNewTierView() {
+        View tierView = LayoutInflater.from(this).inflate(R.layout.item_ticket_tier_builder, llTiersList, false);
+        TextView tvTierNumber = tierView.findViewById(R.id.tvTierNumber);
+        View btnRemoveTier = tierView.findViewById(R.id.btnRemoveTier);
+
+        int tierCount = llTiersList.getChildCount() + 1;
+        tvTierNumber.setText("Tier " + tierCount);
+
+        btnRemoveTier.setOnClickListener(v -> {
+            llTiersList.removeView(tierView);
+            updateTierNumbers();
+        });
+
+        llTiersList.addView(tierView);
+    }
+
+    private void updateTierNumbers() {
+        for (int i = 0; i < llTiersList.getChildCount(); i++) {
+            View v = llTiersList.getChildAt(i);
+            TextView tv = v.findViewById(R.id.tvTierNumber);
+            tv.setText("Tier " + (i + 1));
+        }
+    }
+
     private void setupSubmitButton() {
         btnSubmitEvent.setOnClickListener(v -> submitProposal());
     }
@@ -300,7 +386,8 @@ public class CreateEventActivity extends AppCompatActivity {
     private void submitProposal() {
         String title = etEventTitle.getText().toString().trim();
         String category = actvCategory.getText().toString().trim();
-        String venue = etVenue.getText().toString().trim();
+        String buildingKey = actvBuilding.getText().toString().trim();
+        String locationDesc = etLocationDetail.getText().toString().trim();
         String description = etDescription.getText().toString().trim();
         String capacityText = etCapacity.getText().toString().trim();
         String ticketPriceText = etTicketPrice.getText().toString().trim();
@@ -308,6 +395,11 @@ public class CreateEventActivity extends AppCompatActivity {
         String sponsorsText = etSponsors.getText().toString().trim();
         String foodStallsText = etFoodStalls.getText().toString().trim();
         String trailerUrl = etTrailerUrl.getText().toString().trim();
+
+        if (TextUtils.isEmpty(buildingKey)) {
+            Toast.makeText(this, "Please select a building", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         if (!hasSelectedDate || !hasSelectedTime || selectedTimestamp == null) {
             Toast.makeText(this, getString(R.string.date_and_time_required), Toast.LENGTH_SHORT).show();
@@ -331,24 +423,67 @@ public class CreateEventActivity extends AppCompatActivity {
             return;
         }
 
-        double ticketPrice = 0.0;
-        if (!TextUtils.isEmpty(ticketPriceText)) {
-            try {
-                ticketPrice = Double.parseDouble(ticketPriceText);
-                if (ticketPrice < 0.0) {
+        List<Map<String, Object>> tiers = new ArrayList<>();
+        double baseTicketPrice = 0.0;
+
+        if (cbUseTiers.isChecked()) {
+            if (llTiersList.getChildCount() == 0) {
+                Toast.makeText(this, getString(R.string.no_tiers_error), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            for (int i = 0; i < llTiersList.getChildCount(); i++) {
+                View v = llTiersList.getChildAt(i);
+                EditText etName = v.findViewById(R.id.etTierName);
+                EditText etPrice = v.findViewById(R.id.etTierPrice);
+                EditText etCap = v.findViewById(R.id.etTierCapacity);
+                EditText etDesc = v.findViewById(R.id.etTierDescription);
+
+                String n = etName.getText().toString().trim();
+                String pStr = etPrice.getText().toString().trim();
+                String cStr = etCap.getText().toString().trim();
+                String d = etDesc.getText().toString().trim();
+
+                if (TextUtils.isEmpty(n) || TextUtils.isEmpty(pStr) || TextUtils.isEmpty(cStr)) {
+                    Toast.makeText(this, getString(R.string.invalid_tier_data), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                try {
+                    double p = Double.parseDouble(pStr);
+                    long c = Long.parseLong(cStr);
+                    Map<String, Object> tierMap = new HashMap<>();
+                    tierMap.put("name", n);
+                    tierMap.put("price", p);
+                    tierMap.put("capacity", c);
+                    tierMap.put("description", d);
+                    tierMap.put("rsvpCount", 0L);
+                    tiers.add(tierMap);
+                    
+                    if (i == 0) baseTicketPrice = p; // Fallback for list views
+                } catch (NumberFormatException e) {
+                    Toast.makeText(this, getString(R.string.invalid_tier_data), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+        } else {
+            if (!TextUtils.isEmpty(ticketPriceText)) {
+                try {
+                    baseTicketPrice = Double.parseDouble(ticketPriceText);
+                    if (baseTicketPrice < 0.0) {
+                        Toast.makeText(this, getString(R.string.invalid_ticket_price), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                } catch (NumberFormatException e) {
                     Toast.makeText(this, getString(R.string.invalid_ticket_price), Toast.LENGTH_SHORT).show();
                     return;
                 }
-            } catch (NumberFormatException e) {
-                Toast.makeText(this, getString(R.string.invalid_ticket_price), Toast.LENGTH_SHORT).show();
-                return;
             }
         }
 
         String validationError = EventValidator.validate(
                 title,
                 description,
-                venue,
+                buildingKey, // Passing buildingKey as venue for simple validation
                 selectedTimestamp.toDate().getTime(),
                 capacity,
                 category,
@@ -371,9 +506,12 @@ public class CreateEventActivity extends AppCompatActivity {
         proposal.setCategory(category);
         proposal.setTags(tags);
         proposal.setDate(selectedTimestamp);
-        proposal.setLocation(venue);
+        proposal.setLocation(locationDesc + ", " + buildingKey);
+        proposal.setLocationKey(buildingKey);
+        proposal.setLocationDescription(locationDesc);
         proposal.setCapacity(capacity);
-        proposal.setTicketPrice(ticketPrice);
+        proposal.setTicketPrice(baseTicketPrice);
+        proposal.setTiers(tiers);
         proposal.setSponsors(parseCommaSeparated(sponsorsText, false));
         proposal.setFoodStalls(parseCommaSeparated(foodStallsText, false));
         proposal.setTrailerUrl(trailerUrl);

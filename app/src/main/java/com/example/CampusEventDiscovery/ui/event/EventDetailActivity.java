@@ -20,6 +20,7 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.google.firebase.Timestamp;
@@ -38,11 +39,8 @@ import java.util.Set;
  * EventDetailActivity.java
  *
  * Shows full event details for a selected event.
- * Updated to show "View Ticket" if already registered.
+ * Updated to support internal Campus Map images and remove Google Maps redirection.
  */
-
-// export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
-//export PATH="$JAVA_HOME/bin:$PATH"
 public class EventDetailActivity extends AppCompatActivity {
 
     private ImageView ivBanner;
@@ -112,9 +110,6 @@ public class EventDetailActivity extends AppCompatActivity {
         tvPrice = findViewById(R.id.tvPrice);
         btnTickets = findViewById(R.id.btnTickets);
         
-        // Add dynamic View Ticket button if not in layout, or bind it
-//        btnViewTicket = findViewById(R.id.btnViewTicket);
-        // btnViewTicket is optional — only bind if present in layout
         View rawBtn = findViewById(R.id.btnViewTicket);
         if (rawBtn instanceof com.google.android.material.button.MaterialButton) {
             btnViewTicket = (com.google.android.material.button.MaterialButton) rawBtn;
@@ -185,7 +180,7 @@ public class EventDetailActivity extends AppCompatActivity {
                 return;
             }
 
-            // Launch CheckoutActivity for payment and QR ticket generation
+            // Launch CheckoutActivity
             Intent intent = new Intent(EventDetailActivity.this, CheckoutActivity.class);
             intent.putExtra("eventId", currentEvent.getEventId());
             intent.putExtra("eventTitle", safeText(currentEvent.getTitle(), getString(R.string.app_name)));
@@ -310,7 +305,15 @@ public class EventDetailActivity extends AppCompatActivity {
     private void bindEvent(Event event) {
         tvTitle.setText(safeText(event.getTitle(), getString(R.string.app_name)));
         tvDateTime.setText(formatDateTime(event.getDate()));
-        tvVenue.setText(safeText(event.getLocation(), getString(R.string.placeholder_venue)));
+        
+        // Formatted address: {locationDescription}, {locationKey}
+        if (!TextUtils.isEmpty(event.getLocationKey())) {
+            String formattedLoc = (!TextUtils.isEmpty(event.getLocationDescription()) ? event.getLocationDescription() + ", " : "") + event.getLocationKey();
+            tvVenue.setText(formattedLoc);
+        } else {
+            tvVenue.setText(safeText(event.getLocation(), getString(R.string.placeholder_venue)));
+        }
+        
         tvRefundPolicy.setText(getString(R.string.refund_policy_body));
         tvDescription.setText(safeText(event.getDescription(), getString(R.string.placeholder_description)));
         
@@ -382,17 +385,29 @@ public class EventDetailActivity extends AppCompatActivity {
     }
 
     private void openMap() {
-        if (currentEvent == null || TextUtils.isEmpty(currentEvent.getLocation())) {
-            return;
+        if (currentEvent == null) return;
+        
+        String key = currentEvent.getLocationKey();
+        
+        // If key is missing, try to infer it from the location string for older data
+        if (TextUtils.isEmpty(key) && !TextUtils.isEmpty(currentEvent.getLocation())) {
+            String loc = currentEvent.getLocation().toUpperCase();
+            if (loc.contains("SSE")) key = Constants.MAP_LOC_SSE;
+            else if (loc.contains("HSS")) key = Constants.MAP_LOC_HSS;
+            else if (loc.contains("SDSB")) key = Constants.MAP_LOC_SDSB;
+            else if (loc.contains("SAHSOL")) key = Constants.MAP_LOC_SAHSOL;
+            else if (loc.contains("SPORTS")) key = Constants.MAP_LOC_SPORTS_COMPLEX;
+            else if (loc.contains("PARKING")) key = Constants.MAP_LOC_PARKING_LOT;
+            else if (loc.contains("REDC")) key = Constants.MAP_LOC_REDC;
+            else if (loc.contains("CRICKET")) key = Constants.MAP_LOC_CRICKET_GROUND;
+            else if (loc.contains("IST")) key = Constants.MAP_LOC_IST;
+            else if (loc.contains("MASJID")) key = Constants.MAP_LOC_MASJID;
         }
 
-        try {
-            Uri uri = Uri.parse("geo:0,0?q=" + Uri.encode(currentEvent.getLocation()));
-            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-            startActivity(intent);
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, getString(R.string.open_map_failed), Toast.LENGTH_SHORT).show();
-        }
+        // Always open internal CampusMapActivity, removing external redirect
+        Intent intent = new Intent(this, CampusMapActivity.class);
+        intent.putExtra("locationKey", !TextUtils.isEmpty(key) ? key : Constants.MAP_LOC_HSS);
+        startActivity(intent);
     }
 
     private void trackRecentlyViewed(String eventId) {

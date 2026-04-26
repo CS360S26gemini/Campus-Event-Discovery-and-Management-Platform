@@ -2,6 +2,8 @@ package com.example.CampusEventDiscovery.ui.event;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +26,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * BuyTicketActivity.java
@@ -39,6 +42,7 @@ public class BuyTicketActivity extends AppCompatActivity {
     private RecyclerView rvTiers;
     private TextView tvTotal;
     private MaterialButton btnBuy;
+    private ProgressBar progressBar;
 
     private TicketTierAdapter adapter;
     private EventRepository repository;
@@ -68,7 +72,7 @@ public class BuyTicketActivity extends AppCompatActivity {
         readIntentExtras();
         setupToolbar();
         bindEventSummary();
-        setupTicketTiers();
+        fetchTicketTiers();
         enforceAttendeeAccess();
         setupBuyButton();
     }
@@ -81,6 +85,7 @@ public class BuyTicketActivity extends AppCompatActivity {
         rvTiers = findViewById(R.id.rvTiers);
         tvTotal = findViewById(R.id.tvTotal);
         btnBuy = findViewById(R.id.btnBuy);
+        progressBar = findViewById(R.id.progressBarBuyTicket);
     }
 
     private void readIntentExtras() {
@@ -111,39 +116,70 @@ public class BuyTicketActivity extends AppCompatActivity {
         tvTotal.setText(getString(R.string.total_label, 0));
     }
 
-    private void setupTicketTiers() {
-        List<TicketTierAdapter.TicketTier> tiers = new ArrayList<>();
-        tiers.add(new TicketTierAdapter.TicketTier(
-                getString(R.string.ticket_tier_early_bird),
-                getString(R.string.ticket_desc_early_bird),
-                getString(R.string.ticket_date_range),
-                2500,
-                0
-        ));
-        tiers.add(new TicketTierAdapter.TicketTier(
-                getString(R.string.ticket_tier_vip),
-                getString(R.string.ticket_desc_vip),
-                getString(R.string.ticket_date_range),
-                10000,
-                0
-        ));
-        tiers.add(new TicketTierAdapter.TicketTier(
-                getString(R.string.ticket_tier_general),
-                getString(R.string.ticket_desc_general),
-                getString(R.string.ticket_date_range),
-                3000,
-                0
-        ));
+    private void fetchTicketTiers() {
+        if (eventId == null) return;
 
-        adapter = new TicketTierAdapter(tiers, total ->
-                tvTotal.setText(getString(R.string.total_label, total)));
+        showLoading(true);
+        repository.getTiersForEvent(eventId, new EventRepository.TierListCallback() {
+            @Override
+            public void onSuccess(List<Map<String, Object>> tiersData) {
+                showLoading(false);
+                List<TicketTierAdapter.TicketTier> tiers = new ArrayList<>();
+                
+                if (tiersData != null && !tiersData.isEmpty()) {
+                    for (Map<String, Object> data : tiersData) {
+                        String name = (String) data.get("name");
+                        String desc = (String) data.get("description");
+                        Object priceObj = data.get("price");
+                        int price = 0;
+                        if (priceObj instanceof Number) {
+                            price = ((Number) priceObj).intValue();
+                        }
+                        
+                        tiers.add(new TicketTierAdapter.TicketTier(
+                                name != null ? name : "Standard",
+                                desc != null ? desc : "",
+                                getString(R.string.ticket_date_range),
+                                price,
+                                0
+                        ));
+                    }
+                } else {
+                    // Fallback to a single tier based on event ticket price if no tiers found
+                    double eventPrice = getIntent().getDoubleExtra("ticketPrice", 0.0);
+                    tiers.add(new TicketTierAdapter.TicketTier(
+                            getString(R.string.general),
+                            getString(R.string.ticket_desc_general),
+                            getString(R.string.ticket_date_range),
+                            (int) eventPrice,
+                            0
+                    ));
+                }
+                
+                adapter = new TicketTierAdapter(tiers, total ->
+                        tvTotal.setText(getString(R.string.total_label, total)));
 
-        rvTiers.setLayoutManager(new LinearLayoutManager(this));
-        rvTiers.setAdapter(adapter);
+                rvTiers.setLayoutManager(new LinearLayoutManager(BuyTicketActivity.this));
+                rvTiers.setAdapter(adapter);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                showLoading(false);
+                Toast.makeText(BuyTicketActivity.this, "Failed to load tiers", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showLoading(boolean isLoading) {
+        if (progressBar != null) {
+            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void setupBuyButton() {
         btnBuy.setOnClickListener(v -> {
+            if (adapter == null) return;
             int total = adapter.getTotalPrice();
 
             if (total == 0) {

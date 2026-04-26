@@ -90,6 +90,32 @@
 
         <activity
             android:name="com.example.CampusEventDiscovery.ui.event.EventDetailActivity"
+<<<<<<< Updated upstream
+=======
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="events"
+                    android:scheme="campusevent" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.example.CampusEventDiscovery.ui.event.CampusMapActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.CampusEventDiscovery.ui.sos.SosActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity"
+>>>>>>> Stashed changes
             android:exported="false" />
 
         <activity

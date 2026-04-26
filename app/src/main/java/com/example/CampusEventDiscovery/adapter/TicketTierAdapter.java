@@ -11,12 +11,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.CampusEventDiscovery.R;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * TicketTierAdapter.java
  *
  * Adapter for displaying selectable ticket tiers and quantity counters.
+ * Updated to include tierId for Firestore integration.
  */
 public class TicketTierAdapter extends RecyclerView.Adapter<TicketTierAdapter.TierViewHolder> {
 
@@ -24,7 +26,8 @@ public class TicketTierAdapter extends RecyclerView.Adapter<TicketTierAdapter.Ti
         void onTotalChanged(int total);
     }
 
-    public static class TicketTier {
+    public static class TicketTier implements Serializable {
+        private String tierId;
         private final String name;
         private final String description;
         private final String dateRange;
@@ -32,11 +35,24 @@ public class TicketTierAdapter extends RecyclerView.Adapter<TicketTierAdapter.Ti
         private int quantity;
 
         public TicketTier(String name, String description, String dateRange, int pricePerUnit, int quantity) {
+            this(null, name, description, dateRange, pricePerUnit, quantity);
+        }
+
+        public TicketTier(String tierId, String name, String description, String dateRange, int pricePerUnit, int quantity) {
+            this.tierId = tierId;
             this.name = name;
             this.description = description;
             this.dateRange = dateRange;
             this.pricePerUnit = pricePerUnit;
             this.quantity = quantity;
+        }
+
+        public String getTierId() {
+            return tierId;
+        }
+
+        public void setTierId(String tierId) {
+            this.tierId = tierId;
         }
 
         public String getName() {
@@ -103,10 +119,26 @@ public class TicketTierAdapter extends RecyclerView.Adapter<TicketTierAdapter.Ti
         });
 
         holder.btnPlus.setOnClickListener(v -> {
-            tier.setQuantity(tier.getQuantity() + 1);
-            notifyItemChanged(position);
+            // Simplify for now: Allow only one ticket per RSVP if tiers are used, 
+            // or we need to handle multiple increments in EventRepository.
+            // But let's follow the standard pattern of picking one tier for now.
+            // If the user wants 2, they can register twice or we'd need a multi-ticket system.
+            
+            // To ensure only one tier/ticket is selected if we want to follow rsvpEvent(Map) logic:
+            resetQuantitiesExcept(position);
+            tier.setQuantity(1);
+            
+            notifyDataSetChanged();
             notifyTotalChanged();
         });
+    }
+
+    private void resetQuantitiesExcept(int position) {
+        for (int i = 0; i < tiers.size(); i++) {
+            if (i != position) {
+                tiers.get(i).setQuantity(0);
+            }
+        }
     }
 
     @Override
@@ -120,6 +152,15 @@ public class TicketTierAdapter extends RecyclerView.Adapter<TicketTierAdapter.Ti
             total += tier.getSubtotal();
         }
         return total;
+    }
+
+    public TicketTier getSelectedTier() {
+        for (TicketTier tier : tiers) {
+            if (tier.getQuantity() > 0) {
+                return tier;
+            }
+        }
+        return null;
     }
 
     private void notifyTotalChanged() {

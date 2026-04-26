@@ -27,6 +27,11 @@ public class Rsvp {
     private Timestamp rsvpAt;
     private Timestamp checkedInAt;
 
+    // Added for Ticket Tiers support
+    private String tierId;
+    private String tierName;
+    private double tierPrice;
+
     /**
      * Required empty constructor for Firestore deserialization.
      */
@@ -105,4 +110,13 @@ public class Rsvp {
     public void setCheckInTimestamp(long timestamp) {
         this.checkedInAt = new Timestamp(new java.util.Date(timestamp));
     }
+
+    public String getTierId() { return tierId; }
+    public void setTierId(String tierId) { this.tierId = tierId; }
+
+    public String getTierName() { return tierName; }
+    public void setTierName(String tierName) { this.tierName = tierName; }
+
+    public double getTierPrice() { return tierPrice; }
+    public void setTierPrice(double tierPrice) { this.tierPrice = tierPrice; }
 }

@@ -97,6 +97,32 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Ticket Tiers Selection Section (Visible if tiers exist) -->
+            <LinearLayout
+                android:id="@+id/layoutTiersSelection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ticket_tiers_label"
+                    android:textSize="13sp"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:layout_marginBottom="12dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvCheckoutTiers"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
+            </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/layoutPaymentSection"
                 android:layout_width="match_parent"

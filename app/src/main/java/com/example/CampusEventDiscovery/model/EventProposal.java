@@ -5,6 +5,7 @@ import com.google.firebase.firestore.Exclude;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * EventProposal.java
@@ -23,6 +24,8 @@ public class EventProposal {
     private List<String> tags;
     private Timestamp date;
     private String location;
+    private String locationKey;
+    private String locationDescription;
     private long capacity;
     private List<String> sponsors;
     private List<String> foodStalls;
@@ -36,6 +39,7 @@ public class EventProposal {
     private Timestamp submittedAt;
     private Timestamp reviewedAt;
     private double ticketPrice;
+    private List<Map<String, Object>> tiers; // Added for Ticket Tiers support
 
     /**
      * Required empty constructor for Firestore deserialization.
@@ -44,6 +48,7 @@ public class EventProposal {
         this.tags = new ArrayList<>();
         this.sponsors = new ArrayList<>();
         this.foodStalls = new ArrayList<>();
+        this.tiers = new ArrayList<>();
     }
 
     /**
@@ -85,6 +90,7 @@ public class EventProposal {
         this.submittedAt = submittedAt;
         this.reviewedAt = reviewedAt;
         this.ticketPrice = ticketPrice;
+        this.tiers = new ArrayList<>();
     }
 
     @Exclude
@@ -108,6 +114,12 @@ public class EventProposal {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+
+    public String getLocationKey() { return locationKey; }
+    public void setLocationKey(String locationKey) { this.locationKey = locationKey; }
+
+    public String getLocationDescription() { return locationDescription; }
+    public void setLocationDescription(String locationDescription) { this.locationDescription = locationDescription; }
 
     public long getCapacity() { return capacity; }
     public void setCapacity(long capacity) { this.capacity = capacity; }
@@ -147,4 +159,7 @@ public class EventProposal {
 
     public double getTicketPrice() { return ticketPrice; }
     public void setTicketPrice(double ticketPrice) { this.ticketPrice = ticketPrice; }
+
+    public List<Map<String, Object>> getTiers() { return tiers; }
+    public void setTiers(List<Map<String, Object>> tiers) { this.tiers = tiers; }
 }

@@ -22,6 +22,8 @@ public class Event {
     private Timestamp date;
     private Timestamp endTime;
     private String location;
+    private String locationKey;
+    private String locationDescription;
     private long capacity;
     private long rsvpCount;
     private long checkedInCount;
@@ -66,6 +68,12 @@ public class Event {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+
+    public String getLocationKey() { return locationKey; }
+    public void setLocationKey(String locationKey) { this.locationKey = locationKey; }
+
+    public String getLocationDescription() { return locationDescription; }
+    public void setLocationDescription(String locationDescription) { this.locationDescription = locationDescription; }
 
     public long getCapacity() { return capacity; }
     public void setCapacity(long capacity) { this.capacity = capacity; }

@@ -438,4 +438,11 @@
     <string name="scanner_marked_attended">Attendee marked as attended!</string>
     <string name="scanner_mark_failed">Failed to update check-in status</string>
 
+    <!-- Tier builder strings -->
+    <string name="use_tiers">Use Tiers</string>
+    <string name="add_tier">Add Tier</string>
+    <string name="ticket_tiers_label">Ticket Tiers</string>
+    <string name="no_tiers_error">Please add at least one tier if "Use Tiers" is enabled.</string>
+    <string name="invalid_tier_data">Please fill in all details for each tier correctly.</string>
+
 </resources>
