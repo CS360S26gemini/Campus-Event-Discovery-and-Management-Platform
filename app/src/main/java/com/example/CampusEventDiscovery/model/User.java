@@ -26,6 +26,7 @@ public class User {
     private boolean darkMode;
     private String fcmToken;
     private Map<String, Object> googleCalendarToken;
+    private double creditBalance;
     private Timestamp createdAt;
 
     /**
@@ -35,6 +36,7 @@ public class User {
         this.interests = new ArrayList<>();
         this.avatarConfig = new HashMap<>();
         this.googleCalendarToken = new HashMap<>();
+        this.creditBalance = 0.0;
     }
 
     /**
@@ -59,6 +61,7 @@ public class User {
         this.interests = interests != null ? interests : new ArrayList<>();
         this.darkMode = darkMode;
         this.googleCalendarToken = new HashMap<>();
+        this.creditBalance = 0.0;
         this.createdAt = Timestamp.now();
     }
 
@@ -158,6 +161,14 @@ public class User {
 
     public void setGoogleCalendarToken(Map<String, Object> googleCalendarToken) {
         this.googleCalendarToken = googleCalendarToken;
+    }
+
+    public double getCreditBalance() {
+        return creditBalance;
+    }
+
+    public void setCreditBalance(double creditBalance) {
+        this.creditBalance = creditBalance;
     }
 
     public Timestamp getCreatedAt() {

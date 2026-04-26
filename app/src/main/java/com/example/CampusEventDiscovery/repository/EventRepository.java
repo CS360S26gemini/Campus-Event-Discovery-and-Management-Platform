@@ -9,6 +9,7 @@ import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.model.Memory;
 import com.example.CampusEventDiscovery.model.Notification;
 import com.example.CampusEventDiscovery.model.User;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
@@ -57,6 +58,8 @@ public class EventRepository {
     private static final String SUBCOLLECTION_MESSAGES = "messages";
     private static final String SUBCOLLECTION_BLACKLIST = "blacklist";
     private static final String DOCUMENT_SETTINGS = "settings";
+    private static final int REFUND_WINDOW_DAYS = 3;
+    private static final long REFUND_WINDOW_MILLIS = REFUND_WINDOW_DAYS * 24L * 60L * 60L * 1000L;
 
     private static final int FIRESTORE_WHERE_IN_LIMIT = 10;
 
@@ -134,6 +137,37 @@ public class EventRepository {
     public interface ActionCallback {
         void onSuccess();
         void onError(Exception e);
+    }
+
+    public static boolean isRefundEligible(Timestamp eventDate, Timestamp cancellationTime, boolean organizerInitiated) {
+        if (organizerInitiated) {
+            return true;
+        }
+        if (eventDate == null || cancellationTime == null) {
+            return false;
+        }
+        long remaining = eventDate.toDate().getTime() - cancellationTime.toDate().getTime();
+        return remaining >= REFUND_WINDOW_MILLIS;
+    }
+
+    public static double normalizeRefundAmount(double amount) {
+        return Math.max(0.0, amount);
+    }
+
+    private double resolveCancellationAmount(DocumentSnapshot eventSnap, DocumentSnapshot userRsvpSnap) {
+        Double storedAmount = null;
+        if (userRsvpSnap != null) {
+            storedAmount = userRsvpSnap.getDouble("amount");
+            if (storedAmount == null) {
+                storedAmount = userRsvpSnap.getDouble("ticketPrice");
+            }
+        }
+
+        if (storedAmount == null && eventSnap != null) {
+            storedAmount = eventSnap.getDouble("ticketPrice");
+        }
+
+        return normalizeRefundAmount(storedAmount != null ? storedAmount : 0.0);
     }
 
     public void incrementAttendeeCount(String eventId, ActionCallback cb) {
@@ -418,20 +452,145 @@ public class EventRepository {
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
+    public void rsvpEventWithCredit(String userId, Event event, String fullName, double amount, ActionCallback cb) {
+        if (userId == null || event == null || event.getEventId() == null) {
+            if (cb != null) cb.onError(new Exception("Invalid data"));
+            return;
+        }
+
+        DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(event.getEventId());
+        DocumentReference userRef = db.collection(COLLECTION_USERS).document(userId);
+        DocumentReference userRsvpRef = userRef.collection(SUBCOLLECTION_RSVPS).document(event.getEventId());
+        DocumentReference eventAttendeeRef = eventRef.collection(SUBCOLLECTION_ATTENDEES).document(userId);
+        DocumentReference blacklistRef = eventRef.collection(SUBCOLLECTION_BLACKLIST).document(userId);
+        DocumentReference paymentRef = db.collection(Constants.COLLECTION_PAYMENTS).document();
+        DocumentReference creditTransactionRef = db.collection(Constants.COLLECTION_CREDIT_TRANSACTIONS).document();
+
+        double safeAmount = normalizeRefundAmount(amount);
+
+        db.runTransaction(transaction -> {
+                    DocumentSnapshot eventSnap = transaction.get(eventRef);
+                    if (!eventSnap.exists()) {
+                        throw new FirebaseFirestoreException("Event not found", FirebaseFirestoreException.Code.NOT_FOUND);
+                    }
+
+                    DocumentSnapshot existingRsvpSnap = transaction.get(userRsvpRef);
+                    DocumentSnapshot existingAttendeeSnap = transaction.get(eventAttendeeRef);
+                    DocumentSnapshot blacklistSnap = transaction.get(blacklistRef);
+                    DocumentSnapshot userSnap = transaction.get(userRef);
+
+                    if (blacklistSnap.exists()) {
+                        throw new FirebaseFirestoreException("You are not allowed to register for this event", FirebaseFirestoreException.Code.PERMISSION_DENIED);
+                    }
+
+                    boolean alreadyRegistered = existingAttendeeSnap.exists()
+                            || (existingRsvpSnap.exists()
+                            && !"cancelled".equalsIgnoreCase(existingRsvpSnap.getString("status")));
+                    if (alreadyRegistered) {
+                        throw new FirebaseFirestoreException("Already registered", FirebaseFirestoreException.Code.ABORTED);
+                    }
+
+                    double availableCredit = 0.0;
+                    if (userSnap.exists()) {
+                        Double currentCredit = userSnap.getDouble("creditBalance");
+                        availableCredit = currentCredit != null ? currentCredit : 0.0;
+                    }
+
+                    if (availableCredit + 0.0001 < safeAmount) {
+                        throw new FirebaseFirestoreException("Insufficient credit balance", FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+                    }
+
+                    Long cap = eventSnap.getLong("capacity");
+                    long capacity = cap != null ? cap : 0L;
+                    Long rsvp = eventSnap.getLong("rsvpCount");
+                    long rsvpCount = rsvp != null ? rsvp : 0L;
+
+                    if (rsvpCount >= capacity) {
+                        throw new FirebaseFirestoreException("Event full", FirebaseFirestoreException.Code.ABORTED);
+                    }
+
+                    String transactionId = "credit_" + UUID.randomUUID().toString().replace("-", "");
+                    String qrToken = UUID.randomUUID().toString();
+                    Timestamp now = Timestamp.now();
+
+                    Map<String, Object> paymentData = new HashMap<>();
+                    paymentData.put("userId", userId);
+                    paymentData.put("eventId", event.getEventId());
+                    paymentData.put("amount", safeAmount);
+                    paymentData.put("status", Constants.PAYMENT_CONFIRMED);
+                    paymentData.put("transactionId", transactionId);
+                    paymentData.put("timestamp", now.toDate().getTime());
+                    paymentData.put("paymentMethod", Constants.PAYMENT_METHOD_IN_APP_CREDIT);
+                    paymentData.put("proofUrl", "");
+                    transaction.set(paymentRef, paymentData);
+
+                    Map<String, Object> creditTransaction = new HashMap<>();
+                    creditTransaction.put("userId", userId);
+                    creditTransaction.put("type", Constants.CREDIT_TRANSACTION_USED);
+                    creditTransaction.put("amount", safeAmount);
+                    creditTransaction.put("eventId", event.getEventId());
+                    creditTransaction.put("eventTitle", event.getTitle());
+                    creditTransaction.put("originalAmount", safeAmount);
+                    creditTransaction.put("createdAt", now);
+                    creditTransaction.put("paymentTransactionId", transactionId);
+                    transaction.set(creditTransactionRef, creditTransaction);
+
+                    Map<String, Object> rsvpData = new HashMap<>();
+                    rsvpData.put("eventId", event.getEventId());
+                    rsvpData.put("title", event.getTitle());
+                    rsvpData.put("date", event.getDate());
+                    rsvpData.put("status", "confirmed");
+                    rsvpData.put("paymentStatus", Constants.PAYMENT_CONFIRMED);
+                    rsvpData.put("transactionId", transactionId);
+                    rsvpData.put("paymentRef", transactionId);
+                    rsvpData.put("paymentMethod", Constants.PAYMENT_METHOD_IN_APP_CREDIT);
+                    rsvpData.put("paymentProofUrl", "");
+                    rsvpData.put("checkedIn", false);
+                    rsvpData.put("checkedInAt", null);
+                    rsvpData.put("qrExpired", false);
+                    rsvpData.put("qrCodeToken", qrToken);
+                    rsvpData.put("addedToCalendar", false);
+                    rsvpData.put("gcalEventId", "");
+                    rsvpData.put("rsvpAt", now);
+                    transaction.set(userRsvpRef, rsvpData);
+
+                    Map<String, Object> attendeeData = new HashMap<>();
+                    attendeeData.put("userId", userId);
+                    attendeeData.put("fullName", TextUtils.isEmpty(fullName) ? "Attendee" : fullName);
+                    attendeeData.put("qrToken", qrToken);
+                    attendeeData.put("checkedIn", false);
+                    attendeeData.put("checkedInAt", null);
+                    transaction.set(eventAttendeeRef, attendeeData);
+
+                    transaction.set(userRef, Collections.singletonMap("creditBalance", FieldValue.increment(-safeAmount)), SetOptions.merge());
+                    transaction.update(eventRef, "rsvpCount", FieldValue.increment(1));
+
+                    return null;
+                }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
     public void cancelRsvp(String userId, String eventId, ActionCallback cb) {
+        cancelRsvp(userId, eventId, false, cb);
+    }
+
+    public void cancelRsvp(String userId, String eventId, boolean organizerInitiated, ActionCallback cb) {
         if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(eventId)) {
             if (cb != null) cb.onError(new Exception("Invalid user or event ID"));
             return;
         }
 
         DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(eventId);
-        DocumentReference userRsvpRef = db.collection(COLLECTION_USERS).document(userId).collection(SUBCOLLECTION_RSVPS).document(eventId);
+        DocumentReference userRef = db.collection(COLLECTION_USERS).document(userId);
+        DocumentReference userRsvpRef = userRef.collection(SUBCOLLECTION_RSVPS).document(eventId);
         DocumentReference eventAttendeeRef = eventRef.collection(SUBCOLLECTION_ATTENDEES).document(userId);
+        DocumentReference creditTransactionRef = db.collection(Constants.COLLECTION_CREDIT_TRANSACTIONS).document();
 
         db.runTransaction(transaction -> {
                     DocumentSnapshot eventSnap = transaction.get(eventRef);
                     DocumentSnapshot userRsvpSnap = transaction.get(userRsvpRef);
                     DocumentSnapshot attendeeSnap = transaction.get(eventAttendeeRef);
+                    DocumentSnapshot userSnap = transaction.get(userRef);
 
                     boolean hadActiveRsvp = attendeeSnap.exists();
                     boolean wasCheckedIn = false;
@@ -446,6 +605,7 @@ public class EventRepository {
                         cancelledRsvpData.put("status", "cancelled");
                         cancelledRsvpData.put("addedToCalendar", false);
                         cancelledRsvpData.put("gcalEventId", "");
+                        cancelledRsvpData.put("paymentStatus", organizerInitiated ? Constants.PAYMENT_REFUNDED : userRsvpSnap.getString("paymentStatus"));
                         transaction.set(userRsvpRef, cancelledRsvpData, SetOptions.merge());
                     }
 
@@ -453,6 +613,32 @@ public class EventRepository {
                         Boolean attendeeCheckedIn = attendeeSnap.getBoolean("checkedIn");
                         wasCheckedIn = wasCheckedIn || (attendeeCheckedIn != null && attendeeCheckedIn);
                         transaction.delete(eventAttendeeRef);
+                    }
+
+                    double refundAmount = 0.0;
+                    if (hadActiveRsvp && eventSnap.exists()) {
+                        double candidateAmount = resolveCancellationAmount(eventSnap, userRsvpSnap);
+                        if (isRefundEligible(eventSnap.getTimestamp("date"), Timestamp.now(), organizerInitiated)) {
+                            refundAmount = candidateAmount;
+                        }
+                    }
+
+                    if (refundAmount > 0.0) {
+                        transaction.set(userRsvpRef,
+                                Collections.singletonMap("paymentStatus", Constants.PAYMENT_REFUNDED),
+                                SetOptions.merge());
+
+                        Map<String, Object> creditTransaction = new HashMap<>();
+                        creditTransaction.put("userId", userId);
+                        creditTransaction.put("type", Constants.CREDIT_TRANSACTION_REFUND);
+                        creditTransaction.put("amount", refundAmount);
+                        creditTransaction.put("eventId", eventId);
+                        creditTransaction.put("eventTitle", eventSnap.exists() ? eventSnap.getString("title") : "");
+                        creditTransaction.put("originalAmount", refundAmount);
+                        creditTransaction.put("createdAt", Timestamp.now());
+                        creditTransaction.put("reason", organizerInitiated ? "ORGANIZER_CANCELLED" : "ATTENDEE_CANCELLED");
+                        transaction.set(creditTransactionRef, creditTransaction);
+                        transaction.set(userRef, Collections.singletonMap("creditBalance", FieldValue.increment(refundAmount)), SetOptions.merge());
                     }
 
                     if (hadActiveRsvp && eventSnap.exists()) {
@@ -883,14 +1069,67 @@ public class EventRepository {
             return;
         }
 
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("status", "deleted");
-        updates.put("deletedAt", Timestamp.now());
-        updates.put("deletedBy", deletedByUserId == null ? "" : deletedByUserId);
+        DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(eventId);
 
-        db.collection(COLLECTION_EVENTS).document(eventId)
-                .set(updates, SetOptions.merge())
-                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+        eventRef.get()
+                .addOnSuccessListener(eventSnap -> eventRef.collection(SUBCOLLECTION_ATTENDEES).get()
+                        .addOnSuccessListener(attendeeSnapshots -> {
+                            double refundAmount = 0.0;
+                            if (eventSnap.exists()) {
+                                Double ticketPrice = eventSnap.getDouble("ticketPrice");
+                                refundAmount = normalizeRefundAmount(ticketPrice != null ? ticketPrice : 0.0);
+                            }
+
+                            WriteBatch batch = db.batch();
+                            for (DocumentSnapshot attendeeDoc : attendeeSnapshots.getDocuments()) {
+                                String attendeeUserId = attendeeDoc.getString("userId");
+                                if (TextUtils.isEmpty(attendeeUserId)) {
+                                    attendeeUserId = attendeeDoc.getId();
+                                }
+                                if (TextUtils.isEmpty(attendeeUserId)) {
+                                    continue;
+                                }
+
+                                DocumentReference userRef = db.collection(COLLECTION_USERS).document(attendeeUserId);
+                                DocumentReference userRsvpRef = userRef.collection(SUBCOLLECTION_RSVPS).document(eventId);
+                                DocumentReference creditTransactionRef = db.collection(Constants.COLLECTION_CREDIT_TRANSACTIONS).document();
+
+                                Map<String, Object> cancelledRsvpData = new HashMap<>();
+                                cancelledRsvpData.put("status", "cancelled");
+                                cancelledRsvpData.put("addedToCalendar", false);
+                                cancelledRsvpData.put("gcalEventId", "");
+                                cancelledRsvpData.put("paymentStatus", Constants.PAYMENT_REFUNDED);
+                                batch.set(userRsvpRef, cancelledRsvpData, SetOptions.merge());
+                                batch.delete(eventRef.collection(SUBCOLLECTION_ATTENDEES).document(attendeeUserId));
+
+                                if (refundAmount > 0.0) {
+                                    Map<String, Object> creditTransaction = new HashMap<>();
+                                    creditTransaction.put("userId", attendeeUserId);
+                                    creditTransaction.put("type", Constants.CREDIT_TRANSACTION_REFUND);
+                                    creditTransaction.put("amount", refundAmount);
+                                    creditTransaction.put("eventId", eventId);
+                                    creditTransaction.put("eventTitle", eventSnap.exists() ? eventSnap.getString("title") : "");
+                                    creditTransaction.put("originalAmount", refundAmount);
+                                    creditTransaction.put("createdAt", Timestamp.now());
+                                    creditTransaction.put("reason", "ORGANIZER_CANCELLED");
+                                    batch.set(creditTransactionRef, creditTransaction);
+                                    batch.set(userRef, Collections.singletonMap("creditBalance", FieldValue.increment(refundAmount)), SetOptions.merge());
+                                }
+                            }
+
+                            Map<String, Object> updates = new HashMap<>();
+                            updates.put("status", "deleted");
+                            updates.put("deletedAt", Timestamp.now());
+                            updates.put("deletedBy", deletedByUserId == null ? "" : deletedByUserId);
+                            updates.put("rsvpCount", 0L);
+                            updates.put("checkedInCount", 0L);
+                            batch.set(eventRef, updates, SetOptions.merge());
+
+                            batch.commit()
+                                    .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                                    .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+                        })
+                        .addOnFailureListener(e -> { if (cb != null) cb.onError(e); }))
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 

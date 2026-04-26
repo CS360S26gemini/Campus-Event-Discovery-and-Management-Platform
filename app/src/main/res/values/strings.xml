@@ -84,7 +84,7 @@
     <string name="my_events_count">My Events %1$d</string>
     <string name="recently_viewed_events">Recently Viewed Events</string>
     <string name="cancel_rsvp">Cancel RSVP?</string>
-    <string name="cancel_rsvp_message">Are you sure you want to cancel your RSVP?</string>
+    <string name="cancel_rsvp_message">Are you sure you want to cancel your RSVP? If you are eligible, the ticket amount will return to your in-app credit balance.</string>
 
     <string name="event_calendar">Event Calendar</string>
     <string name="upcoming_events">Upcoming Events</string>
@@ -185,7 +185,7 @@
 
     <string name="event_not_found">Event not found.</string>
     <string name="failed_to_load_event">Failed to load event.</string>
-    <string name="refund_policy_body">Full fee is non-refundable after booking. Please review event guidelines before purchase.</string>
+    <string name="refund_policy_body">Refunds are issued as in-app credit only. Cancel more than 3 days before the event to receive 100%% credit. Organizer cancellations are refunded in full. No cash, bank, or Stripe refunds are issued.</string>
     <string name="open_map_failed">No map app found.</string>
     <string name="calendar_add_failed">No calendar app found.</string>
     <string name="buy_tickets_coming_next">Buy Ticket screen placeholder - Phase 13 will replace this.</string>
@@ -396,7 +396,7 @@
     <string name="show_rejected_events">Rejected Events</string>
     <string name="delete_event">Delete Event</string>
     <string name="delete_event_confirm_title">Delete event?</string>
-    <string name="delete_event_confirm_message">This removes the event from active listings. This cannot be undone from the app.</string>
+    <string name="delete_event_confirm_message">This removes the event from active listings, cancels attendee RSVPs, and returns eligible ticket value as in-app credit. This cannot be undone from the app.</string>
     <string name="event_deleted">Event deleted.</string>
     <string name="event_delete_failed">Failed to delete event.</string>
     <string name="blacklisted_attendees">Blacklisted People</string>
@@ -547,6 +547,8 @@
     <!-- Checkout strings -->
     <string name="checkout_section_personal">Personal details</string>
     <string name="checkout_section_payment">Payment method</string>
+    <string name="checkout_section_credit">In-app credit</string>
+    <string name="checkout_credit_balance">Available credit: PKR %1$.2f</string>
     <string name="checkout_hint_full_name">Full name</string>
     <string name="checkout_hint_last_name">Last name</string>
     <string name="checkout_hint_card_number">Card / account number (16 digits)</string>
@@ -557,10 +559,13 @@
     <string name="payment_method_credit_card">Credit Card</string>
     <string name="payment_method_debit_card">Debit Card</string>
     <string name="payment_method_apple_pay">Apple Pay</string>
+    <string name="payment_method_in_app_credit">In-App Credit</string>
+    <string name="payment_method_in_app_credit_desc">Use your credit balance to cover the full ticket price.</string>
     <string name="invalid_card_number">Card number must be exactly 16 digits</string>
     <string name="already_registered_for_event">You are already registered for this event. Opening your ticket.</string>
     <string name="checkout_rsvp_check_failed">Could not verify registration status. Please try again.</string>
     <string name="payment_failed_message">Payment failed: %1$s</string>
+    <string name="credit_insufficient_balance">Your credit balance is not enough for this ticket.</string>
     <string name="rsvp_failed_message">Registration failed: %1$s</string>
 
     <!-- Scanner strings -->
@@ -581,5 +586,9 @@
     <string name="scanner_marked_attended">Attendee marked as attended!</string>
     <string name="scanner_mark_failed">Failed to update check-in status</string>
     <string name="preferences_section">Preferences</string>
+    <string name="in_app_credits_label">In-App Credits</string>
+    <string name="credit_balance_format">PKR %1$.2f</string>
+    <string name="insufficient_credits_toast">Insufficient credits to complete this purchase</string>
+
 
 </resources>

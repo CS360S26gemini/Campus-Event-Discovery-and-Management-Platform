@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -56,6 +57,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
     private MaterialButton btnChangePassword;
     private MaterialButton btnSaveSettings;
     private ProgressBar progressBarSettings;
+    private TextView tvUserCreditBalance;
 
     private EventRepository repository;
     private String currentUserId;
@@ -111,6 +113,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
         btnChangePassword = findViewById(R.id.btnChangePassword);
         btnSaveSettings = findViewById(R.id.btnSaveSettings);
         progressBarSettings = findViewById(R.id.progressBarSettings);
+        tvUserCreditBalance = findViewById(R.id.tvUserCreditBalance);
     }
 
     private void setupToolbar() {
@@ -208,6 +211,10 @@ public class AccountSettingsActivity extends AppCompatActivity {
                 );
                 etLocation.setText(user.getLocation());
                 etInterests.setText(joinInterests(user.getInterests()));
+
+                if (tvUserCreditBalance != null) {
+                    tvUserCreditBalance.setText(getString(R.string.credit_balance_format, user.getCreditBalance()));
+                }
             }
 
             @Override
