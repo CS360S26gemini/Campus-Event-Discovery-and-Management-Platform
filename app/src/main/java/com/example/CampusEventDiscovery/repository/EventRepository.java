@@ -9,6 +9,7 @@ import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.model.Memory;
 import com.example.CampusEventDiscovery.model.Notification;
 import com.example.CampusEventDiscovery.model.User;
+import com.example.CampusEventDiscovery.model.Vendor;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
@@ -113,6 +114,11 @@ public class EventRepository {
 
     public interface AttendeeListCallback {
         void onSuccess(List<EventAttendee> attendees);
+        void onError(Exception e);
+    }
+
+    public interface VendorListCallback {
+        void onSuccess(List<Vendor> vendors);
         void onError(Exception e);
     }
 
@@ -1509,4 +1515,143 @@ public class EventRepository {
     }
 
     private void runIfNotNull(Runnable r) { if (r != null) r.run(); }
+
+    public void submitVendorRequest(Vendor vendor, ActionCallback cb) {
+        final String COLLECTION_VENDOR_REQUESTS = "vendor_requests";
+        if (vendor == null || TextUtils.isEmpty(vendor.getEventId())) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Vendor and event ID are required"));
+            return;
+        }
+
+        DocumentReference documentRef = db.collection(COLLECTION_VENDOR_REQUESTS).document();
+        vendor.setVendorId(documentRef.getId());
+        vendor.setStatus(Vendor.STATUS_PENDING);
+        vendor.setCreatedAt(Timestamp.now());
+
+        documentRef.set(vendor)
+                .addOnSuccessListener(unused -> {
+                    if (cb != null) cb.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
+    public void getApprovedVendorsForEvent(String eventId, VendorListCallback cb) {
+        final String COLLECTION_VENDOR_REQUESTS = "vendor_requests";
+        if (TextUtils.isEmpty(eventId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Event ID is required"));
+            return;
+        }
+
+        db.collection(COLLECTION_VENDOR_REQUESTS)
+                .whereEqualTo("eventId", eventId)
+                .whereEqualTo("status", Vendor.STATUS_APPROVED)
+                .get()
+                .addOnSuccessListener(snaps -> {
+                    List<Vendor> list = new ArrayList<>();
+                    for (DocumentSnapshot doc : snaps.getDocuments()) {
+                        Vendor vendor = doc.toObject(Vendor.class);
+                        if (vendor != null) {
+                            if (TextUtils.isEmpty(vendor.getVendorId())) {
+                                vendor.setVendorId(doc.getId());
+                            }
+                            list.add(vendor);
+                        }
+                    }
+                    if (cb != null) cb.onSuccess(list);
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
+    public void getPendingVendorRequests(VendorListCallback cb) {
+        final String COLLECTION_VENDOR_REQUESTS = "vendor_requests";
+        db.collection(COLLECTION_VENDOR_REQUESTS)
+                .whereEqualTo("status", Vendor.STATUS_PENDING)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(snaps -> {
+                    List<Vendor> list = new ArrayList<>();
+                    for (DocumentSnapshot doc : snaps.getDocuments()) {
+                        Vendor vendor = doc.toObject(Vendor.class);
+                        if (vendor != null) {
+                            if (TextUtils.isEmpty(vendor.getVendorId())) {
+                                vendor.setVendorId(doc.getId());
+                            }
+                            list.add(vendor);
+                        }
+                    }
+                    if (cb != null) cb.onSuccess(list);
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
+    public void approveVendorRequest(String vendorId, ActionCallback cb) {
+        final String COLLECTION_VENDOR_REQUESTS = "vendor_requests";
+        if (TextUtils.isEmpty(vendorId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Vendor ID is required"));
+            return;
+        }
+
+        db.collection(COLLECTION_VENDOR_REQUESTS)
+                .document(vendorId)
+                .update("status", Vendor.STATUS_APPROVED)
+                .addOnSuccessListener(unused -> {
+                    if (cb != null) cb.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
+    public void rejectVendorRequest(String vendorId, ActionCallback cb) {
+        final String COLLECTION_VENDOR_REQUESTS = "vendor_requests";
+        if (TextUtils.isEmpty(vendorId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Vendor ID is required"));
+            return;
+        }
+
+        db.collection(COLLECTION_VENDOR_REQUESTS)
+                .document(vendorId)
+                .update("status", Vendor.STATUS_REJECTED)
+                .addOnSuccessListener(unused -> {
+                    if (cb != null) cb.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
+    public void getApprovedOrganizerEvents(String organizerId, EventListCallback cb) {
+        final String COLLECTION_VENDOR_REQUESTS = "vendor_requests";
+        if (TextUtils.isEmpty(organizerId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Organizer ID is required"));
+            return;
+        }
+
+        db.collection(COLLECTION_EVENTS)
+                .whereEqualTo("organizerId", organizerId)
+                .whereEqualTo("status", "active")
+                .get()
+                .addOnSuccessListener(snaps -> {
+                    List<Event> list = new ArrayList<>();
+                    for (DocumentSnapshot doc : snaps.getDocuments()) {
+                        Event event = doc.toObject(Event.class);
+                        if (event != null) {
+                            if (TextUtils.isEmpty(event.getEventId())) {
+                                event.setEventId(doc.getId());
+                            }
+                            list.add(event);
+                        }
+                    }
+                    if (cb != null) cb.onSuccess(list);
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
 }
