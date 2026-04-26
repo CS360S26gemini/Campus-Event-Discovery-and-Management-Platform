@@ -2,7 +2,7 @@
 **Branch:** `reminders-and-refunds-in-app-credits`  
 **Developer:** Yahya (27100218)  
 **Sprint:** Sprint 2  
-**Status:** ✅ Implemented, tested on physical device, verified on Firestore console
+**Status:**  Implemented, tested on physical device, verified on Firestore console
 
 ---
 
