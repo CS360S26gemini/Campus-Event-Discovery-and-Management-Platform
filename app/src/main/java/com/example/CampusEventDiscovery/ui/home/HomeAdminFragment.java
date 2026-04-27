@@ -28,7 +28,6 @@ import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
 import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
@@ -44,7 +43,8 @@ public class HomeAdminFragment extends Fragment {
     private RecyclerView rvAdminApprovals;
     private ProgressBar progressBarAdmin;
     private TextView tvEmptyAdmin;
-    private MaterialButtonToggleGroup toggleApprovalStatus;
+    private MaterialButton btnPendingApprovals;
+    private MaterialButton btnRejectedEvents;
     private MaterialButton btnCreateEvent;
     private MaterialButton btnManageEvents;
     private MaterialButton btnScanTickets;
@@ -75,7 +75,8 @@ public class HomeAdminFragment extends Fragment {
         rvAdminApprovals = view.findViewById(R.id.rvAdminApprovals);
         progressBarAdmin = view.findViewById(R.id.progressBarAdmin);
         tvEmptyAdmin = view.findViewById(R.id.tvEmptyAdmin);
-        toggleApprovalStatus = view.findViewById(R.id.toggleApprovalStatus);
+        btnPendingApprovals = view.findViewById(R.id.btnPendingApprovals);
+        btnRejectedEvents = view.findViewById(R.id.btnRejectedEvents);
         btnCreateEvent = view.findViewById(R.id.btnCreateEvent);
         btnManageEvents = view.findViewById(R.id.btnManageEvents);
         btnScanTickets = view.findViewById(R.id.btnScanTickets);
@@ -163,13 +164,37 @@ public class HomeAdminFragment extends Fragment {
     }
 
     private void setupApprovalToggle() {
-        toggleApprovalStatus.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) {
-                return;
-            }
-            showingRejected = checkedId == R.id.btnRejectedEvents;
-            loadApprovals();
-        });
+        btnPendingApprovals.setOnClickListener(v -> selectApprovalStatus(false));
+        btnRejectedEvents.setOnClickListener(v -> selectApprovalStatus(true));
+        applyApprovalToggleState();
+    }
+
+    private void selectApprovalStatus(boolean rejected) {
+        if (showingRejected == rejected) {
+            return;
+        }
+        showingRejected = rejected;
+        applyApprovalToggleState();
+        loadApprovals();
+    }
+
+    private void applyApprovalToggleState() {
+        if (!isAdded()) {
+            return;
+        }
+
+        styleApprovalButton(btnPendingApprovals, !showingRejected);
+        styleApprovalButton(btnRejectedEvents, showingRejected);
+    }
+
+    private void styleApprovalButton(MaterialButton button, boolean selected) {
+        if (button == null) {
+            return;
+        }
+
+        button.setSelected(selected);
+        button.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        button.refreshDrawableState();
     }
 
     private void loadApprovals() {

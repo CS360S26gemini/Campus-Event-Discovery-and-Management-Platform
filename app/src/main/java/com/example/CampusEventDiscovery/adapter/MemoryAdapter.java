@@ -93,6 +93,11 @@ public class MemoryAdapter extends RecyclerView.Adapter<MemoryAdapter.MemoryView
                 listener.onAddPhotos(memory);
             }
         });
+        holder.btnViewPhotos.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onOpenAlbum(memory);
+            }
+        });
     }
 
     @Override
@@ -123,6 +128,7 @@ public class MemoryAdapter extends RecyclerView.Adapter<MemoryAdapter.MemoryView
         final TextView tvDate;
         final TextView tvRating;
         final TextView tvPhotoCount;
+        final MaterialButton btnViewPhotos;
         final MaterialButton btnAddPhotos;
 
         MemoryViewHolder(@NonNull View itemView) {
@@ -133,6 +139,7 @@ public class MemoryAdapter extends RecyclerView.Adapter<MemoryAdapter.MemoryView
             tvDate = itemView.findViewById(R.id.tvMemoryDate);
             tvRating = itemView.findViewById(R.id.tvMemoryRating);
             tvPhotoCount = itemView.findViewById(R.id.tvMemoryPhotoCount);
+            btnViewPhotos = itemView.findViewById(R.id.btnViewMemoryPhotos);
             btnAddPhotos = itemView.findViewById(R.id.btnAddMemoryPhotos);
         }
     }

@@ -70,18 +70,39 @@
                 android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAddMemoryPhotos"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_sm"
-                android:minWidth="0dp"
-                android:paddingHorizontal="@dimen/spacing_sm"
-                android:text="@string/create_memory_album"
-                android:textAllCaps="false"
-                app:icon="@drawable/ic_add"
-                app:iconGravity="textStart" />
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnViewMemoryPhotos"
+                    style="@style/AppSecondaryButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="@dimen/spacing_sm"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="@dimen/spacing_sm"
+                    android:text="@string/view_memories"
+                    android:textAllCaps="false"
+                    app:icon="@drawable/ic_image_outline"
+                    app:iconGravity="textStart" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddMemoryPhotos"
+                    style="@style/AppOutlinedButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="@dimen/spacing_sm"
+                    android:text="@string/create_memory_album"
+                    android:textAllCaps="false"
+                    app:icon="@drawable/ic_add"
+                    app:iconGravity="textStart" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

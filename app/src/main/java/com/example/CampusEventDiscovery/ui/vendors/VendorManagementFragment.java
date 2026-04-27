@@ -24,12 +24,13 @@ import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.model.VendorProposal;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
-import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -43,16 +44,17 @@ public class VendorManagementFragment extends Fragment {
 
     private static final String ARG_ROLE = "role";
 
-    private TextView tvHeader;
     private TextView tvSubtitle;
     private TextView tvEventPrompt;
     private TextView tvEmpty;
     private ProgressBar progressBar;
+    private MaterialToolbar toolbarVendorManagement;
     private RecyclerView rvEvents;
     private RecyclerView rvProposals;
     private MaterialCardView cardVendorToggle;
-    private MaterialButtonToggleGroup toggleStatus;
-    private MaterialButton btnBackToVendorEvents;
+    private MaterialButton btnVendorApproved;
+    private MaterialButton btnVendorPending;
+    private MaterialButton btnVendorRejected;
     private FloatingActionButton fabAddVendor;
 
     private EventRepository repository;
@@ -89,16 +91,17 @@ public class VendorManagementFragment extends Fragment {
         repository = new EventRepository();
         role = UserRoles.sanitize(getArguments() == null ? null : getArguments().getString(ARG_ROLE));
 
-        tvHeader = view.findViewById(R.id.tvVendorHeader);
         tvSubtitle = view.findViewById(R.id.tvVendorSubtitle);
         tvEventPrompt = view.findViewById(R.id.tvVendorEventPrompt);
         tvEmpty = view.findViewById(R.id.tvVendorEmpty);
         progressBar = view.findViewById(R.id.progressVendor);
+        toolbarVendorManagement = view.findViewById(R.id.toolbarVendorManagement);
         rvEvents = view.findViewById(R.id.rvVendorEvents);
         rvProposals = view.findViewById(R.id.rvVendorProposals);
         cardVendorToggle = view.findViewById(R.id.cardVendorToggle);
-        toggleStatus = view.findViewById(R.id.toggleVendorStatus);
-        btnBackToVendorEvents = view.findViewById(R.id.btnBackToVendorEvents);
+        btnVendorApproved = view.findViewById(R.id.btnVendorApproved);
+        btnVendorPending = view.findViewById(R.id.btnVendorPending);
+        btnVendorRejected = view.findViewById(R.id.btnVendorRejected);
         fabAddVendor = view.findViewById(R.id.fabAddVendor);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -141,35 +144,59 @@ public class VendorManagementFragment extends Fragment {
     }
 
     private void setupToggle() {
-        toggleStatus.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) {
-                return;
-            }
-            if (checkedId == R.id.btnVendorPending) {
-                selectedStatus = "pending";
-            } else if (checkedId == R.id.btnVendorRejected) {
-                selectedStatus = "rejected";
-            } else {
-                selectedStatus = "approved";
-            }
-            filterAndShowProposals();
-        });
+        btnVendorApproved.setOnClickListener(v -> selectVendorStatus("approved"));
+        btnVendorPending.setOnClickListener(v -> selectVendorStatus("pending"));
+        btnVendorRejected.setOnClickListener(v -> selectVendorStatus("rejected"));
+        applyVendorStatusState();
+    }
+
+    private void selectVendorStatus(String status) {
+        if (TextUtils.equals(selectedStatus, status)) {
+            return;
+        }
+        selectedStatus = status;
+        applyVendorStatusState();
+        filterAndShowProposals();
+    }
+
+    private void applyVendorStatusState() {
+        if (!isAdded()) {
+            return;
+        }
+
+        styleVendorButton(btnVendorApproved, "approved".equals(selectedStatus));
+        styleVendorButton(btnVendorPending, "pending".equals(selectedStatus));
+        styleVendorButton(btnVendorRejected, "rejected".equals(selectedStatus));
+    }
+
+    private void styleVendorButton(MaterialButton button, boolean selected) {
+        if (button == null) {
+            return;
+        }
+
+        button.setSelected(selected);
+        button.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        button.refreshDrawableState();
     }
 
     private void setupRoleUi() {
         boolean admin = UserRoles.isAdmin(role);
-        tvHeader.setText(admin ? R.string.vendor_requests : R.string.vendor_management);
         tvSubtitle.setText(admin ? R.string.admin_vendor_requests_subtitle : R.string.vendor_management_subtitle);
+        toolbarVendorManagement.setTitle(admin ? R.string.vendor_requests : R.string.vendor_management);
+        toolbarVendorManagement.setNavigationIcon(null);
+        toolbarVendorManagement.setNavigationOnClickListener(v -> {
+            if (showingOrganizerEventDetail) {
+                showOrganizerEventSelection();
+            }
+        });
         tvEventPrompt.setVisibility(admin ? View.GONE : View.VISIBLE);
         rvEvents.setVisibility(admin ? View.GONE : View.VISIBLE);
         rvProposals.setVisibility(admin ? View.VISIBLE : View.GONE);
         cardVendorToggle.setVisibility(admin ? View.VISIBLE : View.GONE);
-        btnBackToVendorEvents.setVisibility(View.GONE);
         fabAddVendor.setVisibility(View.GONE);
-        btnBackToVendorEvents.setOnClickListener(v -> showOrganizerEventSelection());
         fabAddVendor.setOnClickListener(v -> showAddVendorDialog());
         selectedStatus = admin ? "pending" : "approved";
-        toggleStatus.check(admin ? R.id.btnVendorPending : R.id.btnVendorApproved);
+        applyVendorStatusState();
     }
 
     private void loadCurrentUserName() {
@@ -278,13 +305,14 @@ public class VendorManagementFragment extends Fragment {
         selectedEvent = event;
         showingOrganizerEventDetail = true;
         eventAdapter.setSelectedEventId(event.getEventId());
-        tvHeader.setText(TextUtils.isEmpty(event.getTitle()) ? getString(R.string.vendor_management) : event.getTitle());
+        String title = TextUtils.isEmpty(event.getTitle()) ? getString(R.string.vendor_management) : event.getTitle();
+        toolbarVendorManagement.setTitle(title);
+        toolbarVendorManagement.setNavigationIcon(R.drawable.ic_back);
         tvSubtitle.setText(TextUtils.isEmpty(event.getLocation()) ? getString(R.string.vendor_management_subtitle) : event.getLocation());
         tvEventPrompt.setVisibility(View.GONE);
         rvEvents.setVisibility(View.GONE);
         rvProposals.setVisibility(View.VISIBLE);
         cardVendorToggle.setVisibility(View.VISIBLE);
-        btnBackToVendorEvents.setVisibility(View.VISIBLE);
         fabAddVendor.setVisibility(View.VISIBLE);
         tvEmpty.setVisibility(View.GONE);
         loadProposalsForSelectedEvent();
@@ -299,15 +327,17 @@ public class VendorManagementFragment extends Fragment {
         eventAdapter.setSelectedEventId(null);
         proposalAdapter.updateData(new ArrayList<>());
         allProposals.clear();
-        tvHeader.setText(R.string.vendor_management);
+        toolbarVendorManagement.setTitle(R.string.vendor_management);
+        toolbarVendorManagement.setNavigationIcon(null);
         tvSubtitle.setText(R.string.select_event_for_vendors_help);
         tvEventPrompt.setVisibility(View.VISIBLE);
         rvEvents.setVisibility(View.VISIBLE);
         rvProposals.setVisibility(View.GONE);
         cardVendorToggle.setVisibility(View.GONE);
-        btnBackToVendorEvents.setVisibility(View.GONE);
         fabAddVendor.setVisibility(View.GONE);
         tvEmpty.setVisibility(organizerEvents.isEmpty() ? View.VISIBLE : View.GONE);
+        selectedStatus = "approved";
+        applyVendorStatusState();
     }
 
     private void loadAdminProposals() {
@@ -406,7 +436,7 @@ public class VendorManagementFragment extends Fragment {
                 dialog.dismiss();
                 Toast.makeText(requireContext(), R.string.vendor_request_submitted, Toast.LENGTH_SHORT).show();
                 selectedStatus = "pending";
-                toggleStatus.check(R.id.btnVendorPending);
+                applyVendorStatusState();
                 loadProposalsForSelectedEvent();
             }
 

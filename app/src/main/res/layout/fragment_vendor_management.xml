@@ -10,42 +10,24 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <LinearLayout
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarVendorManagement"
+            style="@style/AppToolbarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/colorBackground"
+            android:paddingHorizontal="@dimen/spacing_md"
+            app:title="@string/vendor_management" />
+
+        <TextView
+            android:id="@+id/tvVendorSubtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="@dimen/spacing_md"
-            android:paddingTop="20dp">
-
-            <TextView
-                android:id="@+id/tvVendorHeader"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/vendor_management"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="24sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvVendorSubtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_xs"
-                android:text="@string/vendor_management_subtitle"
-                android:textColor="@color/colorOnSurfaceVariant"
-                android:textSize="14sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnBackToVendorEvents"
-                style="@style/AppOutlinedButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_sm"
-                android:text="@string/back"
-                android:visibility="gone"
-                app:icon="@drawable/ic_back"
-                app:iconTint="?attr/colorPrimary" />
-        </LinearLayout>
+            android:layout_marginHorizontal="@dimen/spacing_md"
+            android:layout_marginTop="@dimen/spacing_xs"
+            android:text="@string/vendor_management_subtitle"
+            android:textColor="@color/colorOnSurfaceVariant"
+            android:textSize="14sp" />
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardVendorToggle"
@@ -59,45 +41,38 @@
             app:strokeColor="@color/colorOutlineVariant"
             app:strokeWidth="1dp">
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/toggleVendorStatus"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="4dp"
-                app:checkedButton="@+id/btnVendorApproved"
-                app:selectionRequired="true"
-                app:singleSelection="true">
+                android:orientation="horizontal"
+                android:padding="4dp">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnVendorApproved"
-                    style="@style/AppAdminToggleButtonStyle"
+                    style="@style/AppSegmentToggleButtonStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:checkable="true"
-                    android:text="@string/approved_vendors"
-                    app:cornerRadius="8dp" />
+                    android:text="@string/approved_vendors" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnVendorPending"
-                    style="@style/AppAdminToggleButtonStyle"
+                    style="@style/AppSegmentToggleButtonStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
                     android:layout_weight="1"
-                    android:checkable="true"
-                    android:text="@string/pending_vendors"
-                    app:cornerRadius="8dp" />
+                    android:text="@string/pending_vendors" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnVendorRejected"
-                    style="@style/AppAdminToggleButtonStyle"
+                    style="@style/AppSegmentToggleButtonStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
                     android:layout_weight="1"
-                    android:checkable="true"
-                    android:text="@string/rejected_vendors"
-                    app:cornerRadius="8dp" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+                    android:text="@string/rejected_vendors" />
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <TextView

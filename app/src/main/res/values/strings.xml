@@ -396,6 +396,8 @@
     <string name="memory_photo_count">%1$d photo(s)</string>
     <string name="create_memory_album">Create album</string>
     <string name="add_more_photos">Add photos</string>
+    <string name="view_memories">View memories</string>
+    <string name="memory_album_title">Event Memories</string>
     <string name="memory_photos_saved">Photos added to memories</string>
     <string name="memory_photos_failed">Could not add photos</string>
     <string name="select_memory_photos">Select photos</string>

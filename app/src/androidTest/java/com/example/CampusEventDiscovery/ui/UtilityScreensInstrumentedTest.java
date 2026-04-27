@@ -16,6 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.ui.event.PaymentConfirmationActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
+import com.example.CampusEventDiscovery.ui.profile.MemoryAlbumActivity;
 import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
@@ -76,6 +77,21 @@ public class UtilityScreensInstrumentedTest {
             onView(withId(R.id.toolbarPayments)).check(matches(isDisplayed()));
             onView(withId(R.id.tvEventTitle)).check(matches(isDisplayed()));
             onView(withId(R.id.rvPayments)).check(matches(isAssignableFrom(RecyclerView.class)));
+        }
+    }
+
+    @Test
+    public void memoryAlbumScreen_showsToolbarAndPhotoGrid() {
+        Intent intent = new Intent(context, MemoryAlbumActivity.class);
+        intent.putExtra(MemoryAlbumActivity.EXTRA_EVENT_TITLE, "UI Test Event");
+        intent.putStringArrayListExtra(
+                MemoryAlbumActivity.EXTRA_PHOTO_URLS,
+                new java.util.ArrayList<>(java.util.Collections.singletonList("https://example.com/photo.jpg"))
+        );
+
+        try (ActivityScenario<MemoryAlbumActivity> ignored = ActivityScenario.launch(intent)) {
+            onView(withId(R.id.toolbarMemoryAlbum)).check(matches(isDisplayed()));
+            onView(withId(R.id.rvMemoryAlbumPhotos)).check(matches(isAssignableFrom(RecyclerView.class)));
         }
     }
 }

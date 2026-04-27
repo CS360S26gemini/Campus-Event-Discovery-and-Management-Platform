@@ -94,11 +94,12 @@ public class LayoutStyleContractTest {
     }
 
     @Test
-    public void mainNavigation_hasOrganizerFabAndBottomNavigation() throws Exception {
+    public void mainNavigation_hasBottomNavigationCreateActionSlot() throws Exception {
         Document document = parse(layoutFile("activity_main.xml"));
+        Document menu = parse(menuFile("bottom_nav_menu.xml"));
 
         assertEquals(1, countId(document, "bottomNavigationView"));
-        assertEquals(1, countId(document, "fabCreateEvent"));
+        assertEquals(1, countId(menu, "nav_action"));
     }
 
     @Test
@@ -163,6 +164,14 @@ public class LayoutStyleContractTest {
 
     private static File layoutFile(String name) {
         return layoutDir().resolve(name).toFile();
+    }
+
+    private static File menuFile(String name) {
+        Path fromRoot = Paths.get("app", "src", "main", "res", "menu", name);
+        if (Files.exists(fromRoot)) {
+            return fromRoot.toFile();
+        }
+        return Paths.get("src", "main", "res", "menu", name).toFile();
     }
 
     private static Path layoutDir() {

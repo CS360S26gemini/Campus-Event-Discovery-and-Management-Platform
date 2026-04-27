@@ -1,14 +1,11 @@
 package com.example.CampusEventDiscovery.ui.profile;
 
-import android.app.AlertDialog;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,7 +16,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.adapter.MemoryAdapter;
 import com.example.CampusEventDiscovery.model.Memory;
@@ -110,7 +106,7 @@ public class MemoriesActivity extends AppCompatActivity {
         adapter = new MemoryAdapter(memories, new MemoryAdapter.OnMemoryActionListener() {
             @Override
             public void onOpenAlbum(Memory memory) {
-                showAlbumDialog(memory);
+                openMemoryAlbum(memory);
             }
 
             @Override
@@ -302,53 +298,24 @@ public class MemoriesActivity extends AppCompatActivity {
         );
     }
 
-    private void showAlbumDialog(Memory memory) {
+    private void openMemoryAlbum(Memory memory) {
         if (memory == null) {
             return;
         }
 
-        LinearLayout content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        int padding = getResources().getDimensionPixelSize(R.dimen.spacing_md);
-        content.setPadding(padding, padding, padding, padding);
-
-        List<String> photoUrls = memory.getPhotoUrls();
-        if (photoUrls == null || photoUrls.isEmpty()) {
-            TextView empty = new TextView(this);
-            empty.setText(R.string.memory_album_empty);
-            empty.setTextColor(getColor(R.color.colorSecondary));
-            content.addView(empty);
-        } else {
-            for (String url : photoUrls) {
-                if (TextUtils.isEmpty(url)) {
-                    continue;
+        ArrayList<String> photoUrls = new ArrayList<>();
+        if (memory.getPhotoUrls() != null) {
+            for (String url : memory.getPhotoUrls()) {
+                if (!TextUtils.isEmpty(url)) {
+                    photoUrls.add(url);
                 }
-                ImageView imageView = new ImageView(this);
-                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        getResources().getDimensionPixelSize(R.dimen.memory_album_photo_height)
-                );
-                params.setMargins(0, 0, 0, getResources().getDimensionPixelSize(R.dimen.spacing_sm));
-                imageView.setLayoutParams(params);
-                Glide.with(this)
-                        .load(url)
-                        .placeholder(R.drawable.bg_placeholder_image)
-                        .centerCrop()
-                        .into(imageView);
-                content.addView(imageView);
             }
         }
 
-        ScrollView scrollView = new ScrollView(this);
-        scrollView.addView(content);
-
-        new AlertDialog.Builder(this)
-                .setTitle(TextUtils.isEmpty(memory.getEventTitle()) ? getString(R.string.memories_title) : memory.getEventTitle())
-                .setView(scrollView)
-                .setPositiveButton(R.string.select_memory_photos, (dialog, which) -> selectPhotosForMemory(memory))
-                .setNegativeButton(R.string.close, null)
-                .show();
+        Intent intent = new Intent(this, MemoryAlbumActivity.class);
+        intent.putExtra(MemoryAlbumActivity.EXTRA_EVENT_TITLE, memory.getEventTitle());
+        intent.putStringArrayListExtra(MemoryAlbumActivity.EXTRA_PHOTO_URLS, photoUrls);
+        startActivity(intent);
     }
 
     private void setLoading(boolean isLoading) {

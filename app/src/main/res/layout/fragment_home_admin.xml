@@ -121,35 +121,29 @@
                 app:strokeColor="@color/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/toggleApprovalStatus"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    app:checkedButton="@+id/btnPendingApprovals"
-                    app:singleSelection="true"
-                    app:selectionRequired="true">
+                    android:orientation="horizontal"
+                    android:padding="4dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnPendingApprovals"
-                        style="@style/AppAdminToggleButtonStyle"
+                        style="@style/AppSegmentToggleButtonStyle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/show_pending_approvals"
-                        android:checkable="true"
-                        app:cornerRadius="8dp" />
+                        android:text="@string/show_pending_approvals" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRejectedEvents"
-                        style="@style/AppAdminToggleButtonStyle"
+                        style="@style/AppSegmentToggleButtonStyle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
                         android:layout_weight="1"
-                        android:text="@string/show_rejected_events"
-                        android:checkable="true"
-                        app:cornerRadius="8dp" />
-                </com.google.android.material.button.MaterialButtonToggleGroup>
+                        android:text="@string/show_rejected_events" />
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <FrameLayout

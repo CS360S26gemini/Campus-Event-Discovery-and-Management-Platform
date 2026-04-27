@@ -198,7 +198,15 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        if (UserRoles.canManageEvents(currentRole)) {
+        if (UserRoles.isOrganizer(currentRole)) {
+            actionItem.setVisible(true);
+            actionItem.setIcon(R.drawable.ic_add);
+            actionItem.setTitle(R.string.create_event);
+            if (favouritesItem != null) {
+                favouritesItem.setIcon(R.drawable.ic_person);
+                favouritesItem.setTitle(R.string.vendors);
+            }
+        } else if (UserRoles.isAdmin(currentRole)) {
             actionItem.setVisible(false);
             if (favouritesItem != null) {
                 favouritesItem.setIcon(R.drawable.ic_person);
@@ -262,7 +270,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (itemId == R.id.nav_action) {
-            if (!UserRoles.canManageEvents(currentRole)) {
+            if (UserRoles.isOrganizer(currentRole)) {
+                startActivity(new Intent(this, CreateEventActivity.class));
+                updateSelectedNavItem(R.id.nav_home);
+                return true;
+            } else if (!UserRoles.canManageEvents(currentRole)) {
                 return navigateTo("my_events", R.id.nav_action);
             }
             return true;

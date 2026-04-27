@@ -24,15 +24,13 @@ public class VendorManagementContractTest {
     public void vendorManagementLayout_hasOrganizerSelectionAndVendorDetailSurfaces() throws Exception {
         Document document = parse(layoutFile("fragment_vendor_management.xml"));
 
-        assertEquals(1, countId(document, "tvVendorHeader"));
+        assertEquals(1, countId(document, "toolbarVendorManagement"));
         assertEquals(1, countId(document, "rvVendorEvents"));
         assertEquals(1, countId(document, "rvVendorProposals"));
         assertEquals(1, countId(document, "cardVendorToggle"));
-        assertEquals(1, countId(document, "toggleVendorStatus"));
         assertEquals(1, countId(document, "btnVendorApproved"));
         assertEquals(1, countId(document, "btnVendorPending"));
         assertEquals(1, countId(document, "btnVendorRejected"));
-        assertEquals(1, countId(document, "btnBackToVendorEvents"));
         assertEquals(1, countId(document, "fabAddVendor"));
     }
 
@@ -41,6 +39,8 @@ public class VendorManagementContractTest {
         Document document = parse(layoutFile("fragment_home_admin.xml"));
 
         assertEquals(1, countId(document, "btnVendorRequests"));
+        assertEquals(1, countId(document, "btnPendingApprovals"));
+        assertEquals(1, countId(document, "btnRejectedEvents"));
     }
 
     @Test
@@ -61,6 +61,16 @@ public class VendorManagementContractTest {
         assertTrue(source.contains("favouritesItem.setTitle(R.string.vendors)"));
         assertTrue(source.contains("return navigateTo(\"vendors\", R.id.nav_favourites)"));
         assertTrue(source.contains("VendorManagementFragment.newInstance(currentRole)"));
+    }
+
+    @Test
+    public void organizerBottomNavActionOpensCreateEventActivity() throws Exception {
+        String source = readUtf8(javaFile("MainActivity.java"));
+
+        assertTrue(source.contains("UserRoles.isOrganizer(currentRole)"));
+        assertTrue(source.contains("actionItem.setIcon(R.drawable.ic_add)"));
+        assertTrue(source.contains("actionItem.setTitle(R.string.create_event)"));
+        assertTrue(source.contains("startActivity(new Intent(this, CreateEventActivity.class))"));
     }
 
     @Test

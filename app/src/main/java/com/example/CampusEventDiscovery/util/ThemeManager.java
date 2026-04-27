@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -19,6 +20,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -250,7 +252,7 @@ public final class ThemeManager {
             }
         }
 
-        if (usesPurple(root.getBackgroundTintList())) {
+        if (!(root instanceof MaterialButtonToggleGroup) && usesPurple(root.getBackgroundTintList())) {
             root.setBackgroundTintList(accentList);
         }
 
@@ -284,6 +286,14 @@ public final class ThemeManager {
                                                     ColorStateList accentList,
                                                     ColorStateList onAccentList,
                                                     ColorStateList rippleList) {
+        if (isSegmentedControlButton(button)) {
+            return;
+        }
+
+        if (isInsideMaterialButtonToggleGroup(button)) {
+            return;
+        }
+
         if (usesPurple(button.getBackgroundTintList())) {
             button.setBackgroundTintList(accentList);
             button.setTextColor(onAccentList);
@@ -307,6 +317,30 @@ public final class ThemeManager {
         if (usesPurple(button.getIconTint())) {
             button.setIconTint(accentList);
         }
+    }
+
+    private static boolean isInsideMaterialButtonToggleGroup(View view) {
+        ViewParent parent = view == null ? null : view.getParent();
+        while (parent instanceof View) {
+            if (parent instanceof MaterialButtonToggleGroup) {
+                return true;
+            }
+            parent = ((View) parent).getParent();
+        }
+        return false;
+    }
+
+    private static boolean isSegmentedControlButton(MaterialButton button) {
+        if (button == null) {
+            return false;
+        }
+
+        int id = button.getId();
+        return id == R.id.btnPendingApprovals
+                || id == R.id.btnRejectedEvents
+                || id == R.id.btnVendorApproved
+                || id == R.id.btnVendorPending
+                || id == R.id.btnVendorRejected;
     }
 
     private static void applyAccentToChip(Chip chip, int accentColor, int rippleColor) {

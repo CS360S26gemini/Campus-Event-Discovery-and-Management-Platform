@@ -67,6 +67,26 @@ public class VendorManagementInstrumentedTest {
         }
     }
 
+    @Test
+    public void adminHomeScreen_showsApprovalSegmentButtons() {
+        DevSessionManager.enableBypass(context, UserRoles.ADMIN);
+
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
+            onView(withId(R.id.btnPendingApprovals)).check(matches(isDisplayed()));
+            onView(withId(R.id.btnRejectedEvents)).check(matches(isDisplayed()));
+        }
+    }
+
+    @Test
+    public void organizerCreateEventPlus_opensCreateEventForm() {
+        DevSessionManager.enableBypass(context, UserRoles.ORGANIZER);
+
+        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
+            onView(withId(R.id.bottomNavigationView)).perform(selectBottomNavItem(R.id.nav_action));
+            onView(withId(R.id.toolbarCreateEvent)).check(matches(isDisplayed()));
+        }
+    }
+
     private static ViewAction selectBottomNavItem(int itemId) {
         return new ViewAction() {
             @Override
