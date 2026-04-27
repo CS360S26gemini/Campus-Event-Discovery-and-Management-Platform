@@ -46,9 +46,10 @@ public class EventRepository {
     private static final String COLLECTION_USERS = "users";
     private static final String COLLECTION_EVENTS = "events";
     private static final String COLLECTION_EVENT_PROPOSALS = "event_proposals";
-    private static final String COLLECTION_REPORTS = "reports";
+    private static final String COLLECTION_ALERTS = "alerts";
     private static final String COLLECTION_NOTIFICATIONS = "notifications";
     private static final String COLLECTION_APP_CONFIG = "app_config";
+    private static final String COLLECTION_VENDOR_REQUESTS = "vendor_requests";
 
     private static final String SUBCOLLECTION_SAVED_EVENTS = "saved_events";
     private static final String SUBCOLLECTION_RSVPS = "rsvps";
@@ -1188,7 +1189,7 @@ public class EventRepository {
         report.put("submittedAt", Timestamp.now());
         report.put("resolvedAt", null);
 
-        db.collection(COLLECTION_REPORTS)
+        db.collection(COLLECTION_ALERTS)
                 .add(report)
                 .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
@@ -1653,5 +1654,18 @@ public class EventRepository {
                 .addOnFailureListener(e -> {
                     if (cb != null) cb.onError(e);
                 });
+    }
+
+    public Task<QuerySnapshot> getProposalsTask(String status) {
+        return db.collection(COLLECTION_EVENT_PROPOSALS)
+                .whereEqualTo("status", status)
+                .get();
+    }
+
+    public Task<QuerySnapshot> getPendingVendorsTask() {
+        return db.collection(COLLECTION_VENDOR_REQUESTS)
+                .whereEqualTo("status", Vendor.STATUS_PENDING)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .get();
     }
 }
