@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/spacing_md"
+    android:layout_marginVertical="@dimen/spacing_sm"
+    app:cardBackgroundColor="@color/colorSurface"
+    app:cardCornerRadius="@dimen/event_card_radius"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/colorOutlineVariant"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_md">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvVendorName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/vendor_name"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="@color/colorOnSurface"
+                android:textStyle="bold" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVendorStatus"
+                style="@style/AppSuggestionChipStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvVendorDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xs"
+            android:text="@string/vendor_description"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="@color/colorOnSurfaceVariant" />
+
+        <TextView
+            android:id="@+id/tvVendorEvent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:text="@string/vendor_event_format"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="@color/colorOnSurfaceVariant" />
+
+        <TextView
+            android:id="@+id/tvVendorOrganizer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xs"
+            android:text="@string/vendor_organizer_format"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="@color/colorOnSurfaceVariant" />
+
+        <TextView
+            android:id="@+id/tvVendorPhone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xs"
+            android:text="@string/vendor_phone_format"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="@color/colorOnSurfaceVariant" />
+
+        <LinearLayout
+            android:id="@+id/layoutVendorActions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnApproveVendor"
+                style="@style/AppSecondaryButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/spacing_sm"
+                android:layout_weight="1"
+                android:text="@string/approve" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRejectVendor"
+                style="@style/AppOutlinedButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_sm"
+                android:layout_weight="1"
+                android:text="@string/reject" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -13,7 +13,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,7 +32,6 @@ import com.example.CampusEventDiscovery.ui.organizer.ManageEventsActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
 import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
-import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.button.MaterialButton;
@@ -43,10 +41,8 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 /**
  * HomeOrganizerFragment.java
@@ -81,8 +77,6 @@ public class HomeOrganizerFragment extends Fragment {
 
     private EventAdapter adapter;
     private final List<Event> eventList = new ArrayList<>();
-    private final Set<String> savedEventIds = new HashSet<>();
-
     private String currentUserId;
     private User currentUser;
     private Event featuredEvent;
@@ -162,7 +156,7 @@ public class HomeOrganizerFragment extends Fragment {
     private void setupRecyclerView() {
         adapter = new EventAdapter(
                 eventList,
-                savedEventIds,
+                new java.util.HashSet<>(),
                 currentUserId,
                 new EventAdapter.OnEventClickListener() {
                     @Override
@@ -172,14 +166,16 @@ public class HomeOrganizerFragment extends Fragment {
 
                     @Override
                     public void onHeartClick(Event event, boolean isCurrentlySaved) {
-                        toggleSaveEvent(event, isCurrentlySaved);
+                        // Favourites are attendee-only.
                     }
 
                     @Override
                     public void onItemLongClick(Event event) {
                         // no-op
                     }
-                }
+                },
+                false,
+                false
         );
 
         rvEvents.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -210,28 +206,6 @@ public class HomeOrganizerFragment extends Fragment {
             updateEventList(new ArrayList<>());
             return;
         }
-
-        repository.getSavedEvents(currentUserId, new EventRepository.EventListCallback() {
-            @Override
-            public void onSuccess(List<Event> events) {
-                if (!isAdded()) return;
-                savedEventIds.clear();
-                for (Event event : events) {
-                    if (event.getEventId() != null) {
-                        savedEventIds.add(event.getEventId());
-                    }
-                }
-                adapter.updateSavedIds(savedEventIds);
-                bindFeaturedEvent(featuredEvent);
-            }
-
-            @Override
-            public void onError(Exception e) {
-                if (!isAdded()) return;
-                savedEventIds.clear();
-                adapter.updateSavedIds(savedEventIds);
-            }
-        });
 
         repository.getUserData(currentUserId, new EventRepository.UserCallback() {
             @Override
@@ -347,11 +321,7 @@ public class HomeOrganizerFragment extends Fragment {
         tvBannerDate.setText(formatDateTime(event.getDate()));
         tvBannerVenue.setText(safeText(event.getLocation(), getString(R.string.placeholder_venue)));
 
-        boolean isSaved = event.getEventId() != null && savedEventIds.contains(event.getEventId());
-        ivBannerHeart.setImageResource(isSaved ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
-        ivBannerHeart.setColorFilter(isSaved
-                ? ThemeManager.getAccentColor(requireContext())
-                : androidx.core.content.ContextCompat.getColor(requireContext(), R.color.colorOnSurfaceVariant));
+        ivBannerHeart.setVisibility(View.GONE);
 
         if (!TextUtils.isEmpty(event.getThumbnailUrl())) {
             Glide.with(requireContext())
@@ -366,8 +336,6 @@ public class HomeOrganizerFragment extends Fragment {
 
         cardFeaturedEvent.setOnClickListener(v -> openEventDetail(event));
 
-        ivBannerHeart.setOnClickListener(v -> toggleSaveEvent(event, isSaved));
-
         ivBannerShare.setOnClickListener(v -> {
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.setType("text/plain");
@@ -379,37 +347,6 @@ public class HomeOrganizerFragment extends Fragment {
                             + safeText(event.getLocation(), getString(R.string.placeholder_venue)));
             startActivity(Intent.createChooser(shareIntent, getString(R.string.share)));
         });
-    }
-
-    private void toggleSaveEvent(Event event, boolean isCurrentlySaved) {
-        if (currentUserId == null || event == null || event.getEventId() == null) {
-            return;
-        }
-
-        if (isCurrentlySaved) {
-            repository.unsaveEvent(currentUserId, event.getEventId(), () -> {
-                if (!isAdded()) return;
-                savedEventIds.remove(event.getEventId());
-                adapter.updateSavedIds(savedEventIds);
-                bindFeaturedEvent(featuredEvent);
-            });
-        } else {
-            repository.saveEvent(currentUserId, event, new EventRepository.ActionCallback() {
-                @Override
-                public void onSuccess() {
-                    if (!isAdded()) return;
-                    savedEventIds.add(event.getEventId());
-                    adapter.updateSavedIds(savedEventIds);
-                    bindFeaturedEvent(featuredEvent);
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    if (!isAdded()) return;
-                    Toast.makeText(requireContext(), "Failed to save event.", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
     }
 
     private void openEventDetail(Event event) {

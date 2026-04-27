@@ -97,6 +97,16 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/spacing_sm"
                         android:text="@string/open_sos_dashboard" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnVendorRequests"
+                        style="@style/AppOutlinedButtonStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:text="@string/vendor_requests"
+                        app:icon="@drawable/ic_person"
+                        app:iconTint="?attr/colorPrimary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

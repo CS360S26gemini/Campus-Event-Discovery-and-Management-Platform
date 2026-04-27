@@ -47,6 +47,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     private final String currentUserId;
     private final OnEventClickListener listener;
     private final boolean useCompactRows;
+    private final boolean showFavouriteActions;
 
     public EventAdapter(List<Event> events,
                         Set<String> savedEventIds,
@@ -60,11 +61,21 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                         String currentUserId,
                         OnEventClickListener listener,
                         boolean useCompactRows) {
+        this(events, savedEventIds, currentUserId, listener, useCompactRows, true);
+    }
+
+    public EventAdapter(List<Event> events,
+                        Set<String> savedEventIds,
+                        String currentUserId,
+                        OnEventClickListener listener,
+                        boolean useCompactRows,
+                        boolean showFavouriteActions) {
         this.events = events;
         this.savedEventIds = savedEventIds != null ? savedEventIds : new HashSet<>();
         this.currentUserId = currentUserId;
         this.listener = listener;
         this.useCompactRows = useCompactRows;
+        this.showFavouriteActions = showFavouriteActions;
     }
 
     @NonNull
@@ -115,7 +126,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
         boolean canToggleFavourite = !TextUtils.isEmpty(currentUserId)
                 && event.getEventId() != null
-                && listener != null;
+                && listener != null
+                && showFavouriteActions;
         boolean isSaved = event.getEventId() != null && savedEventIds.contains(event.getEventId());
         if (holder.ivHeart != null) {
             holder.ivHeart.setImageResource(isSaved ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);

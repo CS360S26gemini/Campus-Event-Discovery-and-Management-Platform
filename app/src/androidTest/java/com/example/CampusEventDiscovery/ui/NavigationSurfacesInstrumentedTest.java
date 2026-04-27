@@ -44,9 +44,9 @@ public class NavigationSurfacesInstrumentedTest {
     }
 
     @Test
-    public void organizerMainScreen_showsCreateEventFabAndShortcuts() {
+    public void organizerMainScreen_showsVendorTabAndShortcuts() {
         try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
-            onView(withId(R.id.fabCreateEvent)).check(matches(isDisplayed()));
+            onView(withText(R.string.vendors)).check(matches(isDisplayed()));
             onView(withText(R.string.organizer_tools)).check(matches(isDisplayed()));
             onView(withId(R.id.btnCreateEvent)).check(matches(isDisplayed()));
             onView(withId(R.id.btnManageEvents)).check(matches(isDisplayed()));

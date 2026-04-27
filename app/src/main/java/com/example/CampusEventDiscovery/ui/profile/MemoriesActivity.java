@@ -25,19 +25,17 @@ import com.example.CampusEventDiscovery.adapter.MemoryAdapter;
 import com.example.CampusEventDiscovery.model.Memory;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Displays the current user's event-based memory albums.
@@ -255,29 +253,23 @@ public class MemoriesActivity extends AppCompatActivity {
             return;
         }
 
-        Uri imageUri = selectedImageUris.get(index);
-        StorageReference photoRef = FirebaseStorage.getInstance()
-                .getReference()
-                .child("memories")
-                .child(currentUserId)
-                .child(selectedMemory.getEventId())
-                .child(UUID.randomUUID() + ".jpg");
+        CloudinaryHelper.uploadImage(selectedImageUris.get(index), new CloudinaryHelper.CloudinaryCallback() {
+            @Override
+            public void onSuccess(String imageUrl) {
+                if (!TextUtils.isEmpty(imageUrl)) {
+                    uploadedUrls.add(imageUrl);
+                }
+                uploadNextPhoto(index + 1, uploadedUrls);
+            }
 
-        photoRef.putFile(imageUri)
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        throw task.getException();
-                    }
-                    return photoRef.getDownloadUrl();
-                })
-                .addOnSuccessListener(downloadUri -> {
-                    uploadedUrls.add(downloadUri.toString());
-                    uploadNextPhoto(index + 1, uploadedUrls);
-                })
-                .addOnFailureListener(e -> {
+            @Override
+            public void onError(String error) {
+                if (!isFinishing() && !isDestroyed()) {
                     setLoading(false);
-                    Toast.makeText(this, R.string.memory_photos_failed, Toast.LENGTH_SHORT).show();
-                });
+                    Toast.makeText(MemoriesActivity.this, R.string.memory_photos_failed, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void saveUploadedPhotos(List<String> uploadedUrls) {

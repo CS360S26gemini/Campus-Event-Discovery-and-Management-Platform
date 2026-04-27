@@ -595,4 +595,36 @@
     <string name="scanner_mark_failed">Failed to update check-in status</string>
     <string name="preferences_section">Preferences</string>
 
+    <!-- Vendor management -->
+    <string name="vendors">Vendors</string>
+    <string name="vendor_management">Vendor Management</string>
+    <string name="vendor_requests">Vendor Requests</string>
+    <string name="vendor_requests_with_count">Vendor Requests (%1$d)</string>
+    <string name="vendor_management_subtitle">Add and track vendors for approved events.</string>
+    <string name="admin_vendor_requests_subtitle">Review vendor proposals submitted by organizers.</string>
+    <string name="select_event_for_vendors">Select an Approved Event</string>
+    <string name="select_event_for_vendors_help">Choose one of your live events to manage approved, pending, and rejected vendors.</string>
+    <string name="no_approved_events_for_vendors">No approved events available</string>
+    <string name="no_vendor_requests">No vendor requests</string>
+    <string name="no_vendors_for_event">No vendors for this event yet</string>
+    <string name="add_vendor">Add Vendor</string>
+    <string name="submit_vendor_request">Submit Request</string>
+    <string name="vendor_name">Vendor name</string>
+    <string name="vendor_description">Description / service type</string>
+    <string name="vendor_phone">Phone number</string>
+    <string name="approved_vendors">Approved</string>
+    <string name="pending_vendors">Pending</string>
+    <string name="rejected_vendors">Rejected</string>
+    <string name="all_vendor_requests">All Requests</string>
+    <string name="vendor_event_format">Event: %1$s</string>
+    <string name="vendor_organizer_format">Organizer: %1$s</string>
+    <string name="vendor_phone_format">Phone: %1$s</string>
+    <string name="vendor_type_format">Type: %1$s</string>
+    <string name="vendor_request_submitted">Vendor request submitted for admin approval.</string>
+    <string name="vendor_request_failed">Vendor request failed: %1$s</string>
+    <string name="vendor_review_failed">Vendor review failed: %1$s</string>
+    <string name="vendor_approved">Vendor approved.</string>
+    <string name="vendor_rejected">Vendor rejected.</string>
+    <string name="required_field">Required</string>
+
 </resources>

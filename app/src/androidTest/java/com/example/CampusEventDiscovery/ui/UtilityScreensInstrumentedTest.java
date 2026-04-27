@@ -73,7 +73,7 @@ public class UtilityScreensInstrumentedTest {
         intent.putExtra("eventTitle", "UI Test Event");
 
         try (ActivityScenario<PaymentConfirmationActivity> ignored = ActivityScenario.launch(intent)) {
-            onView(withId(R.id.btnBack)).check(matches(isDisplayed()));
+            onView(withId(R.id.toolbarPayments)).check(matches(isDisplayed()));
             onView(withId(R.id.tvEventTitle)).check(matches(isDisplayed()));
             onView(withId(R.id.rvPayments)).check(matches(isAssignableFrom(RecyclerView.class)));
         }

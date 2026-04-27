@@ -23,6 +23,7 @@ import com.example.CampusEventDiscovery.ui.profile.ProfileFragment;
 import com.example.CampusEventDiscovery.ui.search.SearchFragment;
 import com.example.CampusEventDiscovery.ui.calendar.EventCalendarFragment;
 import com.example.CampusEventDiscovery.ui.myevents.MyEventsFragment;
+import com.example.CampusEventDiscovery.ui.vendors.VendorManagementFragment;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.NavigationTransitions;
 import com.example.CampusEventDiscovery.util.ThemeManager;
@@ -56,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
 
     // List of keys representing main screens where bottom navigation should be visible.
     private static final List<String> MAIN_SCREEN_KEYS = Arrays.asList(
-            "home_admin", "home_organizer", "home_attendee", "search", "favourites", "profile", "my_events"
+            "home_admin", "home_organizer", "home_attendee", "search", "favourites", "profile", "my_events", "vendors"
     );
 
     @Override
@@ -105,6 +106,10 @@ public class MainActivity extends AppCompatActivity {
             String tab = intent.getStringExtra("OPEN_TAB");
             if ("profile".equals(tab)) {
                 navigateTo("profile", R.id.nav_profile);
+                return;
+            }
+            if ("vendors".equals(tab)) {
+                navigateTo("vendors", R.id.nav_favourites);
                 return;
             }
         }
@@ -188,16 +193,25 @@ public class MainActivity extends AppCompatActivity {
     private void updateBottomNavMenu() {
         Menu menu = bottomNavigationView.getMenu();
         MenuItem actionItem = menu.findItem(R.id.nav_action);
+        MenuItem favouritesItem = menu.findItem(R.id.nav_favourites);
         if (actionItem == null) {
             return;
         }
 
         if (UserRoles.canManageEvents(currentRole)) {
             actionItem.setVisible(false);
+            if (favouritesItem != null) {
+                favouritesItem.setIcon(R.drawable.ic_person);
+                favouritesItem.setTitle(R.string.vendors);
+            }
         } else {
             actionItem.setVisible(true);
             actionItem.setIcon(R.drawable.ic_pin);
             actionItem.setTitle(R.string.my_events_row);
+            if (favouritesItem != null) {
+                favouritesItem.setIcon(R.drawable.ic_heart_outline);
+                favouritesItem.setTitle(R.string.favourites);
+            }
         }
         ThemeManager.applyAccentToMainNavigation(this, bottomNavigationView, null);
         ThemeManager.applyAccentToActivity(this);
@@ -255,6 +269,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (itemId == R.id.nav_favourites) {
+            if (UserRoles.canManageEvents(currentRole)) {
+                return navigateTo("vendors", R.id.nav_favourites);
+            }
             return navigateTo("favourites", R.id.nav_favourites);
         }
 
@@ -336,6 +353,10 @@ public class MainActivity extends AppCompatActivity {
         updateBottomNavVisibility("profile");
     }
 
+    public void openVendorManagement() {
+        navigateTo("vendors", R.id.nav_favourites);
+    }
+
     private void updateBottomNavVisibility(String key) {
         if (MAIN_SCREEN_KEYS.contains(key)) {
             bottomNavigationView.setVisibility(View.VISIBLE);
@@ -358,6 +379,8 @@ public class MainActivity extends AppCompatActivity {
                 return new MyEventsFragment();
             case "favourites":
                 return new FavouritesFragment();
+            case "vendors":
+                return VendorManagementFragment.newInstance(currentRole);
             case "profile":
                 return new ProfileFragment();
             case "home_attendee":

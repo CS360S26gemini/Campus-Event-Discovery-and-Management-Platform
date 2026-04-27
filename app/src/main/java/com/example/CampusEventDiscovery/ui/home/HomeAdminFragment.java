@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.CampusEventDiscovery.R;
+import com.example.CampusEventDiscovery.MainActivity;
 import com.example.CampusEventDiscovery.adapter.OrganizerPendingAdapter;
 import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.EventProposal;
@@ -28,6 +29,7 @@ import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,8 @@ public class HomeAdminFragment extends Fragment {
     private MaterialButton btnManageEvents;
     private MaterialButton btnScanTickets;
     private MaterialButton btnSosDashboard;
+    private MaterialButton btnVendorRequests;
+    private ListenerRegistration vendorCountRegistration;
 
     private OrganizerPendingAdapter adapter;
     private EventRepository repository;
@@ -76,10 +80,12 @@ public class HomeAdminFragment extends Fragment {
         btnManageEvents = view.findViewById(R.id.btnManageEvents);
         btnScanTickets = view.findViewById(R.id.btnScanTickets);
         btnSosDashboard = view.findViewById(R.id.btnSosDashboard);
+        btnVendorRequests = view.findViewById(R.id.btnVendorRequests);
 
         setupToolActions();
         setupRecyclerView();
         setupApprovalToggle();
+        observeVendorRequestCount();
         if (WalkthroughManager.isActive()) {
             approvalEvents.clear();
             approvalEvents.add(WalkthroughManager.getDemoEvent());
@@ -102,6 +108,15 @@ public class HomeAdminFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onDestroyView() {
+        if (vendorCountRegistration != null) {
+            vendorCountRegistration.remove();
+            vendorCountRegistration = null;
+        }
+        super.onDestroyView();
+    }
+
     private void setupToolActions() {
         btnCreateEvent.setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), CreateEventActivity.class)));
@@ -111,6 +126,29 @@ public class HomeAdminFragment extends Fragment {
                 startActivity(new Intent(requireContext(), ScannerActivity.class)));
         btnSosDashboard.setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), SOSDashboardActivity.class)));
+        btnVendorRequests.setOnClickListener(v -> {
+            if (requireActivity() instanceof MainActivity) {
+                ((MainActivity) requireActivity()).openVendorManagement();
+            }
+        });
+    }
+
+    private void observeVendorRequestCount() {
+        vendorCountRegistration = repository.observeUnreadPendingVendorProposalCount(new EventRepository.IntegerCallback() {
+            @Override
+            public void onSuccess(int value) {
+                if (!isAdded() || btnVendorRequests == null) return;
+                btnVendorRequests.setText(value > 0
+                        ? getString(R.string.vendor_requests_with_count, value)
+                        : getString(R.string.vendor_requests));
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded() || btnVendorRequests == null) return;
+                btnVendorRequests.setText(R.string.vendor_requests);
+            }
+        });
     }
 
     private void setupRecyclerView() {

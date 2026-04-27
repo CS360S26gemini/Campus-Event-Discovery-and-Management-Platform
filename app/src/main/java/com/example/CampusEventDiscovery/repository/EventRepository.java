@@ -10,6 +10,7 @@ import com.example.CampusEventDiscovery.model.Memory;
 import com.example.CampusEventDiscovery.model.Notification;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.model.User;
+import com.example.CampusEventDiscovery.model.VendorProposal;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
@@ -46,6 +47,7 @@ public class EventRepository {
     private static final String COLLECTION_USERS = "users";
     private static final String COLLECTION_EVENTS = "events";
     private static final String COLLECTION_EVENT_PROPOSALS = "event_proposals";
+    private static final String COLLECTION_VENDOR_PROPOSALS = "vendorProposals";
     private static final String COLLECTION_REPORTS = "reports";
     private static final String COLLECTION_NOTIFICATIONS = "notifications";
     private static final String COLLECTION_APP_CONFIG = "app_config";
@@ -94,6 +96,16 @@ public class EventRepository {
 
     public interface ProposalCallback {
         void onSuccess(EventProposal proposal);
+        void onError(Exception e);
+    }
+
+    public interface VendorProposalListCallback {
+        void onSuccess(List<VendorProposal> proposals);
+        void onError(Exception e);
+    }
+
+    public interface IntegerCallback {
+        void onSuccess(int value);
         void onError(Exception e);
     }
 
@@ -962,6 +974,143 @@ public class EventRepository {
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
+    public void proposeVendor(VendorProposal proposal, ActionCallback cb) {
+        if (proposal == null
+                || TextUtils.isEmpty(proposal.getVendorName())
+                || TextUtils.isEmpty(proposal.getEventId())
+                || TextUtils.isEmpty(proposal.getOrganizerId())) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Vendor, event, and organizer are required"));
+            return;
+        }
+
+        proposal.setStatus("pending");
+        proposal.setReadByAdmin(false);
+        proposal.setAdminNote("");
+        proposal.setCreatedAt(Timestamp.now());
+        proposal.setReviewedAt(null);
+
+        db.collection(COLLECTION_VENDOR_PROPOSALS)
+                .add(proposal)
+                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
+    public void getVendorProposalsForEvent(String eventId, VendorProposalListCallback cb) {
+        if (TextUtils.isEmpty(eventId)) {
+            cb.onSuccess(new ArrayList<>());
+            return;
+        }
+
+        db.collection(COLLECTION_VENDOR_PROPOSALS)
+                .whereEqualTo("eventId", eventId)
+                .get()
+                .addOnSuccessListener(snaps -> {
+                    List<VendorProposal> proposals = new ArrayList<>();
+                    for (DocumentSnapshot doc : snaps.getDocuments()) {
+                        VendorProposal proposal = doc.toObject(VendorProposal.class);
+                        if (proposal != null) {
+                            proposal.setProposalId(doc.getId());
+                            proposals.add(proposal);
+                        }
+                    }
+                    sortVendorProposalsByCreatedAtDescending(proposals);
+                    cb.onSuccess(proposals);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    public void getAllVendorProposals(VendorProposalListCallback cb) {
+        db.collection(COLLECTION_VENDOR_PROPOSALS)
+                .get()
+                .addOnSuccessListener(snaps -> {
+                    List<VendorProposal> proposals = new ArrayList<>();
+                    for (DocumentSnapshot doc : snaps.getDocuments()) {
+                        VendorProposal proposal = doc.toObject(VendorProposal.class);
+                        if (proposal != null) {
+                            proposal.setProposalId(doc.getId());
+                            proposals.add(proposal);
+                        }
+                    }
+                    sortVendorProposalsByCreatedAtDescending(proposals);
+                    cb.onSuccess(proposals);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    public ListenerRegistration observeUnreadPendingVendorProposalCount(IntegerCallback cb) {
+        return db.collection(COLLECTION_VENDOR_PROPOSALS)
+                .whereEqualTo("status", "pending")
+                .whereEqualTo("readByAdmin", false)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "observeUnreadPendingVendorProposalCount failed", error);
+                        cb.onError(error);
+                        return;
+                    }
+                    cb.onSuccess(snapshots == null ? 0 : snapshots.size());
+                });
+    }
+
+    public void markPendingVendorProposalsRead(ActionCallback cb) {
+        db.collection(COLLECTION_VENDOR_PROPOSALS)
+                .whereEqualTo("status", "pending")
+                .whereEqualTo("readByAdmin", false)
+                .get()
+                .addOnSuccessListener(snaps -> {
+                    if (snaps.isEmpty()) {
+                        if (cb != null) cb.onSuccess();
+                        return;
+                    }
+
+                    WriteBatch batch = db.batch();
+                    for (DocumentSnapshot doc : snaps.getDocuments()) {
+                        batch.update(doc.getReference(), "readByAdmin", true);
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                            .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+                })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
+    public void approveVendorProposal(VendorProposal proposal, ActionCallback cb) {
+        reviewVendorProposal(proposal, "approved", "", cb);
+    }
+
+    public void rejectVendorProposal(VendorProposal proposal, String note, ActionCallback cb) {
+        reviewVendorProposal(proposal, "rejected", note, cb);
+    }
+
+    private void reviewVendorProposal(VendorProposal proposal, String status, String note, ActionCallback cb) {
+        if (proposal == null || TextUtils.isEmpty(proposal.getProposalId())) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Vendor proposal is required"));
+            return;
+        }
+
+        DocumentReference proposalRef = db.collection(COLLECTION_VENDOR_PROPOSALS).document(proposal.getProposalId());
+        WriteBatch batch = db.batch();
+        batch.update(proposalRef,
+                "status", status,
+                "adminNote", note == null ? "" : note,
+                "readByAdmin", true,
+                "reviewedAt", Timestamp.now());
+
+        if (!TextUtils.isEmpty(proposal.getOrganizerId())) {
+            DocumentReference notificationRef = db.collection(COLLECTION_NOTIFICATIONS)
+                    .document(proposal.getOrganizerId())
+                    .collection(SUBCOLLECTION_MESSAGES)
+                    .document();
+            String title = "approved".equals(status) ? "Vendor approved" : "Vendor rejected";
+            String body = proposal.getVendorName() + " for " + proposal.getEventTitle()
+                    + ("approved".equals(status) ? " was approved." : " was rejected.");
+            batch.set(notificationRef, buildNotification(title, body, "vendor_" + status, proposal.getEventId()));
+        }
+
+        batch.commit()
+                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
     public void deleteEvent(String eventId, String deletedByUserId, ActionCallback cb) {
         if (TextUtils.isEmpty(eventId)) {
             if (cb != null) cb.onError(new Exception("Event ID is empty"));
@@ -1590,6 +1739,13 @@ public class EventRepository {
         Collections.sort(proposals, Comparator.comparing(
                 EventProposal::getSubmittedAt,
                 Comparator.nullsLast(Comparator.naturalOrder())
+        ));
+    }
+
+    private void sortVendorProposalsByCreatedAtDescending(List<VendorProposal> proposals) {
+        Collections.sort(proposals, Comparator.comparing(
+                VendorProposal::getCreatedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())
         ));
     }
 

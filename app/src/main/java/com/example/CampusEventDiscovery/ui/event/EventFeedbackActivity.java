@@ -16,17 +16,15 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Lets attendees submit ratings, reviews, and optional photos for events.
@@ -132,29 +130,23 @@ public class EventFeedbackActivity extends AppCompatActivity {
             return;
         }
 
-        Uri imageUri = selectedImageUris.get(index);
-        StorageReference photoRef = FirebaseStorage.getInstance()
-                .getReference()
-                .child("memories")
-                .child(currentUserId)
-                .child(eventId)
-                .child(UUID.randomUUID() + ".jpg");
+        CloudinaryHelper.uploadImage(selectedImageUris.get(index), new CloudinaryHelper.CloudinaryCallback() {
+            @Override
+            public void onSuccess(String imageUrl) {
+                if (!TextUtils.isEmpty(imageUrl)) {
+                    uploadedUrls.add(imageUrl);
+                }
+                uploadNextPhoto(index + 1, uploadedUrls);
+            }
 
-        photoRef.putFile(imageUri)
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        throw task.getException();
-                    }
-                    return photoRef.getDownloadUrl();
-                })
-                .addOnSuccessListener(downloadUri -> {
-                    uploadedUrls.add(downloadUri.toString());
-                    uploadNextPhoto(index + 1, uploadedUrls);
-                })
-                .addOnFailureListener(e -> {
+            @Override
+            public void onError(String error) {
+                if (!isFinishing() && !isDestroyed()) {
                     showLoading(false);
-                    Toast.makeText(this, getString(R.string.feedback_failed), Toast.LENGTH_SHORT).show();
-                });
+                    Toast.makeText(EventFeedbackActivity.this, getString(R.string.feedback_failed), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void saveFeedback(List<String> photoUrls) {
