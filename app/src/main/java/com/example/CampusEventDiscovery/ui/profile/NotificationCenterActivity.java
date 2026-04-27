@@ -74,7 +74,7 @@ public class NotificationCenterActivity extends AppCompatActivity {
         adapter = new NotificationAdapter(notifications, notification -> {
             repository.markNotificationRead(currentUserId, notification.getNotificationId());
             notification.setRead(true);
-            adapter.notifyDataSetChanged();
+            adapter.updateData(new ArrayList<>(notifications));
 
             if (!TextUtils.isEmpty(notification.getEventId())) {
                 Intent intent = new Intent(this, EventDetailActivity.class);

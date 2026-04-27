@@ -911,7 +911,6 @@ public class ProfileFragment extends Fragment {
 
         BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNavigationView);
         ThemeManager.applyAccentToMainNavigation(requireContext(), bottomNavigationView, null);
-        ThemeManager.applyAccentToActivity(requireActivity());
     }
 
     private void preserveScrollPosition() {

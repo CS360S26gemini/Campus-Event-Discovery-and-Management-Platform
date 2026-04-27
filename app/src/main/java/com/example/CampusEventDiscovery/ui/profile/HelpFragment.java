@@ -94,7 +94,6 @@ public class HelpFragment extends Fragment {
         for (Guide guide : guidesForRole(currentRole)) {
             containerHelpGuides.addView(createGuideCard(guide));
         }
-        ThemeManager.applyAccentToActivity(requireActivity());
     }
 
     private View createGuideCard(Guide guide) {

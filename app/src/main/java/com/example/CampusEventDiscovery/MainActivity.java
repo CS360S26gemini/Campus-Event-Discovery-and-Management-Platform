@@ -187,7 +187,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         ThemeManager.applyAccentToMainNavigation(this, bottomNavigationView, null);
-        ThemeManager.applyAccentToActivity(this);
     }
 
     private void updateBottomNavMenu() {
@@ -222,7 +221,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         ThemeManager.applyAccentToMainNavigation(this, bottomNavigationView, null);
-        ThemeManager.applyAccentToActivity(this);
     }
 
     private void loadInitialFragment() {
@@ -423,11 +421,6 @@ public class MainActivity extends AppCompatActivity {
                 false,
                 animate
         );
-        fragmentContainerPostAccent();
-    }
-
-    private void fragmentContainerPostAccent() {
-        bottomNavigationView.postDelayed(() -> ThemeManager.applyAccentToActivity(this), 160L);
     }
 
     private void showLoading(boolean isLoading) {

@@ -121,6 +121,23 @@ public class VendorManagementFragment extends Fragment {
         loadData();
     }
 
+    @Override
+    public void onDestroyView() {
+        if (rvEvents != null) {
+            rvEvents.setAdapter(null);
+        }
+        if (rvProposals != null) {
+            rvProposals.setAdapter(null);
+        }
+        if (fabAddVendor != null) {
+            fabAddVendor.setOnClickListener(null);
+        }
+        eventAdapter = null;
+        proposalAdapter = null;
+        repository = null;
+        super.onDestroyView();
+    }
+
     private void setupLists() {
         rvEvents.setLayoutManager(new LinearLayoutManager(requireContext()));
         eventAdapter = new VendorEventAdapter(organizerEvents, event -> {

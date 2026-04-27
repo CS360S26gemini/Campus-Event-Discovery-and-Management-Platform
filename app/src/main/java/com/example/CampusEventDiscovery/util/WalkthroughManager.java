@@ -1,8 +1,10 @@
 package com.example.CampusEventDiscovery.util;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -134,7 +136,15 @@ public final class WalkthroughManager {
             if (target == null) {
                 target = root;
             }
-            showOverlay(activity, target, step);
+            final View resolvedTarget = resolveTargetView(target);
+            if (shouldAutoScrollBeforeOverlay(step.screen, step.targetId) && requestRevealTarget(resolvedTarget)) {
+                resolvedTarget.postDelayed(() -> {
+                    if (!isActive() || activity.isFinishing() || activity.isDestroyed()) return;
+                    showOverlay(activity, resolvedTarget, step);
+                }, 220L);
+                return;
+            }
+            showOverlay(activity, resolvedTarget, step);
         }, 220L);
     }
 
@@ -149,14 +159,18 @@ public final class WalkthroughManager {
 
     private static void complete(Activity activity) {
         cancel(activity);
-        Intent intent = new Intent(activity, MainActivity.class);
-        intent.putExtra("OPEN_TAB", "profile");
-        intent.putExtra("OPEN_HELP", true);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        Intent intent = createCompletionIntent(activity);
         activity.startActivity(intent);
         if (!(activity instanceof MainActivity)) {
             activity.finish();
         }
+    }
+
+    static Intent createCompletionIntent(Context context) {
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.putExtra("OPEN_HELP", true);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return intent;
     }
 
     private static void back(Activity activity) {
@@ -322,6 +336,45 @@ public final class WalkthroughManager {
         return list;
     }
 
+    static List<String> getGuideIds() {
+        List<String> guideIds = new ArrayList<>();
+        guideIds.add("attendee_register");
+        guideIds.add("attendee_search");
+        guideIds.add("attendee_ticket");
+        guideIds.add("attendee_memories");
+        guideIds.add("attendee_sos");
+        guideIds.add("organizer_create");
+        guideIds.add("organizer_manage");
+        guideIds.add("organizer_scan");
+        guideIds.add("organizer_sos");
+        guideIds.add("admin_review");
+        guideIds.add("admin_dashboard");
+        guideIds.add("admin_sos");
+        return guideIds;
+    }
+
+    static boolean shouldShowBackAction(int position) {
+        return position >= 0;
+    }
+
+    static String resolveBackButtonLabel(Context context, int position) {
+        return position <= 0
+                ? context.getString(R.string.walkthrough_exit)
+                : context.getString(R.string.walkthrough_back);
+    }
+
+    static boolean shouldAutoScrollBeforeOverlay(String screen, int targetId) {
+        return "create_event".equals(screen) && targetId == R.id.btnSubmitEvent;
+    }
+
+    private static boolean requestRevealTarget(View target) {
+        if (target == null || target.getWidth() <= 0 || target.getHeight() <= 0) {
+            return false;
+        }
+        Rect rect = new Rect(0, 0, target.getWidth(), target.getHeight());
+        return target.requestRectangleOnScreen(rect, true);
+    }
+
     private static final class Step {
         final String screen;
         final int targetId;
@@ -367,11 +420,17 @@ public final class WalkthroughManager {
             LinearLayout actions = new LinearLayout(getContext());
             actions.setGravity(Gravity.END);
             MaterialButton exit = actionButton(getContext().getString(R.string.walkthrough_exit), false);
-            MaterialButton back = actionButton(getContext().getString(R.string.walkthrough_back), false);
+            MaterialButton back = actionButton(resolveBackButtonLabel(getContext(), position), false);
             MaterialButton next = actionButton(position == total - 1 ? getContext().getString(R.string.walkthrough_done) : getContext().getString(R.string.walkthrough_next), true);
             exit.setOnClickListener(v -> cancel((Activity) getContext()));
-            back.setVisibility(position == 0 ? GONE : VISIBLE);
-            back.setOnClickListener(v -> back((Activity) getContext()));
+            back.setVisibility(shouldShowBackAction(position) ? VISIBLE : GONE);
+            back.setOnClickListener(v -> {
+                if (position == 0) {
+                    cancel((Activity) getContext());
+                } else {
+                    back((Activity) getContext());
+                }
+            });
             next.setOnClickListener(v -> next((Activity) getContext()));
             actions.addView(exit);
             actions.addView(back);
@@ -473,7 +532,9 @@ public final class WalkthroughManager {
             MaterialButton button = new MaterialButton(getContext());
             button.setText(text);
             button.setAllCaps(false);
-            if (!filled) {
+            if (filled) {
+                button.setTextColor(resolveAttr(com.google.android.material.R.attr.colorOnPrimary));
+            } else {
                 button.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.TRANSPARENT));
                 button.setTextColor(ThemeManager.getAccentColor(getContext()));
             }

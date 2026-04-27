@@ -9,6 +9,178 @@ This file tracks the work done on this project from this point forward. Each ent
 - Include the reason for the change, the implementation details, changed files, verification steps, and any follow-up notes.
 - Mention commits when a change has already been committed or pushed.
 
+## 2026-04-27 - Popular Events Verification Note
+
+### Why This Was Needed
+
+There was concern that the UI performance/stability refactor removed the Popular Events carousel from the home screens.
+
+### What Was Checked
+
+- Compared the local project against `origin/ui-update`.
+- Verified the Popular Events layout and binding code still exists for both attendee and organizer home screens.
+- Confirmed the organizer home diff only added lifecycle cleanup in `onDestroyView()` for the carousel container and handler.
+
+### Current Behavior
+
+- Popular Events is still present.
+- The section is hidden when the upcoming events list is `null`, empty, or fails to load.
+- In emulator/dev sessions, Firestore or network failures can make the event list empty, which can make Popular Events disappear even though the feature was not removed.
+
+### Files Reviewed
+
+- `app/src/main/res/layout/fragment_home.xml`
+- `app/src/main/res/layout/fragment_home_organizer.xml`
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/home/HomeFragment.java`
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/home/HomeOrganizerFragment.java`
+
+### Follow-Up
+
+- If the section should remain visible even when no events load, add an explicit empty/loading/error state instead of hiding the section.
+
+## 2026-04-27 - SOS Walkthrough Card Target Fix
+
+### Why This Was Needed
+
+The SOS dashboard walkthrough targeted an empty full-screen list area, which made the highlight appear as a long horizontal line and left the second step unclear. The filled walkthrough action button could also render without readable text under some accent colors.
+
+### What Was Done
+
+- Changed SOS walkthrough mode to show a local demo SOS alert card instead of an empty-state message.
+- Let the walkthrough overlay target the demo alert card, giving the user a concrete UI element to inspect.
+- Set filled walkthrough action buttons to use the theme's on-primary text color so `Next` and `Done` stay readable.
+
+### Files Changed
+
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/sos/SOSDashboardActivity.java`
+  - Renders a walkthrough-only demo SOS alert and opens the overlay after the row has time to bind.
+- `app/src/main/java/com/example/CampusEventDiscovery/util/WalkthroughManager.java`
+  - Ensures filled walkthrough action button labels remain visible.
+
+### Verification
+
+- Ran `sh gradlew clean :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest --tests com.example.CampusEventDiscovery.util.WalkthroughManagerContractTest`.
+- Build and focused JVM test verification completed successfully.
+
+## 2026-04-27 - Create Event Walkthrough Scroll Reveal
+
+### Why This Was Needed
+
+The final step of the organizer create-event walkthrough could land below the fold on smaller screens, which left the user unable to see the walkthrough message and effectively stuck at the bottom of the form.
+
+### What Was Done
+
+- Added an auto-scroll reveal rule for the create-event walkthrough submit step.
+- Kept the earlier create-event walkthrough steps unchanged so the title, date, and time steps still stay at the top of the form.
+- Added contract coverage for the submit-step scroll rule.
+
+### Files Changed
+
+- `app/src/main/java/com/example/CampusEventDiscovery/util/WalkthroughManager.java`
+  - Added a scroll-reveal helper for the create-event submit step.
+  - Kept the walkthrough overlay logic from showing before the target is brought into view.
+- `app/src/androidTest/java/com/example/CampusEventDiscovery/util/WalkthroughManagerInstrumentedTest.java`
+  - Added assertions for the new scroll rule.
+- `app/src/test/java/com/example/CampusEventDiscovery/util/WalkthroughManagerContractTest.java`
+  - Added a JVM contract test for the same scroll rule.
+
+### Verification
+
+- Ran `sh gradlew clean :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest --tests com.example.CampusEventDiscovery.util.WalkthroughManagerContractTest`.
+- Build and unit test verification completed successfully.
+
+## 2026-04-27 - Walkthrough Navigation Safety and Completion Routing
+
+### Why This Was Needed
+
+Some walkthrough flows could leave the user with no obvious way to leave the guide or move backward once the overlay appeared. The completion flow also returned users to the profile tab after finishing, which was not the intended support handoff.
+
+### What Was Done
+
+- Kept a visible navigation escape on every walkthrough step.
+- Made the first-step back action behave like exit/cancel, so users are never trapped on the first walkthrough screen.
+- Kept later steps on proper backward navigation instead of forcing a one-way flow.
+- Changed walkthrough completion so the app now opens Help and Support instead of the profile tab.
+- Added instrumentation coverage for the completion intent and walkthrough step/back-action behavior.
+
+### Files Changed
+
+- `app/src/main/java/com/example/CampusEventDiscovery/util/WalkthroughManager.java`
+  - Routed walkthrough completion to Help and Support.
+  - Made the back action available on every step.
+  - Added helper methods used by the walkthrough tests.
+- `app/src/androidTest/java/com/example/CampusEventDiscovery/util/WalkthroughManagerInstrumentedTest.java`
+  - Verifies completion routing and that every walkthrough guide exposes steps with a usable back path.
+
+### Verification
+
+- Ran `sh gradlew clean :app:assembleDebug :app:assembleDebugAndroidTest`.
+- Ran `sh gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.CampusEventDiscovery.util.WalkthroughManagerInstrumentedTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.CampusEventDiscovery.ui.VendorManagementInstrumentedTest`.
+- Both completed successfully.
+
+## 2026-04-27 - UI Performance and Stability Refactor
+
+### Why This Was Needed
+
+The UI layer still had several patterns that were expensive or brittle: a recursive runtime accent walker on every activity resume, repeated `notifyDataSetChanged()` refreshes in list-heavy screens, async search results that could arrive out of order, and several fragments that kept view references alive longer than needed.
+
+### What Was Done
+
+- Removed the app-wide accent lifecycle callback and stopped calling the recursive accent walker from `MainActivity`, `ProfileFragment`, and `HelpFragment`.
+- Kept accent styling on explicit surfaces such as the bottom navigation instead of rewalking the full hierarchy on resume.
+- Converted the main list adapters to `ListAdapter` + `DiffUtil` so updates animate and refresh by item instead of redrawing entire lists.
+- Added a generation guard to search so only the latest async result can update the UI.
+- Added `onDestroyView()` cleanup to the organizer home, admin home, vendor management, and search screens so adapters, listeners, and handlers are detached sooner.
+- Removed the remaining full `notifyDataSetChanged()` path from the UI adapters.
+
+### Files Changed
+
+- `app/src/main/java/com/example/CampusEventDiscovery/util/ThemeManager.java`
+  - Removed the lifecycle-based accent application.
+- `app/src/main/java/com/example/CampusEventDiscovery/MainActivity.java`
+  - Removed the repeated accent walker calls from resume and fragment swaps.
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/profile/ProfileFragment.java`
+  - Stopped invoking the global accent walker from the profile screen.
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/profile/HelpFragment.java`
+  - Stopped invoking the global accent walker from the help screen.
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/search/SearchFragment.java`
+  - Added latest-request-wins handling and stronger teardown cleanup.
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/home/HomeAdminFragment.java`
+  - Added view cleanup in `onDestroyView()`.
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/home/HomeOrganizerFragment.java`
+  - Added view cleanup in `onDestroyView()`.
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/vendors/VendorManagementFragment.java`
+  - Added adapter and listener cleanup in `onDestroyView()`.
+- `app/src/main/java/com/example/CampusEventDiscovery/adapter/EventAdapter.java`
+  - Converted to `ListAdapter` and `DiffUtil`.
+- `app/src/main/java/com/example/CampusEventDiscovery/adapter/MemoryAdapter.java`
+  - Converted to `ListAdapter` and `DiffUtil`.
+- `app/src/main/java/com/example/CampusEventDiscovery/adapter/VendorEventAdapter.java`
+  - Converted to `ListAdapter` and `DiffUtil`.
+- `app/src/main/java/com/example/CampusEventDiscovery/adapter/VendorProposalAdapter.java`
+  - Converted to `ListAdapter` and `DiffUtil`.
+- `app/src/main/java/com/example/CampusEventDiscovery/adapter/OrganizerPendingAdapter.java`
+  - Converted to `ListAdapter` and `DiffUtil`.
+- `app/src/main/java/com/example/CampusEventDiscovery/adapter/NotificationAdapter.java`
+  - Converted to `ListAdapter` and `DiffUtil`.
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/sos/SosAlertAdapter.java`
+  - Converted to `ListAdapter` and `DiffUtil`.
+- `app/src/main/java/com/example/CampusEventDiscovery/adapter/AttendeeAdapter.java`
+  - Converted the attendee filter refresh path to `ListAdapter` updates.
+- `app/src/main/java/com/example/CampusEventDiscovery/ui/profile/NotificationCenterActivity.java`
+  - Updated notification read handling to refresh via the adapter data path.
+
+### Verification
+
+- Ran `sh gradlew clean :app:assembleDebug :app:assembleDebugAndroidTest`.
+- Ran `sh gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.CampusEventDiscovery.ui.VendorManagementInstrumentedTest`.
+- Both completed successfully.
+
+### Notes
+
+- The UI no longer depends on a lifecycle-wide accent walk, which removes the source of the earlier segmented-button regressions.
+- The remaining accent application is explicit and localized to known surfaces.
+
 ## 2026-04-27 - Organizer Bottom Navigation Create Event Action
 
 ### Why This Was Needed

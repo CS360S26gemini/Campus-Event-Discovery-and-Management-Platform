@@ -9,6 +9,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -26,9 +28,8 @@ import java.util.Locale;
 /**
  * RecyclerView adapter for attendee memories.
  */
-public class MemoryAdapter extends RecyclerView.Adapter<MemoryAdapter.MemoryViewHolder> {
+public class MemoryAdapter extends ListAdapter<Memory, MemoryAdapter.MemoryViewHolder> {
 
-    private List<Memory> memories;
     private final OnMemoryActionListener listener;
 
     public interface OnMemoryActionListener {
@@ -37,8 +38,9 @@ public class MemoryAdapter extends RecyclerView.Adapter<MemoryAdapter.MemoryView
     }
 
     public MemoryAdapter(List<Memory> memories, OnMemoryActionListener listener) {
-        this.memories = memories;
+        super(DIFF_CALLBACK);
         this.listener = listener;
+        submitList(memories == null ? null : new java.util.ArrayList<>(memories));
     }
 
     @NonNull
@@ -50,7 +52,7 @@ public class MemoryAdapter extends RecyclerView.Adapter<MemoryAdapter.MemoryView
 
     @Override
     public void onBindViewHolder(@NonNull MemoryViewHolder holder, int position) {
-        Memory memory = memories.get(position);
+        Memory memory = getItem(position);
         holder.tvTitle.setText(safeText(memory.getEventTitle(), holder.itemView.getContext().getString(R.string.app_name)));
         holder.tvDate.setText(formatTimestamp(memory.getAttendedAt()));
         if (memory.getRating() > 0) {
@@ -102,12 +104,11 @@ public class MemoryAdapter extends RecyclerView.Adapter<MemoryAdapter.MemoryView
 
     @Override
     public int getItemCount() {
-        return memories != null ? memories.size() : 0;
+        return super.getItemCount();
     }
 
     public void updateData(List<Memory> newMemories) {
-        memories = newMemories;
-        notifyDataSetChanged();
+        submitList(newMemories == null ? null : new java.util.ArrayList<>(newMemories));
     }
 
     private String safeText(String value, String fallback) {
@@ -119,6 +120,28 @@ public class MemoryAdapter extends RecyclerView.Adapter<MemoryAdapter.MemoryView
             return "";
         }
         return new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(timestamp.toDate());
+    }
+
+    private static final DiffUtil.ItemCallback<Memory> DIFF_CALLBACK = new DiffUtil.ItemCallback<Memory>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull Memory oldItem, @NonNull Memory newItem) {
+            return TextUtils.equals(oldItem.getEventId(), newItem.getEventId());
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull Memory oldItem, @NonNull Memory newItem) {
+            int oldCount = oldItem.getPhotoUrls() == null ? 0 : oldItem.getPhotoUrls().size();
+            int newCount = newItem.getPhotoUrls() == null ? 0 : newItem.getPhotoUrls().size();
+            return TextUtils.equals(oldItem.getEventId(), newItem.getEventId())
+                    && TextUtils.equals(oldItem.getEventTitle(), newItem.getEventTitle())
+                    && oldItem.getRating() == newItem.getRating()
+                    && oldCount == newCount
+                    && timestampMillis(oldItem.getAttendedAt()) == timestampMillis(newItem.getAttendedAt());
+        }
+    };
+
+    private static long timestampMillis(Timestamp timestamp) {
+        return timestamp == null ? Long.MIN_VALUE : timestamp.toDate().getTime();
     }
 
     static class MemoryViewHolder extends RecyclerView.ViewHolder {

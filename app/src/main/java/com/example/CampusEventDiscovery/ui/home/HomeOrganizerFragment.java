@@ -153,6 +153,20 @@ public class HomeOrganizerFragment extends Fragment {
         popularCarouselHandler.removeCallbacks(popularCarouselRunnable);
     }
 
+    @Override
+    public void onDestroyView() {
+        popularCarouselHandler.removeCallbacks(popularCarouselRunnable);
+        if (rvEvents != null) {
+            rvEvents.setAdapter(null);
+        }
+        if (popularEventsContainer != null) {
+            popularEventsContainer.removeAllViews();
+        }
+        adapter = null;
+        repository = null;
+        super.onDestroyView();
+    }
+
     private void setupRecyclerView() {
         adapter = new EventAdapter(
                 eventList,

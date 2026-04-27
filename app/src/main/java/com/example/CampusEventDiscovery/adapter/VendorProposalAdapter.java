@@ -10,6 +10,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.CampusEventDiscovery.R;
@@ -21,21 +23,21 @@ import com.google.android.material.chip.Chip;
 import java.util.List;
 import java.util.Locale;
 
-public class VendorProposalAdapter extends RecyclerView.Adapter<VendorProposalAdapter.VendorViewHolder> {
+public class VendorProposalAdapter extends ListAdapter<VendorProposal, VendorProposalAdapter.VendorViewHolder> {
 
     public interface OnVendorActionListener {
         void onApprove(VendorProposal proposal);
         void onReject(VendorProposal proposal);
     }
 
-    private List<VendorProposal> proposals;
     private final boolean showAdminActions;
     private final OnVendorActionListener listener;
 
     public VendorProposalAdapter(List<VendorProposal> proposals, boolean showAdminActions, OnVendorActionListener listener) {
-        this.proposals = proposals;
+        super(DIFF_CALLBACK);
         this.showAdminActions = showAdminActions;
         this.listener = listener;
+        submitList(proposals == null ? null : new java.util.ArrayList<>(proposals));
     }
 
     @NonNull
@@ -47,7 +49,7 @@ public class VendorProposalAdapter extends RecyclerView.Adapter<VendorProposalAd
 
     @Override
     public void onBindViewHolder(@NonNull VendorViewHolder holder, int position) {
-        VendorProposal proposal = proposals.get(position);
+        VendorProposal proposal = getItem(position);
         holder.tvName.setText(safe(proposal.getVendorName(), holder.itemView.getContext().getString(R.string.vendor_name)));
         holder.tvDescription.setText(safe(proposal.getDescription(), holder.itemView.getContext().getString(R.string.vendor_description)));
         holder.tvEvent.setText(holder.itemView.getContext().getString(R.string.vendor_event_format, safe(proposal.getEventTitle(), "-")));
@@ -67,12 +69,11 @@ public class VendorProposalAdapter extends RecyclerView.Adapter<VendorProposalAd
 
     @Override
     public int getItemCount() {
-        return proposals == null ? 0 : proposals.size();
+        return super.getItemCount();
     }
 
     public void updateData(List<VendorProposal> newProposals) {
-        proposals = newProposals;
-        notifyDataSetChanged();
+        submitList(newProposals == null ? null : new java.util.ArrayList<>(newProposals));
     }
 
     private void bindStatus(VendorViewHolder holder, VendorProposal proposal) {
@@ -94,6 +95,24 @@ public class VendorProposalAdapter extends RecyclerView.Adapter<VendorProposalAd
     private String safe(String value, String fallback) {
         return TextUtils.isEmpty(value) ? fallback : value;
     }
+
+    private static final DiffUtil.ItemCallback<VendorProposal> DIFF_CALLBACK = new DiffUtil.ItemCallback<VendorProposal>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull VendorProposal oldItem, @NonNull VendorProposal newItem) {
+            return TextUtils.equals(oldItem.getProposalId(), newItem.getProposalId());
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull VendorProposal oldItem, @NonNull VendorProposal newItem) {
+            return TextUtils.equals(oldItem.getProposalId(), newItem.getProposalId())
+                    && TextUtils.equals(oldItem.getVendorName(), newItem.getVendorName())
+                    && TextUtils.equals(oldItem.getDescription(), newItem.getDescription())
+                    && TextUtils.equals(oldItem.getEventTitle(), newItem.getEventTitle())
+                    && TextUtils.equals(oldItem.getOrganizerName(), newItem.getOrganizerName())
+                    && TextUtils.equals(oldItem.getPhone(), newItem.getPhone())
+                    && TextUtils.equals(oldItem.getStatus(), newItem.getStatus());
+        }
+    };
 
     static class VendorViewHolder extends RecyclerView.ViewHolder {
         TextView tvName;

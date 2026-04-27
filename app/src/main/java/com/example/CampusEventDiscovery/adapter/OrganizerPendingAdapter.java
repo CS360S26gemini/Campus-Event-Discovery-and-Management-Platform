@@ -10,6 +10,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -31,18 +33,18 @@ import java.util.Locale;
  * Adapter for showing organizer pending proposals using the same event card
  * layout but hiding heart/share and showing a PENDING badge.
  */
-public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendingAdapter.PendingViewHolder> {
+public class OrganizerPendingAdapter extends ListAdapter<Event, OrganizerPendingAdapter.PendingViewHolder> {
 
     public interface OnPendingClickListener {
         void onItemClick(Event event);
     }
 
-    private List<Event> events;
     private final OnPendingClickListener listener;
 
     public OrganizerPendingAdapter(List<Event> events, OnPendingClickListener listener) {
-        this.events = events;
+        super(DIFF_CALLBACK);
         this.listener = listener;
+        submitList(events == null ? null : new java.util.ArrayList<>(events));
     }
 
     @NonNull
@@ -54,7 +56,7 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
 
     @Override
     public void onBindViewHolder(@NonNull PendingViewHolder holder, int position) {
-        Event event = events.get(position);
+        Event event = getItem(position);
 
         holder.tvTitle.setText(safeText(event.getTitle(), holder.itemView.getContext().getString(R.string.app_name)));
         holder.tvDateTime.setText(formatDateTime(event.getDate(), holder.itemView));
@@ -105,12 +107,11 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
 
     @Override
     public int getItemCount() {
-        return events != null ? events.size() : 0;
+        return super.getItemCount();
     }
 
     public void updateData(List<Event> newEvents) {
-        this.events = newEvents;
-        notifyDataSetChanged();
+        submitList(newEvents == null ? null : new java.util.ArrayList<>(newEvents));
     }
 
     private String safeText(String text, String fallback) {
@@ -167,6 +168,28 @@ public class OrganizerPendingAdapter extends RecyclerView.Adapter<OrganizerPendi
             holder.chipStatus.setChipBackgroundColorResource(R.color.colorSecondaryContainer);
             holder.chipStatus.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.colorOnSecondaryContainer));
         }
+    }
+
+    private static final DiffUtil.ItemCallback<Event> DIFF_CALLBACK = new DiffUtil.ItemCallback<Event>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull Event oldItem, @NonNull Event newItem) {
+            return TextUtils.equals(oldItem.getEventId(), newItem.getEventId());
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull Event oldItem, @NonNull Event newItem) {
+            return TextUtils.equals(oldItem.getTitle(), newItem.getTitle())
+                    && timestampMillis(oldItem.getDate()) == timestampMillis(newItem.getDate())
+                    && TextUtils.equals(oldItem.getLocation(), newItem.getLocation())
+                    && oldItem.getCapacity() == newItem.getCapacity()
+                    && TextUtils.equals(oldItem.getStatus(), newItem.getStatus())
+                    && TextUtils.equals(oldItem.getThumbnailUrl(), newItem.getThumbnailUrl())
+                    && oldItem.isVerified() == newItem.isVerified();
+        }
+    };
+
+    private static long timestampMillis(Timestamp timestamp) {
+        return timestamp == null ? Long.MIN_VALUE : timestamp.toDate().getTime();
     }
 
     public static class PendingViewHolder extends RecyclerView.ViewHolder {

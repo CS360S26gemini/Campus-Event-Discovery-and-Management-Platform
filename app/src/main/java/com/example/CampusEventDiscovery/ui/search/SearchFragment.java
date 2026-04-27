@@ -72,6 +72,7 @@ public class SearchFragment extends Fragment {
 
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
+    private long searchRequestGeneration;
 
     private String selectedCategory = "All";
     private String currentUserId;
@@ -273,6 +274,7 @@ public class SearchFragment extends Fragment {
         showLoading(true);
 
         String query = etSearch.getText().toString().trim();
+        final long requestGeneration = ++searchRequestGeneration;
 
         if (WalkthroughManager.isActive()) {
             showLoading(false);
@@ -289,7 +291,7 @@ public class SearchFragment extends Fragment {
         repository.searchEvents(query, selectedCategory, new EventRepository.EventListCallback() {
             @Override
             public void onSuccess(List<Event> events) {
-                if (!isAdded()) return;
+                if (!isAdded() || requestGeneration != searchRequestGeneration) return;
                 showLoading(false);
 
                 List<Event> sortedEvents = sortEvents(events, query);
@@ -305,7 +307,7 @@ public class SearchFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
-                if (!isAdded()) return;
+                if (!isAdded() || requestGeneration != searchRequestGeneration) return;
                 showLoading(false);
                 adapter.updateData(new ArrayList<>());
                 tvEventsCount.setText(getString(R.string.events_count_label, 0));
@@ -425,6 +427,11 @@ public class SearchFragment extends Fragment {
         if (searchRunnable != null) {
             searchHandler.removeCallbacks(searchRunnable);
         }
+        if (rvResults != null) {
+            rvResults.setAdapter(null);
+        }
+        adapter = null;
+        repository = null;
     }
 
     private enum SortMode {

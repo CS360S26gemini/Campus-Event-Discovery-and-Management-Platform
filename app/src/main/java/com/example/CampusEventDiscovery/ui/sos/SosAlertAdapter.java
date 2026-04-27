@@ -10,6 +10,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.CampusEventDiscovery.R;
@@ -19,14 +21,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** RecyclerView adapter that renders SOS alerts in the dashboard. */
-public class SosAlertAdapter extends RecyclerView.Adapter<SosAlertAdapter.AlertHolder> {
+public class SosAlertAdapter extends ListAdapter<SosAlert, SosAlertAdapter.AlertHolder> {
 
-    private final List<SosAlert> alerts = new ArrayList<>();
+    public SosAlertAdapter() {
+        super(DIFF_CALLBACK);
+    }
 
     public void setAlerts(List<SosAlert> newAlerts) {
-        alerts.clear();
-        if (newAlerts != null) alerts.addAll(newAlerts);
-        notifyDataSetChanged();
+        submitList(newAlerts == null ? null : new ArrayList<>(newAlerts));
     }
 
     @NonNull
@@ -39,13 +41,31 @@ public class SosAlertAdapter extends RecyclerView.Adapter<SosAlertAdapter.AlertH
 
     @Override
     public void onBindViewHolder(@NonNull AlertHolder holder, int position) {
-        holder.bind(alerts.get(position));
+        holder.bind(getItem(position));
     }
 
     @Override
     public int getItemCount() {
-        return alerts.size();
+        return super.getItemCount();
     }
+
+    private static final DiffUtil.ItemCallback<SosAlert> DIFF_CALLBACK = new DiffUtil.ItemCallback<SosAlert>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull SosAlert oldItem, @NonNull SosAlert newItem) {
+            return oldItem.getTimestamp() == newItem.getTimestamp()
+                    && TextUtils.equals(oldItem.getEventId(), newItem.getEventId())
+                    && TextUtils.equals(oldItem.getDisplayName(), newItem.getDisplayName());
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull SosAlert oldItem, @NonNull SosAlert newItem) {
+            return TextUtils.equals(oldItem.getDisplayName(), newItem.getDisplayName())
+                    && TextUtils.equals(oldItem.getStatus(), newItem.getStatus())
+                    && TextUtils.equals(oldItem.getEventName(), newItem.getEventName())
+                    && TextUtils.equals(oldItem.getMapsUrl(), newItem.getMapsUrl())
+                    && oldItem.getTimestamp() == newItem.getTimestamp();
+        }
+    };
 
     static class AlertHolder extends RecyclerView.ViewHolder {
 

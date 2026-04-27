@@ -69,43 +69,8 @@ public final class ThemeManager {
     }
 
     public static void installAccentLifecycle(Application application) {
-        application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
-            @Override
-            public void onActivityResumed(Activity activity) {
-                applyAccentToActivity(activity);
-            }
-
-            @Override
-            public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-                View decorView = activity.getWindow().getDecorView();
-                decorView.post(() -> applyAccentToActivity(activity));
-            }
-
-            @Override
-            public void onActivityStarted(Activity activity) {
-                // no-op
-            }
-
-            @Override
-            public void onActivityPaused(Activity activity) {
-                // no-op
-            }
-
-            @Override
-            public void onActivityStopped(Activity activity) {
-                // no-op
-            }
-
-            @Override
-            public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-                // no-op
-            }
-
-            @Override
-            public void onActivityDestroyed(Activity activity) {
-                // no-op
-            }
-        });
+        // Accent handling is now applied explicitly at known surfaces instead of
+        // walking every activity view tree on each resume.
     }
 
     public static boolean applyThemePreference(Context context, boolean darkMode) {

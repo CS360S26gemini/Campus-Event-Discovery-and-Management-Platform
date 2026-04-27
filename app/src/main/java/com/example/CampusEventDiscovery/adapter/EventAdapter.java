@@ -12,6 +12,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -34,7 +36,7 @@ import java.util.Set;
  *
  * RecyclerView adapter used to render standard event cards from Firestore data.
  */
-public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
+public class EventAdapter extends ListAdapter<Event, EventAdapter.EventViewHolder> {
 
     public interface OnEventClickListener {
         void onItemClick(Event event);
@@ -42,7 +44,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         void onItemLongClick(Event event);
     }
 
-    private List<Event> events;
     private Set<String> savedEventIds;
     private final String currentUserId;
     private final OnEventClickListener listener;
@@ -70,12 +71,13 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                         OnEventClickListener listener,
                         boolean useCompactRows,
                         boolean showFavouriteActions) {
-        this.events = events;
+        super(DIFF_CALLBACK);
         this.savedEventIds = savedEventIds != null ? savedEventIds : new HashSet<>();
         this.currentUserId = currentUserId;
         this.listener = listener;
         this.useCompactRows = useCompactRows;
         this.showFavouriteActions = showFavouriteActions;
+        submitList(events == null ? null : new java.util.ArrayList<>(events));
     }
 
     @NonNull
@@ -95,7 +97,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
      */
     @Override
     public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
-        Event event = events.get(position);
+        Event event = getItem(position);
 
         holder.tvTitle.setText(safeText(event.getTitle(), holder.itemView.getContext().getString(R.string.app_name)));
         holder.tvDateTime.setText(formatDateTime(event.getDate(), holder.itemView.getContext()));
@@ -186,17 +188,18 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
     @Override
     public int getItemCount() {
-        return events != null ? events.size() : 0;
+        return super.getItemCount();
     }
 
     public void updateSavedIds(Set<String> ids) {
         this.savedEventIds = ids != null ? ids : new HashSet<>();
-        notifyDataSetChanged();
+        if (getItemCount() > 0) {
+            notifyItemRangeChanged(0, getItemCount(), "saved_ids_changed");
+        }
     }
 
     public void updateData(List<Event> newEvents) {
-        this.events = newEvents;
-        notifyDataSetChanged();
+        submitList(newEvents == null ? null : new java.util.ArrayList<>(newEvents));
     }
 
     private boolean isRecentEvent(Timestamp createdAt) {
@@ -210,6 +213,25 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
         return (nowMillis - createdMillis) <= threeDaysInMillis;
     }
+
+    private static final DiffUtil.ItemCallback<Event> DIFF_CALLBACK = new DiffUtil.ItemCallback<Event>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull Event oldItem, @NonNull Event newItem) {
+            String oldId = oldItem == null ? null : oldItem.getEventId();
+            String newId = newItem == null ? null : newItem.getEventId();
+            return TextUtils.equals(oldId, newId);
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull Event oldItem, @NonNull Event newItem) {
+            return TextUtils.equals(oldItem.getTitle(), newItem.getTitle())
+                    && TextUtils.equals(oldItem.getLocation(), newItem.getLocation())
+                    && TextUtils.equals(oldItem.getStatus(), newItem.getStatus())
+                    && TextUtils.equals(oldItem.getThumbnailUrl(), newItem.getThumbnailUrl())
+                    && oldItem.getRsvpCount() == newItem.getRsvpCount()
+                    && oldItem.getCapacity() == newItem.getCapacity();
+        }
+    };
 
     private void bindStatusChip(EventViewHolder holder, Event event, long rsvpCount, long capacity) {
         if (holder.chipStatus == null) {

@@ -26,6 +26,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -68,12 +69,29 @@ public class SOSDashboardActivity extends AppCompatActivity {
 
         if (WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive()) {
             pbLoading.setVisibility(View.GONE);
-            tvEmpty.setText("Walkthrough mode: active SOS alerts would appear here.");
-            tvEmpty.setVisibility(View.VISIBLE);
-            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "sos_dashboard");
+            tvEmpty.setVisibility(View.GONE);
+            rvAlerts.setVisibility(View.VISIBLE);
+            adapter.setAlerts(Collections.singletonList(createDemoAlert()));
+            rvAlerts.postDelayed(() ->
+                    WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "sos_dashboard"), 260L);
         } else {
             resolveRoleAndLoad();
         }
+    }
+
+    private SosAlert createDemoAlert() {
+        return new SosAlert(
+                "walkthrough_attendee",
+                "Demo Attendee",
+                "walkthrough_event",
+                "Demo Music Night",
+                currentUserId,
+                0.0,
+                0.0,
+                "",
+                System.currentTimeMillis() - 5 * 60 * 1000L,
+                getString(R.string.sos_status_active)
+        );
     }
 
     private void resolveRoleAndLoad() {

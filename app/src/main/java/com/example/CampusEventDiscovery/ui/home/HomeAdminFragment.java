@@ -115,6 +115,11 @@ public class HomeAdminFragment extends Fragment {
             vendorCountRegistration.remove();
             vendorCountRegistration = null;
         }
+        if (rvAdminApprovals != null) {
+            rvAdminApprovals.setAdapter(null);
+        }
+        adapter = null;
+        repository = null;
         super.onDestroyView();
     }
 
