@@ -8,7 +8,6 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.MultiAutoCompleteTextView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -24,13 +23,17 @@ import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.SignupValidator;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * AccountSettingsActivity.java
@@ -44,7 +47,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
     private EditText etEmail;
     private AutoCompleteTextView etUniversity;
     private EditText etLocation;
-    private MultiAutoCompleteTextView etInterests;
+    private ChipGroup chipGroupInterests;
     private EditText etCurrentPassword;
     private EditText etNewPassword;
     private EditText etConfirmPassword;
@@ -99,7 +102,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etUniversity = findViewById(R.id.etUniversity);
         etLocation = findViewById(R.id.etLocation);
-        etInterests = findViewById(R.id.etInterests);
+        chipGroupInterests = findViewById(R.id.chipGroupInterests);
         etCurrentPassword = findViewById(R.id.etCurrentPassword);
         etNewPassword = findViewById(R.id.etNewPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
@@ -143,22 +146,6 @@ public class AccountSettingsActivity extends AppCompatActivity {
         if (campusOptions.length > 0) {
             etUniversity.setText(campusOptions[0], false);
         }
-
-        String[] interestOptions = getResources().getStringArray(R.array.interest_options);
-        ArrayAdapter<String> interestsAdapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_dropdown_item_1line,
-                interestOptions
-        );
-        etInterests.setAdapter(interestsAdapter);
-        etInterests.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
-        etInterests.setThreshold(1);
-        etInterests.setOnClickListener(v -> etInterests.showDropDown());
-        etInterests.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                etInterests.showDropDown();
-            }
-        });
     }
 
     private void setupSecurityButtons() {
@@ -207,7 +194,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
                         false
                 );
                 etLocation.setText(user.getLocation());
-                etInterests.setText(joinInterests(user.getInterests()));
+                precheckInterestChips(user.getInterests());
             }
 
             @Override
@@ -226,7 +213,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
         etEmail.setText(DevSessionManager.getDisplayEmail(this));
         etUniversity.setText(getDefaultCampus(), false);
         etLocation.setText("");
-        etInterests.setText("");
+        precheckInterestChips(new ArrayList<>());
         btnSaveSettings.setEnabled(false);
         btnChangeEmail.setEnabled(false);
         btnChangePassword.setEnabled(false);
@@ -250,7 +237,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
         String currentPassword = etCurrentPassword.getText().toString();
         String newPassword = etNewPassword.getText().toString();
         String confirmPassword = etConfirmPassword.getText().toString();
-        List<String> interests = parseInterests(etInterests.getText().toString());
+        List<String> interests = getSelectedInterestsFromChips();
 
         String validationError = SignupValidator.validateName(fullName);
         if (validationError == null) {
@@ -270,6 +257,11 @@ public class AccountSettingsActivity extends AppCompatActivity {
 
         if (validationError != null) {
             Toast.makeText(this, validationError, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!SignupValidator.hasMinimumSelectedInterests(interests)) {
+            Toast.makeText(this, getString(R.string.select_at_least_three_interests), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -447,27 +439,49 @@ public class AccountSettingsActivity extends AppCompatActivity {
         );
     }
 
-    private String joinInterests(List<String> interests) {
-        if (interests == null || interests.isEmpty()) {
-            return "";
-        }
-        return TextUtils.join(", ", interests);
-    }
-
-    private List<String> parseInterests(String raw) {
+    private List<String> getSelectedInterestsFromChips() {
         List<String> interests = new ArrayList<>();
-        if (TextUtils.isEmpty(raw)) {
+        if (chipGroupInterests == null) {
             return interests;
         }
 
-        String[] tokens = raw.split(",");
-        for (String token : tokens) {
-            String value = token == null ? "" : token.trim();
-            if (!TextUtils.isEmpty(value) && !interests.contains(value)) {
-                interests.add(value);
+        for (int i = 0; i < chipGroupInterests.getChildCount(); i++) {
+            if (chipGroupInterests.getChildAt(i) instanceof Chip) {
+                Chip chip = (Chip) chipGroupInterests.getChildAt(i);
+                if (chip.isChecked()) {
+                    interests.add(chip.getText().toString());
+                }
             }
         }
         return interests;
+    }
+
+    private void precheckInterestChips(List<String> interests) {
+        if (chipGroupInterests == null) {
+            return;
+        }
+
+        Set<String> selected = new HashSet<>();
+        if (interests != null) {
+            for (String interest : interests) {
+                selected.add(normalizeInterest(interest));
+            }
+        }
+
+        for (int i = 0; i < chipGroupInterests.getChildCount(); i++) {
+            if (chipGroupInterests.getChildAt(i) instanceof Chip) {
+                Chip chip = (Chip) chipGroupInterests.getChildAt(i);
+                chip.setChecked(selected.contains(normalizeInterest(chip.getText().toString())));
+            }
+        }
+    }
+
+    private String normalizeInterest(String raw) {
+        if (TextUtils.isEmpty(raw)) {
+            return "";
+        }
+        String value = raw.trim();
+        return value.equalsIgnoreCase("Education") ? "Academic" : value;
     }
 
     private String getDefaultCampus() {

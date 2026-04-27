@@ -38,6 +38,7 @@ import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
@@ -50,6 +51,7 @@ import com.google.firebase.auth.FirebaseUser;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -63,9 +65,10 @@ public class HomeFragment extends Fragment {
 
     private TextView tvWelcome;
     private MaterialButton btnSos;
-    private TextView tvPopularLabel;
-    private HorizontalScrollView popularEventsScroll;
-    private LinearLayout popularEventsContainer;
+    private TextView tvRecommendedLabel;
+    private TextView tvRecommendedSubtitle;
+    private HorizontalScrollView recommendedEventsScroll;
+    private LinearLayout recommendedEventsContainer;
     private View featuredCardContainer;
     private MaterialCardView cardFeaturedEvent;
     private RecyclerView rvEvents;
@@ -88,12 +91,12 @@ public class HomeFragment extends Fragment {
     private String currentUserId;
     private User currentUser;
     private Event featuredEvent;
-    private final Handler popularCarouselHandler = new Handler(Looper.getMainLooper());
-    private final Runnable popularCarouselRunnable = new Runnable() {
+    private final Handler recommendationCarouselHandler = new Handler(Looper.getMainLooper());
+    private final Runnable recommendationCarouselRunnable = new Runnable() {
         @Override
         public void run() {
-            advancePopularCarousel();
-            popularCarouselHandler.postDelayed(this, 3000L);
+            advanceRecommendationCarousel();
+            recommendationCarouselHandler.postDelayed(this, 3000L);
         }
     };
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
@@ -139,9 +142,10 @@ public class HomeFragment extends Fragment {
 
         tvWelcome = view.findViewById(R.id.tvWelcome);
         btnSos = view.findViewById(R.id.btnSos);
-        tvPopularLabel = view.findViewById(R.id.tvPopularLabel);
-        popularEventsScroll = view.findViewById(R.id.popularEventsScroll);
-        popularEventsContainer = view.findViewById(R.id.popularEventsContainer);
+        tvRecommendedLabel = view.findViewById(R.id.tvRecommendedLabel);
+        tvRecommendedSubtitle = view.findViewById(R.id.tvRecommendedSubtitle);
+        recommendedEventsScroll = view.findViewById(R.id.recommendedEventsScroll);
+        recommendedEventsContainer = view.findViewById(R.id.recommendedEventsContainer);
         featuredCardContainer = view.findViewById(R.id.featuredCardContainer);
         rvEvents = view.findViewById(R.id.rvEvents);
         progressBar = view.findViewById(R.id.progressBar);
@@ -167,7 +171,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        startPopularCarousel();
+        startRecommendationCarousel();
         if (getView() != null) {
             loadHomeData();
             WalkthroughManager.maybeShow(requireActivity(), getView(), "home_attendee");
@@ -177,7 +181,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        popularCarouselHandler.removeCallbacks(popularCarouselRunnable);
+        recommendationCarouselHandler.removeCallbacks(recommendationCarouselRunnable);
     }
 
     private void setupRecyclerView() {
@@ -215,6 +219,7 @@ public class HomeFragment extends Fragment {
             tvWelcome.setText(getString(R.string.welcome_back));
             btnSos.setEnabled(false);
             featuredCardContainer.setVisibility(View.GONE);
+            hideRecommendations();
             showLoading(false);
             updateEventList(new ArrayList<>());
             tvEmpty.setText(getString(R.string.no_events_found));
@@ -258,6 +263,7 @@ public class HomeFragment extends Fragment {
                 }
 
                 loadFeaturedEvent();
+                loadRecommendations(user == null ? null : user.getInterests());
 
                 repository.getUpcomingEvents(new EventRepository.EventListCallback() {
                     @Override
@@ -286,6 +292,7 @@ public class HomeFragment extends Fragment {
                     tvWelcome.setText(getString(R.string.welcome_back));
                 }
                 loadFeaturedEvent();
+                hideRecommendations();
 
                 repository.getUpcomingEvents(new EventRepository.EventListCallback() {
                     @Override
@@ -526,7 +533,6 @@ public class HomeFragment extends Fragment {
 
     private void updateEventList(List<Event> events) {
         adapter.updateData(events);
-        bindPopularEvents(events);
 
         if (events == null || events.isEmpty()) {
             tvEmpty.setVisibility(View.VISIBLE);
@@ -535,40 +541,89 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private void bindPopularEvents(List<Event> events) {
-        if (popularEventsContainer == null || popularEventsScroll == null || tvPopularLabel == null) {
+    private void loadRecommendations(List<String> interests) {
+        if (currentUserId == null) {
+            hideRecommendations();
             return;
         }
 
-        popularEventsContainer.removeAllViews();
+        List<String> recentlyViewedIds = readRecentlyViewedIds();
+        repository.getScoredRecommendations(interests, recentlyViewedIds, new EventRepository.RecommendationCallback() {
+            @Override
+            public void onSuccess(List<Event> events, boolean trendingFallback, String topCategory) {
+                if (!isAdded()) return;
+                bindRecommendedEvents(events, trendingFallback, topCategory);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                hideRecommendations();
+            }
+        });
+    }
+
+    private List<String> readRecentlyViewedIds() {
+        String raw = requireContext()
+                .getSharedPreferences(Constants.PREFS_RECENTLY_VIEWED, Context.MODE_PRIVATE)
+                .getString(Constants.PREFS_RECENTLY_VIEWED_KEY, "");
+        LinkedHashSet<String> deduped = new LinkedHashSet<>();
+        if (!TextUtils.isEmpty(raw)) {
+            String[] ids = raw.split(",");
+            for (String id : ids) {
+                String value = id == null ? "" : id.trim();
+                if (!TextUtils.isEmpty(value)) {
+                    deduped.add(value);
+                }
+                if (deduped.size() == 5) {
+                    break;
+                }
+            }
+        }
+        return new ArrayList<>(deduped);
+    }
+
+    private void bindRecommendedEvents(List<Event> events, boolean trendingFallback, String topCategory) {
+        if (recommendedEventsContainer == null
+                || recommendedEventsScroll == null
+                || tvRecommendedLabel == null
+                || tvRecommendedSubtitle == null) {
+            return;
+        }
+
+        recommendedEventsContainer.removeAllViews();
 
         if (events == null || events.isEmpty()) {
-            tvPopularLabel.setVisibility(View.GONE);
-            popularEventsScroll.setVisibility(View.GONE);
-            popularCarouselHandler.removeCallbacks(popularCarouselRunnable);
+            hideRecommendations();
             return;
         }
 
-        tvPopularLabel.setVisibility(View.VISIBLE);
-        popularEventsScroll.setVisibility(View.VISIBLE);
+        tvRecommendedLabel.setVisibility(View.VISIBLE);
+        tvRecommendedSubtitle.setVisibility(View.VISIBLE);
+        recommendedEventsScroll.setVisibility(View.VISIBLE);
+        if (trendingFallback) {
+            tvRecommendedLabel.setText(R.string.trending_on_campus);
+            tvRecommendedSubtitle.setText(R.string.popular_events_across_campus);
+        } else {
+            tvRecommendedLabel.setText(R.string.recommended_for_you);
+            tvRecommendedSubtitle.setText(getString(R.string.based_on_interest, safeText(topCategory, getString(R.string.app_name))));
+        }
 
-        List<Event> popular = new ArrayList<>(events);
-        popular.sort((first, second) -> Long.compare(second.getRsvpCount(), first.getRsvpCount()));
-        int max = Math.min(5, popular.size());
+        int max = Math.min(5, events.size());
 
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         for (int i = 0; i < max; i++) {
-            Event event = popular.get(i);
-            View card = inflater.inflate(R.layout.item_event_card_carousel, popularEventsContainer, false);
-            bindPopularCard(card, event, i < max - 1);
-            popularEventsContainer.addView(card);
+            Event event = events.get(i);
+            View card = inflater.inflate(R.layout.item_event_card_carousel, recommendedEventsContainer, false);
+            bindRecommendationCard(card, event, i < max - 1);
+            recommendedEventsContainer.addView(card);
         }
 
-        popularEventsScroll.post(() -> popularEventsScroll.scrollTo(0, 0));
-        startPopularCarousel();
+        recommendedEventsScroll.post(() -> recommendedEventsScroll.scrollTo(0, 0));
+        startRecommendationCarousel();
     }
 
-    private void bindPopularCard(View card, Event event, boolean addTrailingGap) {
+    private void bindRecommendationCard(View card, Event event, boolean addTrailingGap) {
         ImageView thumbnail = card.findViewById(R.id.ivCarouselThumbnail);
         ImageView placeholder = card.findViewById(R.id.ivCarouselPlaceholderIcon);
         TextView title = card.findViewById(R.id.tvCarouselTitle);
@@ -598,27 +653,45 @@ public class HomeFragment extends Fragment {
         card.setOnClickListener(v -> openEventDetail(event));
     }
 
-    private void startPopularCarousel() {
-        popularCarouselHandler.removeCallbacks(popularCarouselRunnable);
-        popularCarouselHandler.postDelayed(popularCarouselRunnable, 3000L);
+    private void hideRecommendations() {
+        if (tvRecommendedLabel != null) {
+            tvRecommendedLabel.setVisibility(View.GONE);
+        }
+        if (tvRecommendedSubtitle != null) {
+            tvRecommendedSubtitle.setVisibility(View.GONE);
+        }
+        if (recommendedEventsScroll != null) {
+            recommendedEventsScroll.setVisibility(View.GONE);
+        }
+        if (recommendedEventsContainer != null) {
+            recommendedEventsContainer.removeAllViews();
+        }
+        recommendationCarouselHandler.removeCallbacks(recommendationCarouselRunnable);
     }
 
-    private void advancePopularCarousel() {
-        if (popularEventsScroll == null || popularEventsContainer == null || popularEventsContainer.getChildCount() < 2) {
+    private void startRecommendationCarousel() {
+        recommendationCarouselHandler.removeCallbacks(recommendationCarouselRunnable);
+        if (recommendedEventsContainer != null && recommendedEventsContainer.getChildCount() > 1) {
+            recommendationCarouselHandler.postDelayed(recommendationCarouselRunnable, 3000L);
+        }
+    }
+
+    private void advanceRecommendationCarousel() {
+        if (recommendedEventsScroll == null || recommendedEventsContainer == null || recommendedEventsContainer.getChildCount() < 2) {
             return;
         }
 
-        int maxScroll = Math.max(0, popularEventsContainer.getWidth() - popularEventsScroll.getWidth());
+        int maxScroll = Math.max(0, recommendedEventsContainer.getWidth() - recommendedEventsScroll.getWidth());
         if (maxScroll == 0) {
             return;
         }
 
         int cardSpan = getResources().getDimensionPixelSize(R.dimen.event_carousel_card_width) + dpToPx(12);
-        int nextScrollX = popularEventsScroll.getScrollX() + cardSpan;
+        int nextScrollX = recommendedEventsScroll.getScrollX() + cardSpan;
         if (nextScrollX >= maxScroll) {
             nextScrollX = 0;
         }
-        popularEventsScroll.smoothScrollTo(nextScrollX, 0);
+        recommendedEventsScroll.smoothScrollTo(nextScrollX, 0);
     }
 
     private int dpToPx(int dp) {

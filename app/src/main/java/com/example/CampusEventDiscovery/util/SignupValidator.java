@@ -3,7 +3,12 @@ package com.example.CampusEventDiscovery.util;
 import android.text.TextUtils;
 import android.util.Patterns;
 
+import java.util.List;
+
 public class SignupValidator {
+
+    public static final String PASSWORD_REQUIREMENTS_MESSAGE =
+            "Password must be at least 8 characters and include 1 uppercase letter, 1 number, and 1 special character.";
 
     public static String validate(String name, String email, String password,
                                   String confirmPassword, String role) {
@@ -43,23 +48,29 @@ public class SignupValidator {
     }
 
     public static String validatePassword(String password) {
-        if (TextUtils.isEmpty(password)) {
+        if (password == null || password.trim().isEmpty()) {
             return "Password is required";
         }
-        if (password.length() < 8) {
-            return "Password must be at least 8 characters";
+
+        boolean hasUppercase = false;
+        boolean hasNumber = false;
+        boolean hasSpecial = false;
+
+        for (int i = 0; i < password.length(); i++) {
+            char ch = password.charAt(i);
+            if (Character.isUpperCase(ch)) {
+                hasUppercase = true;
+            }
+            if (Character.isDigit(ch)) {
+                hasNumber = true;
+            }
+            if (!Character.isLetterOrDigit(ch)) {
+                hasSpecial = true;
+            }
         }
-        if (!password.matches(".*[A-Z].*")) {
-            return "Password must contain at least one uppercase letter";
-        }
-        if (!password.matches(".*[a-z].*")) {
-            return "Password must contain at least one lowercase letter";
-        }
-        if (!password.matches(".*\\d.*")) {
-            return "Password must contain at least one number";
-        }
-        if (!password.matches(".*[^a-zA-Z0-9].*")) {
-            return "Password must contain at least one special character";
+
+        if (password.length() < 8 || !hasUppercase || !hasNumber || !hasSpecial) {
+            return PASSWORD_REQUIREMENTS_MESSAGE;
         }
         return null;
     }
@@ -89,5 +100,9 @@ public class SignupValidator {
             return "Please select a campus";
         }
         return null;
+    }
+
+    public static boolean hasMinimumSelectedInterests(List<String> interests) {
+        return interests != null && interests.size() >= 3;
     }
 }

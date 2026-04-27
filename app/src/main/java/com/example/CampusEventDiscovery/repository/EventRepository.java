@@ -11,6 +11,7 @@ import com.example.CampusEventDiscovery.model.Notification;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.model.VendorProposal;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
@@ -30,8 +31,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Date;
 
@@ -45,7 +49,7 @@ public class EventRepository {
     private static final String TAG = EventRepository.class.getSimpleName();
 
     private static final String COLLECTION_USERS = "users";
-    private static final String COLLECTION_EVENTS = "events";
+    private static final String COLLECTION_EVENTS = Constants.COLLECTION_EVENTS;
     private static final String COLLECTION_EVENT_PROPOSALS = "event_proposals";
     private static final String COLLECTION_VENDOR_PROPOSALS = "vendorProposals";
     private static final String COLLECTION_REPORTS = "reports";
@@ -81,6 +85,11 @@ public class EventRepository {
 
     public interface EventListCallback {
         void onSuccess(List<Event> events);
+        void onError(Exception e);
+    }
+
+    public interface RecommendationCallback {
+        void onSuccess(List<Event> events, boolean trendingFallback, String topCategory);
         void onError(Exception e);
     }
 
@@ -215,29 +224,50 @@ public class EventRepository {
                 .addOnFailureListener(cb::onError);
     }
 
-    public void getPersonalisedEvents(List<String> interests, EventListCallback cb) {
-        if (interests == null || interests.isEmpty()) {
-            getUpcomingEvents(cb);
-            return;
-        }
-        List<String> safeInterests = new ArrayList<>(interests);
-        if (safeInterests.size() > FIRESTORE_WHERE_IN_LIMIT) {
-            safeInterests = safeInterests.subList(0, FIRESTORE_WHERE_IN_LIMIT);
-        }
+    public void getScoredRecommendations(
+            List<String> interests,
+            List<String> recentlyViewedIds,
+            RecommendationCallback cb
+    ) {
+        long nowMillis = System.currentTimeMillis();
         db.collection(COLLECTION_EVENTS)
                 .whereEqualTo("status", "active")
-                .whereArrayContainsAny("tags", safeInterests)
                 .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    List<Event> events = new ArrayList<>();
-                    for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
-                        events.add(documentToEvent(doc));
+                .addOnSuccessListener(activeSnapshots -> {
+                    List<Event> activeUpcoming = new ArrayList<>();
+                    for (DocumentSnapshot doc : activeSnapshots.getDocuments()) {
+                        Event event = documentToEvent(doc);
+                        if (isUpcoming(event, nowMillis)) {
+                            activeUpcoming.add(event);
+                        }
                     }
-                    sortEventsByDateAscending(events);
-                    cb.onSuccess(events);
+
+                    List<String> recentIds = sanitizeRecentIds(recentlyViewedIds);
+                    if (recentIds.isEmpty()) {
+                        completeRecommendations(activeUpcoming, interests, new HashSet<>(), nowMillis, cb);
+                        return;
+                    }
+
+                    db.collection(COLLECTION_EVENTS)
+                            .whereIn(FieldPath.documentId(), recentIds)
+                            .get()
+                            .addOnSuccessListener(recentSnapshots -> {
+                                Set<String> recentCategories = new HashSet<>();
+                                for (DocumentSnapshot doc : recentSnapshots.getDocuments()) {
+                                    String category = normalizeCategory(documentToEvent(doc).getCategory());
+                                    if (!TextUtils.isEmpty(category)) {
+                                        recentCategories.add(category);
+                                    }
+                                }
+                                completeRecommendations(activeUpcoming, interests, recentCategories, nowMillis, cb);
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "getScoredRecommendations recent events failed", e);
+                                cb.onError(e);
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "getPersonalisedEvents failed", e);
+                    Log.e(TAG, "getScoredRecommendations active events failed", e);
                     cb.onError(e);
                 });
     }
@@ -1167,6 +1197,11 @@ public class EventRepository {
             long currentCheckedInCount = currentCheckedInCountLong != null ? currentCheckedInCountLong : 0L;
             long removedCount = 0L;
             long removedCheckedInCount = 0L;
+            List<EventAttendee> validAttendees = new ArrayList<>();
+            List<DocumentReference> attendeeRefs = new ArrayList<>();
+            List<DocumentReference> blacklistRefs = new ArrayList<>();
+            List<DocumentReference> userRsvpRefs = new ArrayList<>();
+            List<DocumentSnapshot> attendeeSnaps = new ArrayList<>();
 
             for (EventAttendee attendee : attendees) {
                 if (attendee == null || TextUtils.isEmpty(attendee.getUserId())) {
@@ -1181,14 +1216,30 @@ public class EventRepository {
                         .collection(SUBCOLLECTION_RSVPS)
                         .document(eventId);
 
+                validAttendees.add(attendee);
+                attendeeRefs.add(attendeeRef);
+                blacklistRefs.add(blacklistRef);
+                userRsvpRefs.add(userRsvpRef);
+                attendeeSnaps.add(transaction.get(attendeeRef));
+            }
+
+            for (int i = 0; i < validAttendees.size(); i++) {
+                EventAttendee attendee = validAttendees.get(i);
+                DocumentReference attendeeRef = attendeeRefs.get(i);
+                DocumentReference blacklistRef = blacklistRefs.get(i);
+                DocumentReference userRsvpRef = userRsvpRefs.get(i);
+                DocumentSnapshot attendeeSnap = attendeeSnaps.get(i);
+                String attendeeEmail = attendeeSnap.getString("email");
+
                 Map<String, Object> blacklistData = new HashMap<>();
-                blacklistData.put("userId", attendeeUserId);
+                blacklistData.put("userId", attendee.getUserId());
                 blacklistData.put("fullName", attendee.getFullName());
+                blacklistData.put("email", attendeeEmail != null ? attendeeEmail : "");
                 blacklistData.put("qrToken", attendee.getQrToken());
                 blacklistData.put("blacklistedAt", Timestamp.now());
+                blacklistData.put("createdAt", Timestamp.now());
                 transaction.set(blacklistRef, blacklistData);
 
-                DocumentSnapshot attendeeSnap = transaction.get(attendeeRef);
                 if (attendeeSnap.exists()) {
                     Boolean attendeeCheckedIn = attendeeSnap.getBoolean("checkedIn");
                     if (attendeeCheckedIn != null && attendeeCheckedIn) {
@@ -1247,6 +1298,109 @@ public class EventRepository {
                             attendee -> attendee.getFullName() == null ? "" : attendee.getFullName().toLowerCase()
                     ));
                     cb.onSuccess(list);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    public void getUserByEmail(String email, UserCallback cb) {
+        if (TextUtils.isEmpty(email)) {
+            cb.onError(new Exception("Email is required"));
+            return;
+        }
+        db.collection(COLLECTION_USERS)
+                .whereEqualTo("email", email.trim().toLowerCase())
+                .limit(1)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (snapshots == null || snapshots.isEmpty()) {
+                        cb.onError(new Exception("No user found with that email"));
+                        return;
+                    }
+                    DocumentSnapshot doc = snapshots.getDocuments().get(0);
+                    User user = doc.toObject(User.class);
+                    if (user == null) {
+                        cb.onError(new Exception("No user found with that email"));
+                        return;
+                    }
+                    cb.onSuccess(user);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    public void blacklistUserByEmail(String eventId, String emailInput, String blacklistedByUserId, String reason, ActionCallback cb) {
+        if (TextUtils.isEmpty(eventId) || TextUtils.isEmpty(emailInput)) {
+            if (cb != null) cb.onError(new Exception("Event ID and email are required"));
+            return;
+        }
+
+        db.collection(COLLECTION_USERS)
+                .whereEqualTo("email", emailInput.trim().toLowerCase())
+                .limit(1)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (snapshots == null || snapshots.isEmpty()) {
+                        if (cb != null) cb.onError(new Exception("No user found with that email"));
+                        return;
+                    }
+                    DocumentSnapshot doc = snapshots.getDocuments().get(0);
+                    String userId = doc.getId();
+                    User user = doc.toObject(User.class);
+
+                    DocumentReference blacklistRef = db.collection(COLLECTION_EVENTS)
+                            .document(eventId)
+                            .collection(SUBCOLLECTION_BLACKLIST)
+                            .document(userId);
+
+                    blacklistRef.get().addOnSuccessListener(snapshot -> {
+                        if (snapshot.exists()) {
+                            if (cb != null) cb.onError(new Exception("User is already blacklisted from this event"));
+                            return;
+                        }
+
+                        Map<String, Object> blacklistData = new HashMap<>();
+                        blacklistData.put("userId", userId);
+                        blacklistData.put("fullName", user != null && user.getFullName() != null ? user.getFullName() : "");
+                        blacklistData.put("email", user != null && user.getEmail() != null ? user.getEmail() : emailInput.trim());
+                        blacklistData.put("reason", reason != null ? reason : "");
+                        blacklistData.put("blacklistedBy", blacklistedByUserId != null ? blacklistedByUserId : "");
+                        blacklistData.put("blacklistedAt", Timestamp.now());
+                        blacklistData.put("createdAt", Timestamp.now());
+                        blacklistData.put("proactive", true);
+
+                        blacklistRef.set(blacklistData)
+                                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+
+                    }).addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+                })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
+    public void isUserBlacklisted(String eventId, String userId, BooleanCallback cb) {
+        Task<DocumentSnapshot> eventBlacklistTask = db.collection(Constants.COLLECTION_EVENTS)
+                .document(eventId)
+                .collection(Constants.SUBCOLLECTION_BLACKLIST)
+                .document(userId)
+                .get();
+
+        Task<DocumentSnapshot> platformBlacklistTask = db.collection(Constants.COLLECTION_PLATFORM_BLACKLIST)
+                .document(userId)
+                .get();
+
+        Tasks.whenAllComplete(eventBlacklistTask, platformBlacklistTask)
+                .addOnSuccessListener(completedTasks -> {
+                    if (!eventBlacklistTask.isSuccessful()) {
+                        cb.onError(new Exception(eventBlacklistTask.getException()));
+                        return;
+                    }
+                    if (!platformBlacklistTask.isSuccessful()) {
+                        cb.onError(new Exception(platformBlacklistTask.getException()));
+                        return;
+                    }
+
+                    DocumentSnapshot eventBlacklistSnapshot = eventBlacklistTask.getResult();
+                    DocumentSnapshot platformBlacklistSnapshot = platformBlacklistTask.getResult();
+                    cb.onSuccess(eventBlacklistSnapshot.exists() || platformBlacklistSnapshot.exists());
                 })
                 .addOnFailureListener(cb::onError);
     }
@@ -1624,6 +1778,281 @@ public class EventRepository {
     }
 
     // --- HELPERS ---
+
+    private void completeRecommendations(List<Event> activeUpcoming,
+                                         List<String> interests,
+                                         Set<String> recentCategories,
+                                         long nowMillis,
+                                         RecommendationCallback cb) {
+        RankedRecommendations ranked = rankRecommendations(activeUpcoming, interests, recentCategories, nowMillis);
+        cb.onSuccess(
+                ranked.events,
+                ranked.trendingFallback,
+                resolveTopCategory(interests, ranked.events)
+        );
+    }
+
+    private static List<String> sanitizeRecentIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        LinkedHashSet<String> deduped = new LinkedHashSet<>();
+        for (String id : ids) {
+            if (id == null) {
+                continue;
+            }
+            String trimmed = id.trim();
+            if (!TextUtils.isEmpty(trimmed)) {
+                deduped.add(trimmed);
+            }
+            if (deduped.size() == 5) {
+                break;
+            }
+        }
+        return new ArrayList<>(deduped);
+    }
+
+    private static RankedRecommendations rankRecommendations(List<Event> events,
+                                                             List<String> interests,
+                                                             Set<String> recentCategories,
+                                                             long nowMillis) {
+        List<Event> upcoming = new ArrayList<>();
+        if (events != null) {
+            for (Event event : events) {
+                if (isUpcoming(event, nowMillis)) {
+                    upcoming.add(event);
+                }
+            }
+        }
+
+        Map<Event, Integer> scoreByEvent = new HashMap<>();
+        boolean hasPositiveScore = false;
+        for (Event event : upcoming) {
+            int score = scoreEvent(event, interests, recentCategories, nowMillis);
+            scoreByEvent.put(event, score);
+            if (score > 0) {
+                hasPositiveScore = true;
+            }
+        }
+
+        if (hasPositiveScore) {
+            upcoming.sort((first, second) -> compareScoredEvents(first, second, scoreByEvent));
+            return new RankedRecommendations(limitToFive(upcoming), false);
+        }
+
+        upcoming.sort(EventRepository::compareTrendingEvents);
+        return new RankedRecommendations(limitToFive(upcoming), true);
+    }
+
+    static List<Event> rankRecommendationsForTesting(List<Event> events,
+                                                     List<String> interests,
+                                                     Set<String> recentCategories,
+                                                     long nowMillis) {
+        return rankRecommendations(events, interests, recentCategories, nowMillis).events;
+    }
+
+    static boolean usesTrendingFallbackForTesting(List<Event> events,
+                                                  List<String> interests,
+                                                  Set<String> recentCategories,
+                                                  long nowMillis) {
+        return rankRecommendations(events, interests, recentCategories, nowMillis).trendingFallback;
+    }
+
+    static int scoreEvent(Event event, List<String> interests, Set<String> recentCategories, long nowMillis) {
+        if (event == null) {
+            return 0;
+        }
+
+        int score = 0;
+        String eventCategory = normalizeCategory(event.getCategory());
+        if (!TextUtils.isEmpty(eventCategory) && normalizedInterestSet(interests).contains(eventCategory)) {
+            score += categoryWeight(eventCategory);
+        }
+
+        Set<String> normalizedRecentCategories = normalizedCategorySet(recentCategories);
+        if (!TextUtils.isEmpty(eventCategory) && normalizedRecentCategories.contains(eventCategory)) {
+            score += 6;
+        }
+
+        score += Math.min(5, (int) (Math.max(0L, event.getRsvpCount()) / 10L));
+        score += dateProximityScore(event, nowMillis);
+        return score;
+    }
+
+    static String normalizeCategory(String raw) {
+        if (TextUtils.isEmpty(raw)) {
+            return "";
+        }
+
+        String value = raw.trim();
+        if (value.equalsIgnoreCase("Education")) {
+            return "Academic";
+        }
+        if (value.equalsIgnoreCase("Music")) return "Music";
+        if (value.equalsIgnoreCase("Sports")) return "Sports";
+        if (value.equalsIgnoreCase("Career")) return "Career";
+        if (value.equalsIgnoreCase("Academic")) return "Academic";
+        if (value.equalsIgnoreCase("Arts")) return "Arts";
+        if (value.equalsIgnoreCase("Business")) return "Business";
+        if (value.equalsIgnoreCase("Food & Bev") || value.equalsIgnoreCase("Food &amp; Bev")) return "Food & Bev";
+        if (value.equalsIgnoreCase("Social")) return "Social";
+        return value;
+    }
+
+    static int categoryWeight(String category) {
+        String normalized = normalizeCategory(category);
+        switch (normalized) {
+            case "Sports":
+                return 10;
+            case "Music":
+                return 9;
+            case "Career":
+            case "Business":
+                return 8;
+            case "Arts":
+            case "Social":
+                return 7;
+            case "Food & Bev":
+                return 6;
+            case "Academic":
+                return 5;
+            default:
+                return 0;
+        }
+    }
+
+    static boolean isUpcoming(Event event, long nowMillis) {
+        if (event == null || event.getDate() == null) {
+            return false;
+        }
+        return event.getDate().toDate().getTime() >= nowMillis;
+    }
+
+    static int dateProximityScore(Event event, long nowMillis) {
+        if (event == null || event.getDate() == null) {
+            return 0;
+        }
+
+        long eventMillis = event.getDate().toDate().getTime();
+        long diffMillis = eventMillis - nowMillis;
+        if (diffMillis < 0L) {
+            return 0;
+        }
+
+        long sevenDaysMillis = 7L * 24L * 60L * 60L * 1000L;
+        long thirtyDaysMillis = 30L * 24L * 60L * 60L * 1000L;
+        if (diffMillis <= sevenDaysMillis) {
+            return 4;
+        }
+        if (diffMillis <= thirtyDaysMillis) {
+            return 2;
+        }
+        return 0;
+    }
+
+    private static Set<String> normalizedInterestSet(List<String> interests) {
+        Set<String> normalized = new HashSet<>();
+        if (interests == null) {
+            return normalized;
+        }
+        for (String interest : interests) {
+            String category = normalizeCategory(interest);
+            if (!TextUtils.isEmpty(category)) {
+                normalized.add(category);
+            }
+        }
+        return normalized;
+    }
+
+    private static Set<String> normalizedCategorySet(Set<String> categories) {
+        Set<String> normalized = new HashSet<>();
+        if (categories == null) {
+            return normalized;
+        }
+        for (String category : categories) {
+            String value = normalizeCategory(category);
+            if (!TextUtils.isEmpty(value)) {
+                normalized.add(value);
+            }
+        }
+        return normalized;
+    }
+
+    private static int compareScoredEvents(Event first, Event second, Map<Event, Integer> scoreByEvent) {
+        int byScore = Integer.compare(scoreByEvent.getOrDefault(second, 0), scoreByEvent.getOrDefault(first, 0));
+        if (byScore != 0) {
+            return byScore;
+        }
+        return compareRecommendationTieBreakers(first, second);
+    }
+
+    private static int compareRecommendationTieBreakers(Event first, Event second) {
+        int byDate = Comparator.comparing(
+                Event::getDate,
+                Comparator.nullsLast(Comparator.naturalOrder())
+        ).compare(first, second);
+        if (byDate != 0) {
+            return byDate;
+        }
+
+        int byRsvp = Long.compare(second == null ? 0L : second.getRsvpCount(), first == null ? 0L : first.getRsvpCount());
+        if (byRsvp != 0) {
+            return byRsvp;
+        }
+
+        String firstTitle = first == null || first.getTitle() == null ? "" : first.getTitle();
+        String secondTitle = second == null || second.getTitle() == null ? "" : second.getTitle();
+        return firstTitle.compareToIgnoreCase(secondTitle);
+    }
+
+    private static int compareTrendingEvents(Event first, Event second) {
+        int byRsvp = Long.compare(second == null ? 0L : second.getRsvpCount(), first == null ? 0L : first.getRsvpCount());
+        if (byRsvp != 0) {
+            return byRsvp;
+        }
+        return compareRecommendationTieBreakers(first, second);
+    }
+
+    private static List<Event> limitToFive(List<Event> events) {
+        if (events == null || events.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(events.subList(0, Math.min(5, events.size())));
+    }
+
+    private static String resolveTopCategory(List<String> interests, List<Event> returnedEvents) {
+        String strongestInterest = "";
+        int strongestWeight = 0;
+        if (interests != null) {
+            for (String interest : interests) {
+                String category = normalizeCategory(interest);
+                int weight = categoryWeight(category);
+                if (weight > strongestWeight) {
+                    strongestWeight = weight;
+                    strongestInterest = category;
+                }
+            }
+        }
+        if (!TextUtils.isEmpty(strongestInterest)) {
+            return strongestInterest;
+        }
+
+        if (returnedEvents != null && !returnedEvents.isEmpty()) {
+            return normalizeCategory(returnedEvents.get(0).getCategory());
+        }
+        return "";
+    }
+
+    private static class RankedRecommendations {
+        final List<Event> events;
+        final boolean trendingFallback;
+
+        RankedRecommendations(List<Event> events, boolean trendingFallback) {
+            this.events = events;
+            this.trendingFallback = trendingFallback;
+        }
+    }
 
     private Event documentToEvent(DocumentSnapshot doc) {
         Event event = doc.toObject(Event.class);
