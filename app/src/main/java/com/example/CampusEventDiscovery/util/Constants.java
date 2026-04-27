@@ -31,6 +31,9 @@ public final class Constants {
     public static final String DESTINATION_TAB_CALENDAR          = "calendar";
     public static final String PREFS_RECENTLY_VIEWED             = "recently_viewed";
     public static final String PREFS_RECENTLY_VIEWED_KEY         = "event_ids";
+    public static final String PREFS_AUTH                        = "auth_prefs";
+    public static final String PREF_REMEMBER_ME                  = "remember_me";
+    public static final String PREF_REMEMBERED_EMAIL             = "remembered_email";
 
     // RSVP payment statuses
     public static final String PAYMENT_PENDING   = "PENDING";

@@ -93,6 +93,66 @@ public class SignupValidatorTest {
     }
 
     @Test
+    public void validateEmail_validEmail_returnsNull() {
+        assertNull(SignupValidator.validateEmail("student@example.com"));
+    }
+
+    @Test
+    public void validateEmail_emptyEmail_returnsError() {
+        assertNotNull(SignupValidator.validateEmail(""));
+    }
+
+    @Test
+    public void validateEmail_malformedEmail_returnsError() {
+        assertNotNull(SignupValidator.validateEmail("student.example.com"));
+    }
+
+    @Test
+    public void validatePassword_strongPassword_returnsNull() {
+        assertNull(SignupValidator.validatePassword("Campus1!"));
+    }
+
+    @Test
+    public void validatePassword_weakPassword_returnsError() {
+        assertNotNull(SignupValidator.validatePassword("password"));
+    }
+
+    @Test
+    public void validatePasswordConfirmation_mismatchedPassword_returnsError() {
+        assertNotNull(SignupValidator.validatePasswordConfirmation("Password123!", "Password456!"));
+    }
+
+    @Test
+    public void validatePassword_fewerThanEightCharacters_returnsError() {
+        assertEquals(SignupValidator.PASSWORD_REQUIREMENTS_MESSAGE, SignupValidator.validatePassword("Camp1!"));
+    }
+
+    @Test
+    public void validatePassword_noUppercase_returnsError() {
+        assertEquals(SignupValidator.PASSWORD_REQUIREMENTS_MESSAGE, SignupValidator.validatePassword("campus1!"));
+    }
+
+    @Test
+    public void validatePassword_noNumber_returnsError() {
+        assertEquals(SignupValidator.PASSWORD_REQUIREMENTS_MESSAGE, SignupValidator.validatePassword("Campus!!"));
+    }
+
+    @Test
+    public void validatePassword_noSpecialCharacter_returnsError() {
+        assertEquals(SignupValidator.PASSWORD_REQUIREMENTS_MESSAGE, SignupValidator.validatePassword("Campus12"));
+    }
+
+    @Test
+    public void validatePassword_minimumValidPassword_returnsNull() {
+        assertNull(SignupValidator.validatePassword("Campus1!"));
+    }
+
+    @Test
+    public void validatePasswordConfirmation_matchingPassword_returnsNull() {
+        assertNull(SignupValidator.validatePasswordConfirmation("Campus1!", "Campus1!"));
+    }
+
+    @Test
     public void validateInterests_fewerThanThreeRejected() {
         assertEquals(false, SignupValidator.hasMinimumSelectedInterests(Arrays.asList("Music", "Sports")));
     }
