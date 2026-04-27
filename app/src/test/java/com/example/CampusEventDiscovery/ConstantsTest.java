@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import com.example.CampusEventDiscovery.util.Constants;
 
@@ -79,10 +78,15 @@ public class ConstantsTest {
 
     @Test
     public void paymentStatuses_doNotLeakLegacySuccessValue() {
-        // Old MockPaymentService used "SUCCESS" — must never leak back in.
         assertFalse("SUCCESS".equals(Constants.PAYMENT_PENDING));
         assertFalse("SUCCESS".equals(Constants.PAYMENT_CONFIRMED));
         assertFalse("SUCCESS".equals(Constants.PAYMENT_REJECTED));
+    }
+
+    @Test
+    public void reminderRoutingConstants_matchSpec() {
+        assertEquals("destinationTab", Constants.EXTRA_DESTINATION_TAB);
+        assertEquals("calendar", Constants.DESTINATION_TAB_CALENDAR);
     }
 
     @Test
@@ -94,7 +98,7 @@ public class ConstantsTest {
             c.newInstance();
             // Allowed to succeed via reflection, but private modifier is the contract.
         } catch (Exception ignored) {
-            // Fine — throwing is also acceptable.
+            // Fine â€” throwing is also acceptable.
         }
     }
 

@@ -19,7 +19,7 @@ public final class Constants {
 
     public static final String SUBCOLLECTION_MESSAGES = "messages";
 
-    // Level 2 Sprint — New Constants
+    // Level 2 Sprint — New Constants (Hussain + Nausher + Yahya)
     public static final String SUBCOLLECTION_TICKET_TIERS        = "ticket_tiers";
     public static final String COLLECTION_CREDIT_TRANSACTIONS    = "credit_transactions";
     public static final String COLLECTION_APP_SETTINGS           = "app_settings";
@@ -39,6 +39,16 @@ public final class Constants {
     public static final String PAYMENT_PENDING   = "PENDING";
     public static final String PAYMENT_CONFIRMED = "CONFIRMED";
     public static final String PAYMENT_REJECTED  = "REJECTED";
+    public static final String PAYMENT_REFUNDED  = "REFUNDED";
+
+    // In-app credit payment methods (Yahya)
+    public static final String PAYMENT_METHOD_JAZZCASH        = "JAZZ_CASH";
+    public static final String PAYMENT_METHOD_CREDIT_CARD     = "CREDIT_CARD";
+    public static final String PAYMENT_METHOD_DEBIT_CARD      = "DEBIT_CARD";
+    public static final String PAYMENT_METHOD_APPLE_PAY       = "APPLE_PAY";
+    public static final String PAYMENT_METHOD_IN_APP_CREDIT   = "IN_APP_CREDIT";
+    public static final String CREDIT_TRANSACTION_REFUND      = "REFUND";
+    public static final String CREDIT_TRANSACTION_USED        = "USED";
 
     // Campus map location keys (Nausher)
     public static final String MAP_LOC_HSS            = "HSS";

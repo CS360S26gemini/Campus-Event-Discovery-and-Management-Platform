@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,6 +21,7 @@ import com.example.CampusEventDiscovery.model.Payment;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.repository.PaymentRepository;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.MockPaymentService;
 import com.example.CampusEventDiscovery.util.UserRoles;
@@ -53,10 +55,12 @@ public class CheckoutActivity extends AppCompatActivity {
     private MaterialToolbar toolbarCheckout;
     private TextView tvCheckoutEventTitle;
     private TextView tvCheckoutSubtitle;
+    private TextView tvCreditBalance;
     private EditText etFullName;
     private EditText etLastName;
     private LinearLayout layoutPaymentSection;
     private RadioGroup radioGroupPayment;
+    private RadioButton rbInAppCredit;
     private TextInputLayout tilCardNumber;
     private EditText etCardNumber;
     private TextView tvCheckoutTotal;
@@ -74,6 +78,7 @@ public class CheckoutActivity extends AppCompatActivity {
     private double totalPrice;
     private String effectiveUserId;
     private boolean walkthroughMode;
+    private double availableCreditBalance;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -105,10 +110,12 @@ public class CheckoutActivity extends AppCompatActivity {
         toolbarCheckout      = findViewById(R.id.toolbarCheckout);
         tvCheckoutEventTitle = findViewById(R.id.tvCheckoutEventTitle);
         tvCheckoutSubtitle   = findViewById(R.id.tvCheckoutSubtitle);
+        tvCreditBalance      = findViewById(R.id.tvCreditBalance);
         etFullName           = findViewById(R.id.etFirstName);
         etLastName           = findViewById(R.id.etLastName);
         layoutPaymentSection = findViewById(R.id.layoutPaymentSection);
         radioGroupPayment    = findViewById(R.id.radioGroupPayment);
+        rbInAppCredit        = findViewById(R.id.rbInAppCredit);
         tilCardNumber        = findViewById(R.id.tilCardNumber);
         etCardNumber         = findViewById(R.id.etCardNumber);
         tvCheckoutTotal      = findViewById(R.id.tvCheckoutTotal);
@@ -138,11 +145,15 @@ public class CheckoutActivity extends AppCompatActivity {
     private void bindStaticUi() {
         tvCheckoutEventTitle.setText(eventTitle != null ? eventTitle : getString(R.string.app_name));
         tvCheckoutSubtitle.setText(getString(R.string.secure_your_spot_subtitle));
+        updateCreditBalanceUi();
 
         if (isFreeEvent()) {
             tvCheckoutTotal.setText(getString(R.string.checkout_total_free));
             btnPay.setText(getString(R.string.register_free));
             layoutPaymentSection.setVisibility(View.GONE);
+            if (tvCreditBalance != null) {
+                tvCreditBalance.setVisibility(View.GONE);
+            }
             radioGroupPayment.clearCheck();
             etCardNumber.setText("");
             tilCardNumber.setVisibility(View.GONE);
@@ -151,6 +162,20 @@ public class CheckoutActivity extends AppCompatActivity {
             btnPay.setText(getString(R.string.pay_now));
             layoutPaymentSection.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void updateCreditBalanceUi() {
+        if (tvCreditBalance == null) {
+            return;
+        }
+
+        if (isFreeEvent()) {
+            tvCreditBalance.setVisibility(View.GONE);
+            return;
+        }
+
+        tvCreditBalance.setVisibility(View.VISIBLE);
+        tvCreditBalance.setText(getString(R.string.checkout_credit_balance, availableCreditBalance));
     }
 
     /**
@@ -215,7 +240,11 @@ public class CheckoutActivity extends AppCompatActivity {
                             return;
                         }
                     }
-                    processPayment();
+                    if (isCreditPaymentSelected()) {
+                        processCreditPayment();
+                    } else {
+                        processPayment();
+                    }
                 })
                 .addOnFailureListener(e -> {
                     showLoading(false);
@@ -264,6 +293,24 @@ public class CheckoutActivity extends AppCompatActivity {
         return totalPrice <= 0.0;
     }
 
+    private boolean isCreditPaymentSelected() {
+        return radioGroupPayment.getCheckedRadioButtonId() == R.id.rbInAppCredit;
+    }
+
+    private String resolveSelectedPaymentMethod() {
+        int checkedId = radioGroupPayment.getCheckedRadioButtonId();
+        if (checkedId == R.id.rbCreditCard) {
+            return Constants.PAYMENT_METHOD_CREDIT_CARD;
+        } else if (checkedId == R.id.rbDebitCard) {
+            return Constants.PAYMENT_METHOD_DEBIT_CARD;
+        } else if (checkedId == R.id.rbApplePay) {
+            return Constants.PAYMENT_METHOD_APPLE_PAY;
+        } else if (checkedId == R.id.rbInAppCredit) {
+            return Constants.PAYMENT_METHOD_IN_APP_CREDIT;
+        }
+        return Constants.PAYMENT_METHOD_JAZZCASH;
+    }
+
     /**
      * Processes the demo payment via MockPaymentService, saves the Payment
      * record, then delegates RSVP creation to EventRepository.rsvpEvent()
@@ -273,6 +320,8 @@ public class CheckoutActivity extends AppCompatActivity {
      */
     private void processPayment() {
         Payment demoPayment = MockPaymentService.processPayment(effectiveUserId, eventId, totalPrice);
+        demoPayment.setPaymentMethod(resolveSelectedPaymentMethod());
+        demoPayment.setProofUrl("");
 
         paymentRepository.savePayment(demoPayment, new FirestoreCallback() {
             @Override
@@ -288,6 +337,58 @@ public class CheckoutActivity extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void processCreditPayment() {
+        if (availableCreditBalance + 0.0001 < totalPrice) {
+            showLoading(false);
+            Toast.makeText(this, getString(R.string.credit_insufficient_balance), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        com.example.CampusEventDiscovery.model.Event eventShell =
+                new com.example.CampusEventDiscovery.model.Event();
+        eventShell.setEventId(eventId);
+        eventShell.setTitle(eventTitle);
+        if (eventDateMillis > 0L) {
+            eventShell.setDate(new Timestamp(new java.util.Date(eventDateMillis)));
+        }
+
+        String fullName = etFullName.getText().toString().trim()
+                + " " + etLastName.getText().toString().trim();
+
+        eventRepository.rsvpEventWithCredit(effectiveUserId, eventShell, fullName, totalPrice,
+                new EventRepository.ActionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        showLoading(false);
+                        fetchExistingRsvpAndShowTicket();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        showLoading(false);
+                        String msg = e.getMessage() != null ? e.getMessage() : "";
+                        if (msg.contains("Already registered")) {
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.already_registered_for_event),
+                                    Toast.LENGTH_LONG).show();
+                            fetchExistingRsvpAndShowTicket();
+                        } else if (msg.contains("Event full")) {
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.sold_out_toast),
+                                    Toast.LENGTH_SHORT).show();
+                        } else if (msg.contains("credit")) {
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.credit_insufficient_balance),
+                                    Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.rsvp_failed_message, msg),
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
     /**
@@ -375,6 +476,9 @@ public class CheckoutActivity extends AppCompatActivity {
         Map<String, Object> paymentMerge = new HashMap<>();
         paymentMerge.put("paymentStatus", "SUCCESS");
         paymentMerge.put("transactionId", payment.getTransactionId());
+        paymentMerge.put("paymentRef", payment.getTransactionId());
+        paymentMerge.put("paymentMethod", payment.getPaymentMethod());
+        paymentMerge.put("paymentProofUrl", payment.getProofUrl());
         paymentMerge.put("qrPayload", qrPayload);
         paymentMerge.put("qrExpired", false);
 
@@ -389,6 +493,9 @@ public class CheckoutActivity extends AppCompatActivity {
                     rsvp.setStatus("confirmed");
                     rsvp.setPaymentStatus("SUCCESS");
                     rsvp.setTransactionId(payment.getTransactionId());
+                    rsvp.setPaymentRef(payment.getTransactionId());
+                    rsvp.setPaymentMethod(payment.getPaymentMethod());
+                    rsvp.setPaymentProofUrl(payment.getProofUrl());
                     rsvp.setQrPayload(qrPayload);
                     rsvp.setCheckedIn(false);
                     rsvp.setQrExpired(false);
@@ -490,7 +597,11 @@ public class CheckoutActivity extends AppCompatActivity {
                             getString(R.string.attendee_only_registration_message),
                             Toast.LENGTH_SHORT).show();
                     finish();
+                    return;
                 }
+
+                availableCreditBalance = user.getCreditBalance();
+                updateCreditBalanceUi();
             }
 
             @Override
@@ -498,6 +609,8 @@ public class CheckoutActivity extends AppCompatActivity {
                 if (isFinishing() || isDestroyed()) {
                     return;
                 }
+                availableCreditBalance = 0.0;
+                updateCreditBalanceUi();
                 Toast.makeText(CheckoutActivity.this,
                         getString(R.string.attendee_only_registration_message),
                         Toast.LENGTH_SHORT).show();
