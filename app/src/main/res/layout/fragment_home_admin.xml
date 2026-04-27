@@ -100,15 +100,16 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Correct Segmented Toggle Implementation -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="@dimen/spacing_md"
                 android:layout_marginTop="@dimen/spacing_lg"
-                app:cardBackgroundColor="@color/colorSecondaryContainer"
+                app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="0dp">
+                app:cardElevation="0dp"
+                app:strokeColor="@color/colorOutlineVariant"
+                app:strokeWidth="1dp">
 
                 <com.google.android.material.button.MaterialButtonToggleGroup
                     android:id="@+id/toggleApprovalStatus"
