@@ -3,6 +3,8 @@ package com.example.CampusEventDiscovery.repository;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.EventAttendee;
 import com.example.CampusEventDiscovery.model.EventProposal;
@@ -63,6 +65,7 @@ public class EventRepository {
     private static final String SUBCOLLECTION_ATTENDEES = "attendees";
     private static final String SUBCOLLECTION_MESSAGES = "messages";
     private static final String SUBCOLLECTION_BLACKLIST = "blacklist";
+    private static final String SUBCOLLECTION_TICKET_TIERS = "ticket_tiers";
     private static final String DOCUMENT_SETTINGS = "settings";
 
     private static final int FIRESTORE_WHERE_IN_LIMIT = 10;
@@ -160,6 +163,12 @@ public class EventRepository {
 
     public interface ActionCallback {
         void onSuccess();
+        void onError(Exception e);
+    }
+
+    // ─── TICKET TIERS (Nausher) ─────────────────────────────────────────────
+    public interface TierListCallback {
+        void onSuccess(List<Map<String, Object>> tiers);
         void onError(Exception e);
     }
 
@@ -466,6 +475,105 @@ public class EventRepository {
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
+    // ─── TICKET TIER-AWARE RSVP (Nausher) ───────────────────────────────────
+    public void rsvpEvent(String userId, Event event, String fullName, @Nullable Map<String, Object> selectedTier, ActionCallback cb) {
+        if (userId == null || event == null || event.getEventId() == null) {
+            if (cb != null) cb.onError(new Exception("Invalid data"));
+            return;
+        }
+
+        DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(event.getEventId());
+        DocumentReference userRsvpRef = db.collection(COLLECTION_USERS).document(userId)
+                .collection(SUBCOLLECTION_RSVPS).document(event.getEventId());
+        DocumentReference eventAttendeeRef = eventRef.collection(SUBCOLLECTION_ATTENDEES).document(userId);
+        DocumentReference blacklistRef = eventRef.collection(SUBCOLLECTION_BLACKLIST).document(userId);
+
+        db.runTransaction(transaction -> {
+                    DocumentSnapshot eventSnap = transaction.get(eventRef);
+                    if (!eventSnap.exists()) throw new FirebaseFirestoreException("Event not found", FirebaseFirestoreException.Code.NOT_FOUND);
+
+                    DocumentSnapshot existingRsvpSnap = transaction.get(userRsvpRef);
+                    DocumentSnapshot existingAttendeeSnap = transaction.get(eventAttendeeRef);
+                    DocumentSnapshot blacklistSnap = transaction.get(blacklistRef);
+
+                    if (blacklistSnap.exists()) {
+                        throw new FirebaseFirestoreException("You are not allowed to register for this event", FirebaseFirestoreException.Code.PERMISSION_DENIED);
+                    }
+
+                    boolean alreadyRegistered = existingAttendeeSnap.exists()
+                            || (existingRsvpSnap.exists()
+                            && !"cancelled".equalsIgnoreCase(existingRsvpSnap.getString("status")));
+                    if (alreadyRegistered) {
+                        throw new FirebaseFirestoreException("Already registered", FirebaseFirestoreException.Code.ABORTED);
+                    }
+
+                    String tierId = null;
+                    String tierName = null;
+                    double tierPrice = event.getTicketPrice();
+
+                    if (selectedTier != null) {
+                        tierId = (String) selectedTier.get("tierId");
+                        tierName = (String) selectedTier.get("name");
+                        Object p = selectedTier.get("price");
+                        tierPrice = (p instanceof Number) ? ((Number) p).doubleValue() : 0.0;
+
+                        DocumentReference tierRef = eventRef.collection(SUBCOLLECTION_TICKET_TIERS).document(tierId);
+                        DocumentSnapshot tierSnap = transaction.get(tierRef);
+                        if (!tierSnap.exists()) throw new FirebaseFirestoreException("Ticket tier not found", FirebaseFirestoreException.Code.NOT_FOUND);
+
+                        Long tierCap = tierSnap.getLong("capacity");
+                        Long tierRsvp = tierSnap.getLong("rsvpCount");
+                        if (tierRsvp != null && tierCap != null && tierRsvp >= tierCap) {
+                            throw new FirebaseFirestoreException("Ticket tier sold out", FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+                        }
+                        transaction.update(tierRef, "rsvpCount", FieldValue.increment(1));
+                    } else {
+                        Long cap = eventSnap.getLong("capacity");
+                        long capacity = cap != null ? cap : 0L;
+                        Long rsvp = eventSnap.getLong("rsvpCount");
+                        long rsvpCount = rsvp != null ? rsvp : 0L;
+
+                        if (rsvpCount >= capacity) throw new FirebaseFirestoreException("Event full", FirebaseFirestoreException.Code.ABORTED);
+                    }
+
+                    String qrToken = UUID.randomUUID().toString();
+
+                    Map<String, Object> rsvpData = new HashMap<>();
+                    rsvpData.put("eventId", event.getEventId());
+                    rsvpData.put("title", event.getTitle());
+                    rsvpData.put("date", event.getDate());
+                    rsvpData.put("status", "confirmed");
+                    rsvpData.put("checkedIn", false);
+                    rsvpData.put("checkedInAt", null);
+                    rsvpData.put("qrExpired", false);
+                    rsvpData.put("qrCodeToken", qrToken);
+                    rsvpData.put("addedToCalendar", false);
+                    rsvpData.put("gcalEventId", "");
+                    rsvpData.put("rsvpAt", Timestamp.now());
+
+                    if (tierId != null) {
+                        rsvpData.put("tierId", tierId);
+                        rsvpData.put("tierName", tierName);
+                        rsvpData.put("tierPrice", tierPrice);
+                    }
+
+                    transaction.set(userRsvpRef, rsvpData);
+
+                    Map<String, Object> attendeeData = new HashMap<>();
+                    attendeeData.put("userId", userId);
+                    attendeeData.put("fullName", TextUtils.isEmpty(fullName) ? "Attendee" : fullName);
+                    attendeeData.put("qrToken", qrToken);
+                    attendeeData.put("checkedIn", false);
+                    attendeeData.put("checkedInAt", null);
+                    transaction.set(eventAttendeeRef, attendeeData);
+
+                    transaction.update(eventRef, "rsvpCount", FieldValue.increment(1));
+
+                    return null;
+                }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
     public void cancelRsvp(String userId, String eventId, ActionCallback cb) {
         if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(eventId)) {
             if (cb != null) cb.onError(new Exception("Invalid user or event ID"));
@@ -483,6 +591,8 @@ public class EventRepository {
 
                     boolean hadActiveRsvp = attendeeSnap.exists();
                     boolean wasCheckedIn = false;
+                    String tierId = userRsvpSnap.exists() ? userRsvpSnap.getString("tierId") : null;
+
                     if (userRsvpSnap.exists()) {
                         String currentStatus = userRsvpSnap.getString("status");
                         hadActiveRsvp = hadActiveRsvp || !"cancelled".equalsIgnoreCase(currentStatus);
@@ -516,6 +626,11 @@ public class EventRepository {
                         }
 
                         transaction.update(eventRef, eventUpdates);
+
+                        if (!TextUtils.isEmpty(tierId)) {
+                            DocumentReference tierRef = eventRef.collection(SUBCOLLECTION_TICKET_TIERS).document(tierId);
+                            transaction.update(tierRef, "rsvpCount", FieldValue.increment(-1));
+                        }
                     }
                     return null;
                 }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
@@ -940,6 +1055,17 @@ public class EventRepository {
                             "reviewedAt", Timestamp.now());
                     transaction.set(eventRef, proposalToApprovedEvent(proposal));
 
+                    // ─── TICKET TIERS (Nausher) ───────────────────────────
+                    if (proposal.getTiers() != null && !proposal.getTiers().isEmpty()) {
+                        for (Map<String, Object> tierMap : proposal.getTiers()) {
+                            String newTierId = UUID.randomUUID().toString();
+                            Map<String, Object> tierData = new HashMap<>(tierMap);
+                            tierData.put("tierId", newTierId);
+                            tierData.put("rsvpCount", 0L);
+                            transaction.set(eventRef.collection(SUBCOLLECTION_TICKET_TIERS).document(newTierId), tierData);
+                        }
+                    }
+
                     if (!TextUtils.isEmpty(proposal.getOrganizerId())) {
                         DocumentReference notificationRef = db.collection(COLLECTION_NOTIFICATIONS)
                                 .document(proposal.getOrganizerId())
@@ -964,6 +1090,25 @@ public class EventRepository {
                 .update("status", "active")
                 .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
+    // ─── TICKET TIERS (Nausher) ─────────────────────────────────────────────
+    public void getTiersForEvent(String eventId, TierListCallback cb) {
+        db.collection(COLLECTION_EVENTS).document(eventId)
+                .collection(SUBCOLLECTION_TICKET_TIERS)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Map<String, Object>> tiers = new ArrayList<>();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        Map<String, Object> tier = doc.getData();
+                        if (tier != null) {
+                            tier.put("tierId", doc.getId());
+                            tiers.add(tier);
+                        }
+                    }
+                    cb.onSuccess(tiers);
+                })
+                .addOnFailureListener(cb::onError);
     }
 
     public void rejectProposal(String proposalId, String note, ActionCallback cb) {

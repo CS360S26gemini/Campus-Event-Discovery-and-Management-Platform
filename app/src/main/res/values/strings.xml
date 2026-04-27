@@ -653,4 +653,11 @@
     <string name="vendor_rejected">Vendor rejected.</string>
     <string name="required_field">Required</string>
 
+    <!-- Tier builder (Nausher) -->
+    <string name="use_tiers">Use Tiers</string>
+    <string name="add_tier">Add Tier</string>
+    <string name="ticket_tiers_label">Ticket Tiers</string>
+    <string name="no_tiers_error">Please add at least one tier if "Use Tiers" is enabled.</string>
+    <string name="invalid_tier_data">Please fill in all details for each tier correctly.</string>
+
 </resources>

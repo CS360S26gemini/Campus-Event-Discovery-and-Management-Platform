@@ -147,4 +147,18 @@ public class EventProposal {
 
     public double getTicketPrice() { return ticketPrice; }
     public void setTicketPrice(double ticketPrice) { this.ticketPrice = ticketPrice; }
+
+    // ─── CAMPUS LOCATION + TICKET TIERS (Nausher) ───────────────────────────
+    private String locationKey;
+    private String locationDescription;
+    private java.util.List<java.util.Map<String, Object>> tiers;
+
+    public String getLocationKey() { return locationKey; }
+    public void setLocationKey(String locationKey) { this.locationKey = locationKey; }
+
+    public String getLocationDescription() { return locationDescription; }
+    public void setLocationDescription(String locationDescription) { this.locationDescription = locationDescription; }
+
+    public java.util.List<java.util.Map<String, Object>> getTiers() { return tiers; }
+    public void setTiers(java.util.List<java.util.Map<String, Object>> tiers) { this.tiers = tiers; }
 }

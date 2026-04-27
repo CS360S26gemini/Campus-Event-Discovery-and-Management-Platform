@@ -115,6 +115,10 @@
             android:exported="false" />
 
         <activity
+            android:name="com.example.CampusEventDiscovery.ui.event.CampusMapActivity"
+            android:exported="false" />
+
+        <activity
             android:name="com.example.CampusEventDiscovery.ui.event.EventDetailActivity"
             android:exported="true">
             <intent-filter>
