@@ -13,20 +13,30 @@
     <string name="welcome_back">Welcome Back,</string>
     <string name="sos">SOS</string>
     <string name="popular_in_lums">Popular in LUMS</string>
-    <string name="more_like_this">More Like This</string>
+    <string name="popular_events">Popular Events</string>
+    <string name="more_like_this">Recent Events</string>
     <string name="new_badge">NEW</string>
     <string name="verified">Verified</string>
     <string name="no_events_found">No events found</string>
 
     <string name="home">Home</string>
     <string name="search">Search</string>
+    <string name="clear_search">Clear search</string>
+    <string name="previous">Previous</string>
+    <string name="next">Next</string>
     <string name="action">Action</string>
     <string name="favourites">Favourites</string>
     <string name="profile">Profile</string>
     <string name="approvals">Approvals</string>
 
     <string name="search_for">Search For...</string>
-    <string name="sort_by_relevant">Sort by relevant</string>
+    <string name="sort_by_relevant">Sort by relevance</string>
+    <string name="sort_events_title">Sort events</string>
+    <string name="sort_by_relevance">Sort by relevance</string>
+    <string name="sort_by_date">Sort by date</string>
+    <string name="sort_by_popularity">Sort by popularity</string>
+    <string name="sort_by_price_high_low">Ticket price: high to low</string>
+    <string name="sort_by_price_low_high">Ticket price: low to high</string>
     <string name="all">All</string>
     <string name="music">Music</string>
     <string name="sports">Sports</string>
@@ -35,6 +45,13 @@
     <string name="arts">Arts</string>
     <string name="business">Business</string>
     <string name="food_bev">Food &amp; Bev</string>
+    <string name="social">Social</string>
+    <string name="recommended_for_you">Recommended for You</string>
+    <string name="trending_on_campus">Trending on Campus</string>
+    <string name="based_on_interest">Based on your interest in %1$s</string>
+    <string name="popular_events_across_campus">Popular events across campus</string>
+    <string name="select_at_least_three_interests">Please select at least 3 interests.</string>
+    <string name="interests_chip_helper">Select at least 3 interests.</string>
 
     <string name="events_count_label">%1$d Events</string>
     <string name="search_placeholder_empty">Search results will appear here.</string>
@@ -47,6 +64,10 @@
     <string name="sold_out">Sold Out</string>
     <string name="spots_remaining">%1$d spots remaining</string>
     <string name="spots_ratio">%1$d / %2$d spots</string>
+    <string name="registered_count_placeholder">0 registered</string>
+    <string name="status_open">Open</string>
+    <string name="status_full">Full</string>
+    <string name="status_closed">Closed</string>
 
     <string name="buy">Buy</string>
     <string name="secure_your_spot">Secure Your Spot</string>
@@ -70,13 +91,20 @@
     <string name="my_events_count">My Events %1$d</string>
     <string name="recently_viewed_events">Recently Viewed Events</string>
     <string name="cancel_rsvp">Cancel RSVP?</string>
-    <string name="cancel_rsvp_message">Are you sure you want to cancel your RSVP?</string>
+    <string name="cancel_rsvp_message">Are you sure you want to cancel your RSVP? If you are eligible, the ticket amount will return to your in-app credit balance.</string>
 
     <string name="event_calendar">Event Calendar</string>
     <string name="upcoming_events">Upcoming Events</string>
     <string name="add_to_google_calendar">Add to Google Calendar</string>
+    <string name="calendar_all_events_legend">All events</string>
+    <string name="calendar_registered_events_legend">Registered events</string>
+    <string name="calendar_approved_events_legend">My approved events</string>
+    <string name="calendar_filter_all">All events</string>
+    <string name="calendar_filter_registered">Registered only</string>
+    <string name="calendar_filter_approved">My approved events</string>
 
     <string name="create_event">Create Event</string>
+    <string name="create_event_primary">Create a New Event</string>
     <string name="approved_events">Approved Events</string>
     <string name="pending_events">Pending Events</string>
     <string name="pending">PENDING</string>
@@ -94,10 +122,50 @@
     <string name="settings">Settings</string>
     <string name="primary_campus">Primary Campus</string>
     <string name="dark_mode">Dark Mode</string>
+    <string name="accent_color">Accent Color</string>
+    <string name="accent_purple">Purple</string>
+    <string name="accent_blue">Blue</string>
+    <string name="accent_green">Green</string>
+    <string name="accent_orange">Orange</string>
+    <string name="accent_pink">Pink</string>
+    <string name="accent_teal">Teal</string>
+    <string name="accent_updated">Accent updated.</string>
     <string name="manage_events">Manage Events</string>
     <string name="view_event_calendar">View Event Calendar</string>
     <string name="account_settings">Account Settings</string>
+    <string name="account_name_label">Account Name</string>
+    <string name="campus_label">Campus</string>
+    <string name="campus_hint">Select campus</string>
+    <string name="campus_required">Please select a campus.</string>
+    <string name="current_password_label">Current Password</string>
+    <string name="new_password_label">New Password</string>
+    <string name="confirm_new_password_label">Confirm New Password</string>
+    <string name="current_password_hint">Enter current password to confirm email or password changes</string>
+    <string name="new_password_hint">Leave blank to keep your current password</string>
+    <string name="confirm_new_password_hint">Repeat the new password</string>
+    <string name="current_password_required_for_auth_updates">Enter your current password to change email or password.</string>
+    <string name="security_section">Security</string>
+    <string name="profile_section">Profile</string>
+    <string name="change_email">Change Email</string>
+    <string name="change_password">Change Password</string>
+    <string name="change_email_helper">Use this only when you want to update your sign-in email.</string>
+    <string name="change_password_helper">Enter your current password, then choose a new password.</string>
+    <string name="email_change_locked_hint">Tap Change Email to edit your sign-in email.</string>
+    <string name="account_updated">Account updated.</string>
+    <string name="account_update_failed">Update failed: %1$s</string>
+    <string name="profile_updated_but_auth_failed">Profile details were saved, but the email/password update failed: %1$s</string>
+    <string name="reauthentication_failed">Could not verify your current password: %1$s</string>
+    <string name="unknown_error">Unknown error</string>
     <string name="logout">Logout</string>
+    <string name="help_support">Help &amp; Support</string>
+    <string name="help_support_placeholder">We\'re building this section. Full help documentation, FAQs, and support contact will be available here soon.</string>
+    <string name="got_it">Got it</string>
+    <string name="help_walkthrough_intro">Choose a safe walkthrough. The guide uses the app\'s real screens with local demo data and does not change backend records.</string>
+    <string name="start_walkthrough">Start walkthrough</string>
+    <string name="walkthrough_next">Next</string>
+    <string name="walkthrough_back">Back</string>
+    <string name="walkthrough_exit">Exit</string>
+    <string name="walkthrough_done">Done</string>
 
     <string name="send_sos_title">Send SOS?</string>
     <string name="send_sos_message">This will alert campus security.</string>
@@ -112,6 +180,13 @@
     <string name="general">General</string>
 
     <string name="share">Share</string>
+    <string name="share_event_title">Share event</string>
+    <string name="share_event_message">Event link:\n%1$s</string>
+    <string name="copy_event_link">Copy link</string>
+    <string name="share_event_link">Share link</string>
+    <string name="share_event_details">Share event details</string>
+    <string name="event_link_label">Event link</string>
+    <string name="event_link_copied">Event link copied.</string>
     <string name="save">Save</string>
     <string name="unsave">Unsave</string>
     <string name="back">Back</string>
@@ -123,7 +198,7 @@
 
     <string name="event_not_found">Event not found.</string>
     <string name="failed_to_load_event">Failed to load event.</string>
-    <string name="refund_policy_body">Full fee is non-refundable after booking. Please review event guidelines before purchase.</string>
+    <string name="refund_policy_body">Refunds are issued as in-app credit only. Cancel more than 3 days before the event to receive 100%% credit. Organizer cancellations are refunded in full. No cash, bank, or Stripe refunds are issued.</string>
     <string name="open_map_failed">No map app found.</string>
     <string name="calendar_add_failed">No calendar app found.</string>
     <string name="buy_tickets_coming_next">Buy Ticket screen placeholder - Phase 13 will replace this.</string>
@@ -131,6 +206,7 @@
     <string name="view_on_map_inline">View on map</string>
     <string name="add_to_calendar_inline">Add to calendar</string>
     <string name="tickets_button">Tickets</string>
+    <string name="view_ticket">View Ticket</string>
     <string name="ticket_price_label">PKR 3000</string>
     <string name="sold_out_toast">This event is sold out</string>
 
@@ -179,12 +255,17 @@
 
     <string name="calendar_header">Event Calendar</string>
     <string name="dates_with_events">Dates with events: %1$s</string>
+    <string name="dates_with_events_empty">Dates with events: -</string>
+    <string name="calendar_month_placeholder">Month</string>
+    <string name="previous_month">Previous Month</string>
+    <string name="next_month">Next Month</string>
     <string name="no_events_this_day">No events on this day</string>
     <string name="month_previous"><![CDATA[<]]></string>
     <string name="month_next"><![CDATA[>]]></string>
     <string name="selected_day_events">Selected Day Events</string>
     <string name="calendar_not_available">Calendar screen unavailable right now</string>
     <string name="no_rsvpd_events_for_day">You have no RSVP\'d events for this day.</string>
+    <string name="no_approved_events_for_day">You have no approved events for this day.</string>
 
     <string name="organizer_welcome_back">Welcome Back,</string>
     <string name="approved_events_label">Approved Events</string>
@@ -202,25 +283,57 @@
     <string name="create_event_header">Create Event</string>
     <string name="event_title_hint">Event Title</string>
     <string name="event_date_hint">Event Date</string>
+    <string name="event_time">Event Time</string>
+    <string name="event_time_hint">Event Time</string>
     <string name="event_category_hint">Event Category</string>
     <string name="venue_hint">Venue</string>
     <string name="description_hint">Description</string>
     <string name="capacity_hint">Capacity</string>
     <string name="tags_label">Tags</string>
     <string name="tags_hint">concert, networking, sports</string>
-    <string name="sponsors_label">Sponsors</string>
+    <string name="event_image_label">Event Image</string>
+    <string name="sponsors_label">Sponsors (Optional)</string>
     <string name="sponsors_hint">Brand A, Student Council</string>
-    <string name="food_stalls_label">Food Stalls</string>
+    <string name="food_stalls_label">Food Stalls (Optional)</string>
     <string name="food_stalls_hint">Coffee Cart, Burger Truck</string>
     <string name="trailer_url_hint">Trailer URL (optional)</string>
     <string name="pick_date">Pick Date</string>
+    <string name="pick_time">Pick Time</string>
     <string name="selected_date_label">%1$s</string>
+    <string name="selected_time_label">%1$s</string>
+    <string name="date_and_time_required">Please select both an event date and time.</string>
     <string name="invalid_capacity">Please enter a valid capacity</string>
+    <string name="invalid_ticket_price">Please enter a valid ticket price.</string>
+    <string name="ticket_price_optional_label">Ticket Price (PKR) - leave 0 for free</string>
     <string name="submit_failed">Failed to submit proposal.</string>
     <string name="ok">OK</string>
 
     <string name="profile_header">Profile</string>
     <string name="edit_photo">Edit Photo</string>
+    <string name="edit_photo_or_avatar">Photo or Avatar</string>
+    <string name="profile_visual_title">Profile image</string>
+    <string name="choose_main_profile_visual">Choose main profile image</string>
+    <string name="upload_photo">Upload photo</string>
+    <string name="change_photo">Change photo</string>
+    <string name="add_profile_picture">Add profile picture</string>
+    <string name="use_photo_as_main">Use photo as main</string>
+    <string name="use_avatar_as_main">Use avatar as main</string>
+    <string name="create_avatar">Create avatar</string>
+    <string name="edit_avatar">Edit avatar</string>
+    <string name="avatar_creator_title">Create avatar</string>
+    <string name="avatar_creator_subtitle">Pick a look for your profile. You can switch back to a photo anytime.</string>
+    <string name="avatar_preview">Avatar preview</string>
+    <string name="avatar_initials">Initials</string>
+    <string name="avatar_skin_tone">Skin tone</string>
+    <string name="avatar_hair_style">Hair style</string>
+    <string name="avatar_hair_color">Hair color</string>
+    <string name="avatar_background">Background</string>
+    <string name="avatar_accessory">Accessory</string>
+    <string name="avatar_outfit">Outfit</string>
+    <string name="avatar_saved">Avatar saved</string>
+    <string name="avatar_save_failed">Failed to save avatar</string>
+    <string name="profile_image_updated">Profile image updated</string>
+    <string name="profile_image_update_failed">Failed to update profile image</string>
     <string name="manage_events_placeholder">Manage Events placeholder</string>
     <string name="account_settings_placeholder">Account Settings placeholder</string>
     <string name="logout_confirm_title">Log out?</string>
@@ -235,6 +348,14 @@
     <string name="view_event_calendar_row">View Event Calendar</string>
     <string name="account_settings_row">Account Settings</string>
     <string name="my_events_row">My Events</string>
+    <string name="organizer_tools">Organizer Tools</string>
+    <string name="organizer_tools_subtitle">Create, scan, review alerts, and manage live events.</string>
+    <string name="scan_tickets">Scan Tickets</string>
+    <string name="open_sos_dashboard">SOS Dashboard</string>
+    <string name="view_payments">View Payments</string>
+    <string name="event_context_label">Event: %1$s</string>
+    <string name="search_your_events">Search your events</string>
+    <string name="search_managed_events">Search managed events</string>
 
     <!-- Auth Screens -->
     <string name="welcome_title">Welcome!</string>
@@ -250,13 +371,37 @@
     <string name="welcome_back_title">Welcome Back !</string>
     <string name="email_address_label">Email address</string>
     <string name="password_label">Password</string>
+    <string name="password_requirements">Password must be at least 8 characters and include 1 uppercase letter, 1 number, and 1 special character.</string>
+    <string name="password_missing_uppercase">Password must include at least 1 uppercase letter.</string>
+    <string name="password_missing_number">Password must include at least 1 number.</string>
+    <string name="password_missing_special">Password must include at least 1 special character.</string>
+    <string name="password_too_short">Password must be at least 8 characters.</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="reset_password_title">Reset Password</string>
+    <string name="reset_password_message">Enter your email address and we will send you a password reset link.</string>
+    <string name="reset_password_email_hint">Email address</string>
+    <string name="send_reset_link">Send Reset Link</string>
+    <string name="reset_password_email_sent">If an account exists for this email, a password reset link has been sent.</string>
+    <string name="reset_password_invalid_email">Please enter a valid email address.</string>
+    <string name="reset_password_failed">Could not send reset email: %1$s</string>
+    <string name="reset_password_too_many_requests">Too many attempts. Please try again later.</string>
     <string name="remember_me">Remember me</string>
+    <string name="new_here">New here?</string>
+    <string name="create_account_link">Create an account</string>
+    <string name="new_here_create_account">New here? Create an account</string>
     <string name="create_account_title">Create Account</string>
     <string name="full_name_label">Full Name</string>
     <string name="confirm_password_label">Repeat password</string>
     <string name="interests_label">Interests</string>
-    <string name="interests_hint">Music, Sports, Career</string>
+    <string name="interests_hint">Select one or more interests</string>
+    <string name="interests_dropdown_hint">Type to choose interests</string>
     <string name="user_type_label">Type of User</string>
+    <string name="terms_consent">I agree to the Terms and Conditions and Privacy Policy.</string>
+    <string name="terms_and_conditions">Terms and Conditions</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_required">Please accept the terms and privacy policy to continue.</string>
+    <string name="terms_body">By creating an account, you agree to use Campus Event Discovery responsibly, provide accurate registration details, follow campus event rules, and avoid misuse of tickets, check-in codes, SOS reports, or organizer tools.</string>
+    <string name="privacy_body">Campus Event Discovery uses your profile details, campus, interests, event registrations, saved events, memories, and safety reports to operate app features. Do not upload sensitive information unless it is needed for the feature you are using.</string>
     <string name="attendee">Attendee</string>
     <string name="organizer">Organizer</string>
     <string name="admin">Admin</string>
@@ -268,14 +413,36 @@
     <string name="notifications_row">Notifications</string>
     <string name="no_notifications">No notifications yet</string>
     <string name="unread_notification">Unread</string>
-    <string name="memories_title">My Memories</string>
+    <string name="memories_title">Memory Folders</string>
     <string name="memories_row">My Memories</string>
-    <string name="no_memories">No memories yet</string>
+    <string name="no_memories">No attended events yet</string>
     <string name="memory_rating">Rating: %1$d/5</string>
     <string name="memory_photo_count">%1$d photo(s)</string>
+    <string name="create_memory_album">Create album</string>
+    <string name="add_more_photos">Add photos</string>
+    <string name="view_memories">View memories</string>
+    <string name="memory_album_title">Event Memories</string>
+    <string name="memory_photos_saved">Photos added to memories</string>
+    <string name="memory_photos_failed">Could not add photos</string>
+    <string name="select_memory_photos">Select photos</string>
+    <string name="memory_album_empty">No photos in this event folder yet.</string>
+    <string name="memory_uploading_photos">Uploading photos...</string>
 
     <!-- Admin Screens -->
-    <string name="admin_header">Home Administrator</string>
+    <string name="admin_header">Admin Dashboard</string>
+    <string name="admin_tools_subtitle">Create, manage, approve, scan, and monitor campus-wide event activity.</string>
+    <string name="show_pending_approvals">Pending Approvals</string>
+    <string name="show_rejected_events">Rejected Events</string>
+    <string name="delete_event">Delete Event</string>
+    <string name="delete_event_confirm_title">Delete event?</string>
+    <string name="delete_event_confirm_message">This removes the event from active listings, cancels attendee RSVPs, and returns eligible ticket value as in-app credit. This cannot be undone from the app.</string>
+    <string name="event_deleted">Event deleted.</string>
+    <string name="event_delete_failed">Failed to delete event.</string>
+    <string name="blacklisted_attendees">Blacklisted People</string>
+    <string name="participant_blacklisted_at">Blacklisted at %1$s</string>
+    <string name="no_blacklisted_attendees">No blacklisted attendees for this event.</string>
+    <string name="scanner_blacklisted_warning">%1$s has been blacklisted and should not be allowed to enter.</string>
+    <string name="admin_all_active_events">All Active Events</string>
     <string name="events_to_be_approved">Events to be Approved</string>
     <string name="no_pending_approvals">No pending approvals</string>
     <string name="approve">Approve</string>
@@ -286,6 +453,7 @@
     <string name="rejection_requires_note">Please enter a rejection note.</string>
     <string name="proposal_rejected_success">Proposal rejected.</string>
     <string name="proposal_approved_success">Event approved and created.</string>
+    <string name="approve_proposal_confirm_message">Approve this proposal and publish it as an event?</string>
     <string name="error_loading_proposal">Failed to load proposal.</string>
     <string name="approval_failed">Approval failed: %1$s</string>
     <string name="rejection_failed">Rejection failed: %1$s</string>
@@ -347,12 +515,32 @@
     <string name="feedback_failed">Failed to save feedback.</string>
     <string name="feedback_requires_rating">Please select a rating.</string>
     <string name="sos_location_unavailable">Location unavailable. SOS will be sent without coordinates.</string>
+    <string name="sos_label_unknown_reporter">Unknown reporter</string>
+    <string name="sos_status_active">Active</string>
+    <string name="sos_label_event">Event: %1$s</string>
+    <string name="sos_label_reporter">Reporter: %1$s</string>
+    <string name="sos_dashboard_title">SOS Dashboard</string>
+    <string name="sos_empty">No SOS alerts yet.</string>
+    <string name="sos_alert_title">Emergency Alert</string>
+    <string name="sos_alert_reporter_loading">Reporter: Loading...</string>
+    <string name="sos_alert_description_empty">Description: No details provided.</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="sos_alert_sent_title">SOS Alert Sent</string>
+    <string name="sos_alert_sent_message">Help is on the way. Security has been notified.</string>
+    <string name="close">Close</string>
 
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="select_event_image">Select Event Image</string>
     <string name="image_upload_failed">Image upload failed: %1$s</string>
+    <string name="scan_ticket_title">Scan Ticket</string>
 
     <!-- Payment and ticket strings -->
+    <string name="payments_title">Payments</string>
+    <string name="payment_empty">No payments yet for this event.</string>
+    <string name="payment_missing_event">Event information is missing</string>
+    <string name="payment_load_failed">Failed to load payments</string>
+    <string name="payment_count_label">Payments: %1$d</string>
+    <string name="payment_total_revenue">Total revenue: %1$s</string>
     <string name="price_format">Price: PKR %1$.2f</string>
     <string name="price_free">Free</string>
     <string name="pay_now">Pay Now</string>
@@ -360,7 +548,32 @@
     <string name="ticket_header">Your Ticket</string>
     <string name="txn_id_format">Txn ID: %1$s</string>
     <string name="done">Done</string>
+    <string name="your_ticket">Your Ticket</string>
+    <string name="account_section">Account</string>
+    <string name="attendee_tools_section">Attendee Tools</string>
+    <string name="organizer_tools_section">Organizer Tools</string>
+    <string name="app_preferences_section">App Preferences</string>
+    <string name="support_section">Support</string>
+    <string name="my_events_subtitle">View RSVPs, tickets, and recently viewed events.</string>
+    <string name="memories_subtitle">View event folders for events you attended.</string>
+    <string name="manage_events_subtitle">Review approved, pending, and rejected events.</string>
+    <string name="create_event_subtitle">Submit a new event proposal for approval.</string>
+    <string name="scan_tickets_subtitle">Check in attendees by QR code.</string>
+    <string name="sos_dashboard_subtitle">Monitor active emergency alerts for your events.</string>
+    <string name="calendar_subtitle">See upcoming campus events by date.</string>
+    <string name="notifications_subtitle">Review event updates and alerts.</string>
+    <string name="account_settings_subtitle">Edit your profile, email, password, and preferences.</string>
+    <string name="dark_mode_subtitle">Switch between light and dark appearance.</string>
+    <string name="no_search_results_help">Try a different keyword or clear the search.</string>
+    <string name="no_saved_events_help">Search campus events and save the ones you like.</string>
+    <string name="no_managed_events_help">Create your first event to start managing attendees.</string>
+    <string name="dismiss_sos_alert_title">Dismiss SOS alert?</string>
+    <string name="dismiss_sos_alert_message">Only dismiss this alert after you have acknowledged the emergency.</string>
     <string name="scanner_result">Scanner Result</string>
+    <string name="scanner_attendee_placeholder">Attendee: ...</string>
+    <string name="scanner_event_placeholder">Event: ...</string>
+    <string name="scanner_payment_placeholder">Payment: ...</string>
+    <string name="scanner_status_placeholder">Status: ...</string>
     <string name="scanner_attendee_format">Attendee: %1$s</string>
     <string name="scanner_event_format">Event: %1$s</string>
     <string name="scanner_payment_format">Payment: %1$s</string>
@@ -368,10 +581,13 @@
     <string name="mark_as_attended">Mark as Attended</string>
     <string name="open_camera">Open Camera</string>
     <string name="scan_ticket_prompt">Please scan a valid ticket QR code.</string>
+    <string name="scanner_camera_hint">Point the camera at an attendee ticket QR code.</string>
 
     <!-- Checkout strings -->
     <string name="checkout_section_personal">Personal details</string>
     <string name="checkout_section_payment">Payment method</string>
+    <string name="checkout_section_credit">In-app credit</string>
+    <string name="checkout_credit_balance">Available credit: PKR %1$.2f</string>
     <string name="checkout_hint_full_name">Full name</string>
     <string name="checkout_hint_last_name">Last name</string>
     <string name="checkout_hint_card_number">Card / account number (16 digits)</string>
@@ -382,10 +598,13 @@
     <string name="payment_method_credit_card">Credit Card</string>
     <string name="payment_method_debit_card">Debit Card</string>
     <string name="payment_method_apple_pay">Apple Pay</string>
+    <string name="payment_method_in_app_credit">In-App Credit</string>
+    <string name="payment_method_in_app_credit_desc">Use your credit balance to cover the full ticket price.</string>
     <string name="invalid_card_number">Card number must be exactly 16 digits</string>
     <string name="already_registered_for_event">You are already registered for this event. Opening your ticket.</string>
     <string name="checkout_rsvp_check_failed">Could not verify registration status. Please try again.</string>
     <string name="payment_failed_message">Payment failed: %1$s</string>
+    <string name="credit_insufficient_balance">Your credit balance is not enough for this ticket.</string>
     <string name="rsvp_failed_message">Registration failed: %1$s</string>
 
     <!-- Scanner strings -->
@@ -405,5 +624,49 @@
     <string name="scanner_ticket_already_used">TICKET ALREADY USED</string>
     <string name="scanner_marked_attended">Attendee marked as attended!</string>
     <string name="scanner_mark_failed">Failed to update check-in status</string>
+    <string name="preferences_section">Preferences</string>
+    <string name="in_app_credits_label">In-App Credits</string>
+    <string name="credit_balance_format">PKR %1$.2f</string>
+    <string name="insufficient_credits_toast">Insufficient credits to complete this purchase</string>
+
+
+    <!-- Vendor management -->
+    <string name="vendors">Vendors</string>
+    <string name="vendor_management">Vendor Management</string>
+    <string name="vendor_requests">Vendor Requests</string>
+    <string name="vendor_requests_with_count">Vendor Requests (%1$d)</string>
+    <string name="vendor_management_subtitle">Add and track vendors for approved events.</string>
+    <string name="admin_vendor_requests_subtitle">Review vendor proposals submitted by organizers.</string>
+    <string name="select_event_for_vendors">Select an Approved Event</string>
+    <string name="select_event_for_vendors_help">Choose one of your live events to manage approved, pending, and rejected vendors.</string>
+    <string name="no_approved_events_for_vendors">No approved events available</string>
+    <string name="no_vendor_requests">No vendor requests</string>
+    <string name="no_vendors_for_event">No vendors for this event yet</string>
+    <string name="add_vendor">Add Vendor</string>
+    <string name="submit_vendor_request">Submit Request</string>
+    <string name="vendor_name">Vendor name</string>
+    <string name="vendor_description">Description / service type</string>
+    <string name="vendor_phone">Phone number</string>
+    <string name="approved_vendors">Approved</string>
+    <string name="pending_vendors">Pending</string>
+    <string name="rejected_vendors">Rejected</string>
+    <string name="all_vendor_requests">All Requests</string>
+    <string name="vendor_event_format">Event: %1$s</string>
+    <string name="vendor_organizer_format">Organizer: %1$s</string>
+    <string name="vendor_phone_format">Phone: %1$s</string>
+    <string name="vendor_type_format">Type: %1$s</string>
+    <string name="vendor_request_submitted">Vendor request submitted for admin approval.</string>
+    <string name="vendor_request_failed">Vendor request failed: %1$s</string>
+    <string name="vendor_review_failed">Vendor review failed: %1$s</string>
+    <string name="vendor_approved">Vendor approved.</string>
+    <string name="vendor_rejected">Vendor rejected.</string>
+    <string name="required_field">Required</string>
+
+    <!-- Tier builder (Nausher) -->
+    <string name="use_tiers">Use Tiers</string>
+    <string name="add_tier">Add Tier</string>
+    <string name="ticket_tiers_label">Ticket Tiers</string>
+    <string name="no_tiers_error">Please add at least one tier if "Use Tiers" is enabled.</string>
+    <string name="invalid_tier_data">Please fill in all details for each tier correctly.</string>
 
 </resources>

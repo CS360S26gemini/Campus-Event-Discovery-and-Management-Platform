@@ -27,6 +27,7 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.example.CampusEventDiscovery.util.ThemeManager.applyAccentTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
@@ -34,12 +35,37 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void routeFromSplash() {
+        if (!canRoute()) {
+            return;
+        }
+
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
         if (currentUser == null && DevSessionManager.shouldUseBypass(this)) {
             openActivity(MainActivity.class);
             return;
         }
 
+        if (currentUser == null) {
+            continueRouting(null);
+            return;
+        }
+
+        currentUser.reload()
+                .addOnCompleteListener(task -> {
+                    FirebaseUser refreshedUser = FirebaseAuth.getInstance().getCurrentUser();
+
+                    if (refreshedUser != null && !refreshedUser.isEmailVerified()) {
+                        FirebaseAuth.getInstance().signOut();
+                        openActivity(WelcomeActivity.class);
+                        return;
+                    }
+
+                    continueRouting(refreshedUser);
+                });
+    }
+
+    private void continueRouting(FirebaseUser currentUser) {
         repository.getMaintenanceMode(new EventRepository.BooleanCallback() {
             @Override
             public void onSuccess(boolean maintenanceMode) {
@@ -86,8 +112,15 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void openActivity(Class<?> activityClass) {
+        if (!canRoute()) {
+            return;
+        }
         Intent intent = new Intent(SplashActivity.this, activityClass);
         startActivity(intent);
         finish();
+    }
+
+    private boolean canRoute() {
+        return !isFinishing() && !isDestroyed();
     }
 }

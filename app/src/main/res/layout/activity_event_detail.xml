@@ -22,21 +22,15 @@
                 android:contentDescription="@string/app_name"
                 android:scaleType="centerCrop" />
 
-            <View
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbarEventDetail"
+                style="@style/AppToolbarStyle"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_featured_overlay" />
-
-            <ImageButton
-                android:id="@+id/btnBack"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="top|start"
-                android:layout_margin="16dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/back"
-                android:src="@drawable/ic_back"
-                app:tint="@android:color/white" />
+                android:layout_height="?attr/actionBarSize"
+                android:background="@android:color/transparent"
+                app:navigationContentDescription="@string/back"
+                app:navigationIcon="@drawable/ic_back"
+                app:navigationIconTint="@color/colorOnOverlay" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -46,21 +40,27 @@
                 android:orientation="horizontal">
 
                 <ImageButton
+                    style="@style/AppImageButtonStyle"
                     android:id="@+id/btnHeart"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_icon_button_circle"
                     android:contentDescription="@string/save"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_heart_outline"
                     app:tint="@color/colorOnOverlay" />
 
                 <ImageButton
+                    style="@style/AppImageButtonStyle"
                     android:id="@+id/btnShare"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:layout_marginStart="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:background="@drawable/bg_icon_button_circle"
                     android:contentDescription="@string/share"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_share"
                     app:tint="@color/colorOnOverlay" />
             </LinearLayout>
@@ -110,7 +110,7 @@
                         android:paddingHorizontal="4dp"
                         android:paddingVertical="2dp"
                         android:text="@string/add_to_calendar_inline"
-                        android:textColor="@color/colorPrimary"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="13sp" />
                 </LinearLayout>
 
@@ -137,7 +137,7 @@
                         android:paddingHorizontal="4dp"
                         android:paddingVertical="2dp"
                         android:text="@string/view_on_map_inline"
-                        android:textColor="@color/colorPrimary"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="13sp" />
                 </LinearLayout>
 

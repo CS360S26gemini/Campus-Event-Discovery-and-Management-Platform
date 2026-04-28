@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
@@ -28,30 +29,39 @@ import java.util.Locale;
 public class EventApprovalActivity extends AppCompatActivity {
 
     private ImageView ivBanner;
-    private ImageButton btnBack;
+    private MaterialToolbar toolbarEventApproval;
     private TextView tvTitle, tvDateTime, tvVenue, tvDescription, tvPriceInfo;
     private com.google.android.material.button.MaterialButton btnApprove, btnReject;
 
     private String proposalId;
     private EventProposal currentProposal;
     private EventRepository repository;
+    private boolean walkthroughMode;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.example.CampusEventDiscovery.util.ThemeManager.applyAccentTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_approval);
 
         repository = new EventRepository();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
         proposalId = getIntent().getStringExtra("proposalId");
 
         bindViews();
         setupListeners();
-        loadProposalDetails();
+        if (walkthroughMode) {
+            currentProposal = WalkthroughManager.getDemoProposal();
+            bindProposal(currentProposal);
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "approval");
+        } else {
+            loadProposalDetails();
+        }
     }
 
     private void bindViews() {
         ivBanner = findViewById(R.id.ivBanner);
-        btnBack = findViewById(R.id.btnBack);
+        toolbarEventApproval = findViewById(R.id.toolbarEventApproval);
         tvTitle = findViewById(R.id.tvTitle);
         tvDateTime = findViewById(R.id.tvDateTime);
         tvVenue = findViewById(R.id.tvVenue);
@@ -62,29 +72,53 @@ public class EventApprovalActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
-        btnBack.setOnClickListener(v -> finish());
+        toolbarEventApproval.setNavigationOnClickListener(v -> finish());
         
         btnApprove.setOnClickListener(v -> {
             if (currentProposal == null) return;
-            repository.approveProposal(proposalId, currentProposal, new EventRepository.ActionCallback() {
-                @Override
-                public void onSuccess() {
-                    Toast.makeText(EventApprovalActivity.this, getString(R.string.proposal_approved_success), Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    String message = e.getMessage() == null ? getString(R.string.app_name) : e.getMessage();
-                    Toast.makeText(EventApprovalActivity.this, getString(R.string.approval_failed, message), Toast.LENGTH_SHORT).show();
-                }
-            });
+            if (walkthroughMode) {
+                Toast.makeText(this, "Walkthrough mode: proposal was not approved.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.approve)
+                    .setMessage(R.string.approve_proposal_confirm_message)
+                    .setPositiveButton(R.string.confirm, (dialog, which) -> approveProposal())
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
         });
 
         btnReject.setOnClickListener(v -> {
             if (currentProposal == null) return;
+            if (walkthroughMode) {
+                Toast.makeText(this, "Walkthrough mode: proposal was not rejected.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             showRejectDialog();
         });
+    }
+
+    private void approveProposal() {
+        setActionLoading(true);
+        repository.approveProposal(proposalId, currentProposal, new EventRepository.ActionCallback() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(EventApprovalActivity.this, getString(R.string.proposal_approved_success), Toast.LENGTH_SHORT).show();
+                finish();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                setActionLoading(false);
+                String message = e.getMessage() == null ? getString(R.string.app_name) : e.getMessage();
+                Toast.makeText(EventApprovalActivity.this, getString(R.string.approval_failed, message), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void setActionLoading(boolean isLoading) {
+        btnApprove.setEnabled(!isLoading);
+        btnReject.setEnabled(!isLoading);
     }
 
     private void loadProposalDetails() {
@@ -97,20 +131,7 @@ public class EventApprovalActivity extends AppCompatActivity {
             @Override
             public void onSuccess(EventProposal proposal) {
                 currentProposal = proposal;
-                tvTitle.setText(currentProposal.getTitle());
-                tvDateTime.setText(formatDateTime(currentProposal.getDate()));
-                tvVenue.setText(currentProposal.getLocation());
-                tvDescription.setText(currentProposal.getDescription());
-                
-                if (tvPriceInfo != null) {
-                    if (currentProposal.getTicketPrice() == 0) {
-                        tvPriceInfo.setText(R.string.price_free);
-                    } else {
-                        tvPriceInfo.setText(String.format(Locale.getDefault(), "PKR %.2f", currentProposal.getTicketPrice()));
-                    }
-                }
-
-                ivBanner.setImageResource(R.drawable.bg_placeholder_image);
+                bindProposal(currentProposal);
             }
 
             @Override
@@ -119,6 +140,23 @@ public class EventApprovalActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    private void bindProposal(EventProposal proposal) {
+        tvTitle.setText(proposal.getTitle());
+        tvDateTime.setText(formatDateTime(proposal.getDate()));
+        tvVenue.setText(proposal.getLocation());
+        tvDescription.setText(proposal.getDescription());
+
+        if (tvPriceInfo != null) {
+            if (proposal.getTicketPrice() == 0) {
+                tvPriceInfo.setText(R.string.price_free);
+            } else {
+                tvPriceInfo.setText(String.format(Locale.getDefault(), "PKR %.2f", proposal.getTicketPrice()));
+            }
+        }
+
+        ivBanner.setImageResource(R.drawable.bg_placeholder_image);
     }
 
     private void showRejectDialog() {
@@ -138,6 +176,7 @@ public class EventApprovalActivity extends AppCompatActivity {
                         return;
                     }
 
+                    setActionLoading(true);
                     repository.rejectProposal(proposalId, currentProposal, note, new EventRepository.ActionCallback() {
                         @Override
                         public void onSuccess() {
@@ -147,6 +186,7 @@ public class EventApprovalActivity extends AppCompatActivity {
 
                         @Override
                         public void onError(Exception e) {
+                            setActionLoading(false);
                             String message = e.getMessage() == null ? getString(R.string.app_name) : e.getMessage();
                             Toast.makeText(EventApprovalActivity.this, getString(R.string.rejection_failed, message), Toast.LENGTH_SHORT).show();
                         }

@@ -41,4 +41,13 @@ public final class UserRoles {
     public static boolean isAdmin(String role) {
         return ADMIN.equals(sanitize(role));
     }
+
+    public static boolean canManageEvents(String role) {
+        String safeRole = sanitize(role);
+        return ORGANIZER.equals(safeRole) || ADMIN.equals(safeRole);
+    }
+
+    public static boolean canUseAdminPowers(String role) {
+        return ADMIN.equals(sanitize(role));
+    }
 }

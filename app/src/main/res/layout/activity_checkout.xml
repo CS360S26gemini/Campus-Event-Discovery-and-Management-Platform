@@ -11,6 +11,7 @@
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbarCheckout"
+            style="@style/AppToolbarStyle"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_back"
@@ -47,6 +48,16 @@
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginBottom="24dp" />
 
+            <TextView
+                android:id="@+id/tvCreditBalance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
             <!-- Divider -->
             <View
                 android:layout_width="match_parent"
@@ -69,7 +80,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/checkout_hint_full_name"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/AppTextInputBoxStyle"
                 android:layout_marginBottom="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -85,7 +96,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/checkout_hint_last_name"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/AppTextInputBoxStyle"
                 android:layout_marginBottom="24dp">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -96,6 +107,12 @@
                     android:imeOptions="actionNext" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutPaymentSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
             <!-- Payment method section -->
             <TextView
@@ -109,12 +126,9 @@
                 android:layout_marginBottom="12dp" />
 
             <com.google.android.material.card.MaterialCardView
+                style="@style/AppMaterialCardView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="?attr/colorOutlineVariant"
-                app:cardElevation="0dp"
                 android:layout_marginBottom="12dp">
 
                 <RadioGroup
@@ -186,9 +200,35 @@
                         android:drawableEnd="@null"
                         android:background="?attr/selectableItemBackground" />
 
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.5dp"
+                        android:background="?attr/colorOutlineVariant"
+                        android:layout_marginStart="12dp" />
+
+                    <RadioButton
+                        android:id="@+id/rbInAppCredit"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="@string/payment_method_in_app_credit"
+                        android:paddingStart="12dp"
+                        android:textSize="15sp"
+                        android:button="@null"
+                        android:drawableEnd="@null"
+                        android:background="?attr/selectableItemBackground" />
+
                 </RadioGroup>
 
             </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvCreditBalanceHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:text="@string/payment_method_in_app_credit_desc"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="13sp" />
 
             <!-- Card number — shown only for Credit/Debit -->
             <com.google.android.material.textfield.TextInputLayout
@@ -196,7 +236,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/checkout_hint_card_number"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/AppTextInputBoxStyle"
                 android:layout_marginBottom="24dp"
                 android:visibility="gone">
 
@@ -209,6 +249,8 @@
                     android:imeOptions="actionDone" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
 
             <!-- Order summary -->
             <View
@@ -252,13 +294,13 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPay"
+                style="@style/AppButtonStyle"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="@string/pay_now"
                 android:textSize="16sp"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                app:cornerRadius="12dp" />
+                android:layout_marginBottom="16dp" />
 
         </LinearLayout>
 

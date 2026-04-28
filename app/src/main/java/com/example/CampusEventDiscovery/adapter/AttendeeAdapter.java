@@ -8,6 +8,8 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.CampusEventDiscovery.R;
@@ -27,20 +29,20 @@ import java.util.Set;
  *
  * RecyclerView adapter for organizer attendee management.
  */
-public class AttendeeAdapter extends RecyclerView.Adapter<AttendeeAdapter.AttendeeViewHolder> {
+public class AttendeeAdapter extends ListAdapter<EventAttendee, AttendeeAdapter.AttendeeViewHolder> {
 
     public interface OnSelectionChangedListener {
         void onSelectionChanged(int selectedCount);
     }
 
     private final List<EventAttendee> allAttendees = new ArrayList<>();
-    private final List<EventAttendee> filteredAttendees = new ArrayList<>();
     private final Set<String> selectedIds = new HashSet<>();
     private final OnSelectionChangedListener selectionChangedListener;
     private final SimpleDateFormat checkedInDateFormat =
             new SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault());
 
     public AttendeeAdapter(OnSelectionChangedListener selectionChangedListener) {
+        super(DIFF_CALLBACK);
         this.selectionChangedListener = selectionChangedListener;
     }
 
@@ -54,7 +56,7 @@ public class AttendeeAdapter extends RecyclerView.Adapter<AttendeeAdapter.Attend
 
     @Override
     public void onBindViewHolder(@NonNull AttendeeViewHolder holder, int position) {
-        EventAttendee attendee = filteredAttendees.get(position);
+        EventAttendee attendee = getItem(position);
         String attendeeId = resolveSelectionId(attendee);
 
         holder.tvName.setText(TextUtils.isEmpty(attendee.getFullName())
@@ -82,7 +84,7 @@ public class AttendeeAdapter extends RecyclerView.Adapter<AttendeeAdapter.Attend
 
     @Override
     public int getItemCount() {
-        return filteredAttendees.size();
+        return super.getItemCount();
     }
 
     public void updateData(List<EventAttendee> attendees) {
@@ -96,7 +98,7 @@ public class AttendeeAdapter extends RecyclerView.Adapter<AttendeeAdapter.Attend
     public void filter(String query) {
         String safeQuery = query == null ? "" : query.trim().toLowerCase(Locale.getDefault());
 
-        filteredAttendees.clear();
+        List<EventAttendee> filteredAttendees = new ArrayList<>();
         for (EventAttendee attendee : allAttendees) {
             String fullName = attendee.getFullName() == null ? "" : attendee.getFullName().toLowerCase(Locale.getDefault());
             if (safeQuery.isEmpty() || fullName.contains(safeQuery)) {
@@ -105,7 +107,7 @@ public class AttendeeAdapter extends RecyclerView.Adapter<AttendeeAdapter.Attend
         }
 
         pruneSelectionToKnownAttendees();
-        notifyDataSetChanged();
+        submitList(new ArrayList<>(filteredAttendees));
         notifySelectionChanged();
     }
 
@@ -148,6 +150,17 @@ public class AttendeeAdapter extends RecyclerView.Adapter<AttendeeAdapter.Attend
     }
 
     private String buildStatusText(View itemView, EventAttendee attendee) {
+        if (attendee.isBlacklisted()) {
+            Timestamp blacklistedAt = attendee.getBlacklistedAt();
+            if (blacklistedAt == null) {
+                return itemView.getContext().getString(R.string.blacklisted_attendees);
+            }
+            return itemView.getContext().getString(
+                    R.string.participant_blacklisted_at,
+                    checkedInDateFormat.format(blacklistedAt.toDate())
+            );
+        }
+
         if (!attendee.isCheckedIn()) {
             return itemView.getContext().getString(R.string.participant_registered_status);
         }
@@ -161,6 +174,41 @@ public class AttendeeAdapter extends RecyclerView.Adapter<AttendeeAdapter.Attend
                 R.string.participant_checked_in_at,
                 checkedInDateFormat.format(checkedInAt.toDate())
         );
+    }
+
+    private static final DiffUtil.ItemCallback<EventAttendee> DIFF_CALLBACK = new DiffUtil.ItemCallback<EventAttendee>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull EventAttendee oldItem, @NonNull EventAttendee newItem) {
+            return TextUtils.equals(resolveSelectionIdStatic(oldItem), resolveSelectionIdStatic(newItem));
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull EventAttendee oldItem, @NonNull EventAttendee newItem) {
+            return TextUtils.equals(oldItem.getFullName(), newItem.getFullName())
+                    && TextUtils.equals(oldItem.getUserId(), newItem.getUserId())
+                    && TextUtils.equals(oldItem.getQrToken(), newItem.getQrToken())
+                    && oldItem.isBlacklisted() == newItem.isBlacklisted()
+                    && oldItem.isCheckedIn() == newItem.isCheckedIn()
+                    && timestampMillis(oldItem.getBlacklistedAt()) == timestampMillis(newItem.getBlacklistedAt())
+                    && timestampMillis(oldItem.getCheckedInAt()) == timestampMillis(newItem.getCheckedInAt());
+        }
+    };
+
+    private static String resolveSelectionIdStatic(EventAttendee attendee) {
+        if (attendee == null) {
+            return "";
+        }
+        if (!TextUtils.isEmpty(attendee.getUserId())) {
+            return attendee.getUserId();
+        }
+        if (!TextUtils.isEmpty(attendee.getQrToken())) {
+            return attendee.getQrToken();
+        }
+        return attendee.getFullName() == null ? "" : attendee.getFullName();
+    }
+
+    private static long timestampMillis(Timestamp timestamp) {
+        return timestamp == null ? Long.MIN_VALUE : timestamp.toDate().getTime();
     }
 
     static class AttendeeViewHolder extends RecyclerView.ViewHolder {

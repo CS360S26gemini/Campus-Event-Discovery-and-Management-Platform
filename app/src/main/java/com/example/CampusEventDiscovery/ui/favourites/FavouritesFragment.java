@@ -93,7 +93,7 @@ public class FavouritesFragment extends Fragment {
                 new EventAdapter.OnEventClickListener() {
                     @Override
                     public void onItemClick(Event event) {
-                        if (event == null || event.getEventId() == null) {
+                        if (event == null || event.getEventId() == null || !canUseView()) {
                             return;
                         }
 
@@ -104,12 +104,14 @@ public class FavouritesFragment extends Fragment {
 
                     @Override
                     public void onHeartClick(Event event, boolean isCurrentlySaved) {
-                        if (currentUserId == null || event == null || event.getEventId() == null) {
+                        if (currentUserId == null || event == null || event.getEventId() == null || !canUseView()) {
                             return;
                         }
 
                         repository.unsaveEvent(currentUserId, event.getEventId(), () -> {
-                            removeEventFromList(event.getEventId());
+                            if (canUseView()) {
+                                removeEventFromList(event.getEventId());
+                            }
                         });
                     }
 
@@ -140,6 +142,10 @@ public class FavouritesFragment extends Fragment {
         repository.getSavedEvents(currentUserId, new EventRepository.EventListCallback() {
             @Override
             public void onSuccess(List<Event> events) {
+                if (!canUseView()) {
+                    return;
+                }
+
                 favouriteEvents.clear();
                 savedEventIds.clear();
 
@@ -161,6 +167,10 @@ public class FavouritesFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (!canUseView()) {
+                    return;
+                }
+
                 favouriteEvents.clear();
                 savedEventIds.clear();
                 adapter.updateSavedIds(savedEventIds);
@@ -206,6 +216,12 @@ public class FavouritesFragment extends Fragment {
     }
 
     private void showLoading(boolean isLoading) {
-        progressBarFavourites.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        if (progressBarFavourites != null) {
+            progressBarFavourites.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private boolean canUseView() {
+        return isAdded() && getView() != null;
     }
 }

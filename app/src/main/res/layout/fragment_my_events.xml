@@ -8,12 +8,11 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarMyEvents"
+        style="@style/AppToolbarStyle"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorSurface"
         app:navigationIcon="@drawable/ic_back"
-        app:title="@string/my_events_header"
-        app:titleTextColor="@color/colorOnBackground" />
+        app:title="@string/my_events_header" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -25,6 +24,24 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingBottom="20dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/spacing_md"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/search_your_events"
+                app:endIconContentDescription="@string/clear_search"
+                app:endIconMode="clear_text">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMyEventsSearch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:textColor="@color/colorOnBackground" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
                 android:id="@+id/tvSection1Header"
@@ -49,7 +66,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:nestedScrollingEnabled="false" />
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:paddingBottom="@dimen/spacing_md" />
 
             <TextView
                 android:id="@+id/tvEmptySection1"
@@ -57,7 +76,10 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp"
-                android:text="@string/no_rsvps_yet"
+                android:drawableTop="@drawable/ic_event_outline"
+                android:drawablePadding="@dimen/spacing_md"
+                android:gravity="center"
+                android:text="@string/no_saved_events_help"
                 android:textColor="@color/colorSecondary"
                 android:textSize="14sp"
                 android:visibility="gone" />
@@ -93,7 +115,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:nestedScrollingEnabled="false" />
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:paddingBottom="@dimen/spacing_md" />
 
             <TextView
                 android:id="@+id/tvEmptySection2"
@@ -101,6 +125,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp"
+                android:gravity="center"
                 android:text="@string/no_recent_events"
                 android:textColor="@color/colorSecondary"
                 android:textSize="14sp"
@@ -141,7 +166,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:clipToPadding="false"
                 android:nestedScrollingEnabled="false"
+                android:paddingBottom="@dimen/bottom_nav_safe_padding"
                 android:visibility="gone" />
 
             <TextView
@@ -150,6 +177,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp"
+                android:gravity="center"
                 android:text="@string/no_rejected_proposals"
                 android:textColor="@color/colorSecondary"
                 android:textSize="14sp"

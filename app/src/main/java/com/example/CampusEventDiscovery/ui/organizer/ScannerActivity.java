@@ -20,10 +20,10 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
-import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -51,8 +51,12 @@ public class ScannerActivity extends AppCompatActivity {
     private MaterialButton btnStartScanner;
 
     private FirebaseFirestore db;
+    private EventRepository repository;
+    private String expectedEventId;
     private Rsvp currentRsvp;
     private String currentAttendeeName;
+    private String currentAttendeeUserId;
+    private boolean walkthroughMode;
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -67,13 +71,20 @@ public class ScannerActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.example.CampusEventDiscovery.util.ThemeManager.applyAccentTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scanner);
 
         db = FirebaseFirestore.getInstance();
+        repository = new EventRepository();
+        expectedEventId = getIntent().getStringExtra("eventId");
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
 
         bindViews();
         setupUI();
+        if (walkthroughMode) {
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "scanner");
+        }
     }
 
     private void bindViews() {
@@ -95,6 +106,10 @@ public class ScannerActivity extends AppCompatActivity {
     }
 
     private void checkCameraPermission() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: camera scanner was not opened.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
             startScanning();
@@ -106,6 +121,7 @@ public class ScannerActivity extends AppCompatActivity {
     private void startScanning() {
         IntentIntegrator integrator = new IntentIntegrator(this);
         integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
+        integrator.setCaptureActivity(TicketCaptureActivity.class);
         integrator.setPrompt(getString(R.string.scanner_prompt));
         integrator.setCameraId(0);
         integrator.setBeepEnabled(true);
@@ -139,6 +155,10 @@ public class ScannerActivity extends AppCompatActivity {
             String userId        = json.getString("userId");
             String eventId       = json.getString("eventId");
 
+            if (!TextUtils.isEmpty(expectedEventId) && !expectedEventId.equals(eventId)) {
+                showError(getString(R.string.scanner_rsvp_mismatch));
+                return;
+            }
             lookupRsvp(transactionId, userId, eventId);
         } catch (JSONException e) {
             showError(getString(R.string.scanner_invalid_qr));
@@ -163,9 +183,10 @@ public class ScannerActivity extends AppCompatActivity {
                             // Fix: Explicitly set userId and eventId since they may not be fields in the doc
                             currentRsvp.setUserId(userId);
                             currentRsvp.setEventId(eventId);
+                            currentAttendeeUserId = userId;
 
                             if (txnId.equals(currentRsvp.getTransactionId())) {
-                                fetchAttendeeNameAndDisplay(userId);
+                                checkBlacklistThenDisplay(userId, eventId);
                             } else {
                                 showError(getString(R.string.scanner_rsvp_mismatch));
                             }
@@ -175,6 +196,24 @@ public class ScannerActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> showError(getString(R.string.scanner_error_fetching, e.getMessage())));
+    }
+
+    private void checkBlacklistThenDisplay(String userId, String eventId) {
+        db.collection("events").document(eventId)
+                .collection("blacklist").document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String name = documentSnapshot.getString("fullName");
+                        if (TextUtils.isEmpty(name)) {
+                            name = getString(R.string.scanner_unknown_user);
+                        }
+                        showBlacklistedResult(name);
+                    } else {
+                        fetchAttendeeNameAndDisplay(userId);
+                    }
+                })
+                .addOnFailureListener(e -> fetchAttendeeNameAndDisplay(userId));
     }
 
     /**
@@ -224,39 +263,60 @@ public class ScannerActivity extends AppCompatActivity {
         }
     }
 
+    private void showBlacklistedResult(String attendeeName) {
+        currentAttendeeName = attendeeName;
+        tvError.setVisibility(View.GONE);
+        cardResult.setVisibility(View.VISIBLE);
+        tvAttendeeName.setText(getString(R.string.scanner_label_attendee, currentAttendeeName));
+        tvEventName.setText(getString(R.string.scanner_label_event,
+                currentRsvp == null ? "" : currentRsvp.getTitle()));
+        tvPaymentStatus.setText(getString(R.string.scanner_label_payment,
+                currentRsvp == null ? "" : currentRsvp.getPaymentStatus()));
+        tvCheckInStatus.setText(getString(R.string.scanner_blacklisted_warning, currentAttendeeName));
+        tvCheckInStatus.setTextColor(Color.RED);
+        btnMarkAttended.setVisibility(View.GONE);
+    }
+
     /**
      * Marks the attendee as attended by setting checkedIn = true and
      * qrExpired = true in a single Firestore update, making the QR
      * code one-time use only.
      */
     private void markAsAttended() {
-        if (currentRsvp == null || currentRsvp.getUserId() == null || currentRsvp.getEventId() == null) return;
+        if (currentRsvp == null
+                || TextUtils.isEmpty(currentRsvp.getUserId())
+                || TextUtils.isEmpty(currentRsvp.getEventId())
+                || TextUtils.isEmpty(currentRsvp.getTransactionId())) {
+            showError(getString(R.string.scanner_invalid_qr));
+            return;
+        }
 
-        db.collection("users").document(currentRsvp.getUserId())
-                .collection("rsvps").document(currentRsvp.getEventId())
-                .update(
-                        "checkedIn", true,
-                        "qrExpired", true,
-                        "checkedInAt", Timestamp.now()
-                )
-                .addOnSuccessListener(aVoid -> {
-                    currentRsvp.setCheckedIn(true);
-                    currentRsvp.setQrExpired(true);
+        repository.checkInAttendeeByScan(
+                currentRsvp.getEventId(),
+                currentRsvp.getUserId(),
+                currentRsvp.getTransactionId(),
+                new EventRepository.ActionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        currentRsvp.setCheckedIn(true);
+                        currentRsvp.setQrExpired(true);
 
-                    tvCheckInStatus.setText(getString(R.string.scanner_checked_in_yes));
-                    btnMarkAttended.setVisibility(View.GONE);
-                    Toast.makeText(this,
-                            getString(R.string.scanner_marked_attended),
-                            Toast.LENGTH_SHORT).show();
+                        tvCheckInStatus.setText(getString(R.string.scanner_checked_in_yes));
+                        btnMarkAttended.setVisibility(View.GONE);
+                        Toast.makeText(ScannerActivity.this,
+                                getString(R.string.scanner_marked_attended),
+                                Toast.LENGTH_SHORT).show();
+                    }
 
-                    // Mirror check-in state on the event's attendees sub-collection
-                    db.collection("events").document(currentRsvp.getEventId())
-                            .collection("attendees").document(currentRsvp.getUserId())
-                            .update("checkedIn", true, "checkedInAt", Timestamp.now());
-                })
-                .addOnFailureListener(e -> Toast.makeText(this,
-                        getString(R.string.scanner_mark_failed),
-                        Toast.LENGTH_SHORT).show());
+                    @Override
+                    public void onError(Exception e) {
+                        String message = e != null && !TextUtils.isEmpty(e.getMessage())
+                                ? e.getMessage()
+                                : getString(R.string.scanner_mark_failed);
+                        showError(message);
+                    }
+                }
+        );
     }
 
     private void showError(String message) {

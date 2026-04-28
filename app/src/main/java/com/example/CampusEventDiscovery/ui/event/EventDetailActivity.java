@@ -14,14 +14,20 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.EventShareHelper;
+import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -46,7 +52,7 @@ import java.util.Set;
 public class EventDetailActivity extends AppCompatActivity {
 
     private ImageView ivBanner;
-    private ImageButton btnBack;
+    private MaterialToolbar toolbarEventDetail;
     private ImageButton btnHeart;
     private ImageButton btnShare;
     private TextView tvTitle;
@@ -68,13 +74,16 @@ public class EventDetailActivity extends AppCompatActivity {
     private Event currentEvent;
     private Rsvp currentRsvp;
     private final Set<String> savedEventIds = new HashSet<>();
+    private boolean walkthroughMode;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        ThemeManager.applyAccentTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_detail);
 
         repository = new EventRepository();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         currentUserId = currentUser != null ? currentUser.getUid() : DevSessionManager.getEffectiveUserId(this);
@@ -82,7 +91,7 @@ public class EventDetailActivity extends AppCompatActivity {
         bindViews();
         updateRegistrationCta();
 
-        eventId = getIntent().getStringExtra("eventId");
+        eventId = resolveEventId(getIntent());
         if (TextUtils.isEmpty(eventId)) {
             Toast.makeText(this, getString(R.string.event_not_found), Toast.LENGTH_SHORT).show();
             finish();
@@ -90,15 +99,22 @@ public class EventDetailActivity extends AppCompatActivity {
         }
 
         setupStaticListeners();
-        loadSavedState();
-        loadCurrentUserRole();
-        loadEventDetails();
-        checkRsvpStatus();
+        if (walkthroughMode) {
+            currentUserRole = UserRoles.ATTENDEE;
+            currentEvent = WalkthroughManager.getDemoEvent();
+            bindEvent(currentEvent);
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "event_detail");
+        } else {
+            loadSavedState();
+            loadCurrentUserRole();
+            loadEventDetails();
+            checkRsvpStatus();
+        }
     }
 
     private void bindViews() {
         ivBanner = findViewById(R.id.ivBanner);
-        btnBack = findViewById(R.id.btnBack);
+        toolbarEventDetail = findViewById(R.id.toolbarEventDetail);
         btnHeart = findViewById(R.id.btnHeart);
         btnShare = findViewById(R.id.btnShare);
         tvTitle = findViewById(R.id.tvTitle);
@@ -122,7 +138,7 @@ public class EventDetailActivity extends AppCompatActivity {
     }
 
     private void setupStaticListeners() {
-        btnBack.setOnClickListener(v -> finish());
+        toolbarEventDetail.setNavigationOnClickListener(v -> finish());
 
         btnHeart.setOnClickListener(v -> {
             if (currentEvent == null || currentUserId == null || currentEvent.getEventId() == null) {
@@ -157,16 +173,7 @@ public class EventDetailActivity extends AppCompatActivity {
                 return;
             }
 
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("text/plain");
-            shareIntent.putExtra(Intent.EXTRA_TEXT,
-                    safeText(currentEvent.getTitle(), getString(R.string.app_name))
-                            + "\n"
-                            + formatDateTime(currentEvent.getDate())
-                            + "\n"
-                            + safeText(currentEvent.getLocation(), getString(R.string.placeholder_venue)));
-
-            startActivity(Intent.createChooser(shareIntent, getString(R.string.share)));
+            EventShareHelper.showEventShareOptions(this, currentEvent);
         });
 
         tvAddToCalendar.setOnClickListener(v -> addToCalendar());
@@ -174,6 +181,10 @@ public class EventDetailActivity extends AppCompatActivity {
         tvViewOnMap.setOnClickListener(v -> openMap());
 
         btnTickets.setOnClickListener(v -> {
+            if (walkthroughMode) {
+                Toast.makeText(this, "Walkthrough mode: no RSVP was created.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (currentEvent == null || !UserRoles.isAttendee(currentUserRole)) {
                 Toast.makeText(this, getString(R.string.attendee_only_registration_message), Toast.LENGTH_SHORT).show();
                 return;
@@ -232,7 +243,7 @@ public class EventDetailActivity extends AppCompatActivity {
         if (btnTickets != null) btnTickets.setVisibility(View.GONE);
         if (btnViewTicket != null) {
             btnViewTicket.setVisibility(View.VISIBLE);
-            btnViewTicket.setText("View Ticket");
+            btnViewTicket.setText(R.string.view_ticket);
         }
     }
 
@@ -252,12 +263,18 @@ public class EventDetailActivity extends AppCompatActivity {
         repository.getUserData(currentUserId, new EventRepository.UserCallback() {
             @Override
             public void onSuccess(com.example.CampusEventDiscovery.model.User user) {
-                currentUserRole = UserRoles.sanitize(user.getRole());
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                currentUserRole = user == null ? "" : UserRoles.sanitize(user.getRole());
                 updateRegistrationCta();
             }
 
             @Override
             public void onError(Exception e) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
                 currentUserRole = "";
                 updateRegistrationCta();
             }
@@ -350,6 +367,9 @@ public class EventDetailActivity extends AppCompatActivity {
 
         boolean isSaved = savedEventIds.contains(currentEvent.getEventId());
         btnHeart.setImageResource(isSaved ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+        btnHeart.setColorFilter(isSaved
+                ? ThemeManager.getAccentColor(this)
+                : ContextCompat.getColor(this, R.color.colorOnSurfaceVariant));
     }
 
     private void addToCalendar() {
@@ -400,8 +420,8 @@ public class EventDetailActivity extends AppCompatActivity {
             return;
         }
 
-        String prefsName = "recently_viewed";
-        String key = "event_ids";
+        String prefsName = Constants.PREFS_RECENTLY_VIEWED;
+        String key = Constants.PREFS_RECENTLY_VIEWED_KEY;
 
         String existing = getSharedPreferences(prefsName, MODE_PRIVATE).getString(key, "");
         LinkedList<String> ids = new LinkedList<>();
@@ -446,6 +466,19 @@ public class EventDetailActivity extends AppCompatActivity {
 
     private String safeText(String text, String fallback) {
         return TextUtils.isEmpty(text) ? fallback : text;
+    }
+
+    private String resolveEventId(Intent intent) {
+        if (intent == null) {
+            return "";
+        }
+
+        String extraEventId = intent.getStringExtra("eventId");
+        if (!TextUtils.isEmpty(extraEventId)) {
+            return extraEventId;
+        }
+
+        return EventShareHelper.eventIdFromUri(intent.getData());
     }
 
     private void updateRegistrationCta() {

@@ -17,7 +17,7 @@
             android:orientation="vertical"
             android:paddingBottom="16dp">
 
-            <!-- Welcome & Create Event Button -->
+            <!-- Welcome -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -36,27 +36,107 @@
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnCreateEvent"
-                    style="@style/AppButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/create_event"
-                    app:icon="@drawable/ic_add"
-                    app:iconTint="@android:color/white" />
             </LinearLayout>
 
-            <!-- Browsing Sections (Same as HomeFragment) -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/AppMaterialCardView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/spacing_md"
+                android:layout_marginTop="@dimen/spacing_lg">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_md">
+
+                    <TextView
+                        style="@style/AppSectionLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/organizer_tools" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:text="@string/organizer_tools_subtitle"
+                        android:textColor="@color/colorOnSurfaceVariant"
+                        android:textSize="14sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCreateEvent"
+                        style="@style/AppButtonStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
+                        android:text="@string/create_event_primary"
+                        app:icon="@drawable/ic_add"
+                        app:iconTint="?attr/colorOnPrimary" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnManageEvents"
+                            style="@style/AppSecondaryButtonStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="@dimen/spacing_sm"
+                            android:layout_weight="1"
+                            android:text="@string/manage_events" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnScanTickets"
+                            style="@style/AppSecondaryButtonStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/scan_tickets" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSosDashboard"
+                        style="@style/AppOutlinedButtonStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:text="@string/open_sos_dashboard" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Popular Events -->
             <TextView
                 android:id="@+id/tvPopularLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="20dp"
-                android:text="@string/popular_in_lums"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:layout_marginBottom="@dimen/spacing_sm"
+                android:text="@string/popular_events"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="?attr/colorOnSurface" />
+
+            <HorizontalScrollView
+                android:id="@+id/popularEventsScroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/popularEventsContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/spacing_md"
+                    android:paddingEnd="@dimen/spacing_md" />
+            </HorizontalScrollView>
 
             <FrameLayout
                 android:id="@+id/featuredCardContainer"
@@ -83,7 +163,8 @@
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
                 android:nestedScrollingEnabled="false"
-                android:paddingTop="4dp" />
+                android:paddingTop="@dimen/spacing_md"
+                android:paddingBottom="@dimen/bottom_nav_safe_padding" />
 
             <TextView
                 android:id="@+id/tvEmpty"
@@ -93,8 +174,11 @@
                 android:layout_marginTop="32dp"
                 android:layout_marginBottom="24dp"
                 android:text="@string/no_events_found"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="?attr/colorOnSurface"
+                android:drawableTop="@drawable/ic_event_outline"
+                android:drawablePadding="@dimen/spacing_md"
+                android:gravity="center"
                 android:visibility="gone" />
 
         </LinearLayout>

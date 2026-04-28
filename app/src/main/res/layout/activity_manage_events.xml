@@ -8,12 +8,11 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarManageEvents"
+        style="@style/AppToolbarStyle"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorSurface"
         app:navigationIcon="@drawable/ic_back"
-        app:title="@string/manage_events"
-        app:titleTextColor="@color/colorOnBackground" />
+        app:title="@string/manage_events" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -25,6 +24,24 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingBottom="20dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/spacing_md"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/search_managed_events"
+                app:endIconContentDescription="@string/clear_search"
+                app:endIconMode="clear_text">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etManageEventsSearch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:textColor="@color/colorOnBackground" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
                 android:id="@+id/tvSection1Header"
@@ -57,7 +74,10 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp"
-                android:text="@string/no_approved_events"
+                android:drawableTop="@drawable/ic_event_outline"
+                android:drawablePadding="@dimen/spacing_md"
+                android:gravity="center"
+                android:text="@string/no_managed_events_help"
                 android:textColor="@color/colorSecondary"
                 android:textSize="14sp"
                 android:visibility="gone" />
@@ -101,6 +121,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp"
+                android:gravity="center"
                 android:text="@string/no_pending_events"
                 android:textColor="@color/colorSecondary"
                 android:textSize="14sp"
@@ -145,6 +166,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp"
+                android:gravity="center"
                 android:text="@string/no_rejected_proposals"
                 android:textColor="@color/colorSecondary"
                 android:textSize="14sp"

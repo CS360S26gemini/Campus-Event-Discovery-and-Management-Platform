@@ -11,7 +11,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.CampusEventDiscovery.MainActivity;
 import com.example.CampusEventDiscovery.R;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.example.CampusEventDiscovery.util.QRCodeHelper;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 
 /**
@@ -28,11 +30,13 @@ public class TicketActivity extends AppCompatActivity {
     private String qrPayload;
 
     private ImageView ivQrCode;
+    private MaterialToolbar toolbarTicket;
     private TextView tvEventName, tvEventDate, tvTxnId;
     private MaterialButton btnDone;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.example.CampusEventDiscovery.util.ThemeManager.applyAccentTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ticket);
 
@@ -45,9 +49,11 @@ public class TicketActivity extends AppCompatActivity {
 
         bindViews();
         setupUI();
+        WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "ticket");
     }
 
     private void bindViews() {
+        toolbarTicket = findViewById(R.id.toolbarTicket);
         ivQrCode = findViewById(R.id.ivTicketQrCode);
         tvEventName = findViewById(R.id.tvTicketEventName);
         tvEventDate = findViewById(R.id.tvTicketEventDate);
@@ -68,6 +74,8 @@ public class TicketActivity extends AppCompatActivity {
                 ivQrCode.setImageBitmap(qrBitmap);
             }
         }
+
+        toolbarTicket.setNavigationOnClickListener(v -> finish());
 
         btnDone.setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);

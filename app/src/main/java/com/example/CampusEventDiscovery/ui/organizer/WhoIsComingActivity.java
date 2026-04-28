@@ -7,7 +7,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +20,7 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.adapter.AttendeeAdapter;
 import com.example.CampusEventDiscovery.model.EventAttendee;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -41,8 +41,9 @@ import java.util.List;
  */
 public class WhoIsComingActivity extends AppCompatActivity {
 
-    private ImageButton btnBack;
+    private MaterialToolbar toolbarWhoIsComing;
     private TextView tvTitle;
+    private TextView tvEventContext;
     private EditText etSearchParticipants;
     private RecyclerView rvParticipants;
     private TextView tvEmptyParticipants;
@@ -54,33 +55,46 @@ public class WhoIsComingActivity extends AppCompatActivity {
     private AttendeeAdapter adapter;
     private String eventId;
     private String eventTitle;
+    private boolean showBlacklisted;
     private ListenerRegistration attendeeListener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.example.CampusEventDiscovery.util.ThemeManager.applyAccentTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_who_is_coming);
 
         repository = new EventRepository();
         eventId    = getIntent().getStringExtra("eventId");
         eventTitle = getIntent().getStringExtra("eventTitle");
+        showBlacklisted = getIntent().getBooleanExtra("showBlacklisted", false);
 
         bindViews();
-        btnBack.setOnClickListener(v -> finish());
-        tvTitle.setText(TextUtils.isEmpty(eventTitle)
-                ? getString(R.string.who_is_coming) : eventTitle);
+        toolbarWhoIsComing.setNavigationOnClickListener(v -> finish());
+        tvTitle.setText(showBlacklisted ? R.string.blacklisted_attendees : R.string.who_is_coming);
+        if (TextUtils.isEmpty(eventTitle)) {
+            tvEventContext.setVisibility(View.GONE);
+        } else {
+            tvEventContext.setText(getString(R.string.event_context_label, eventTitle));
+            tvEventContext.setVisibility(View.VISIBLE);
+        }
 
         setupRecyclerView();
         setupSearch();
         setupScanQrAction();
         setupCheckInAction();
         setupBlacklistAction();
+        bindMode();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        startAttendeesListener();
+        if (showBlacklisted) {
+            loadBlacklistedAttendees();
+        } else {
+            startAttendeesListener();
+        }
     }
 
     @Override
@@ -90,14 +104,24 @@ public class WhoIsComingActivity extends AppCompatActivity {
     }
 
     private void bindViews() {
-        btnBack              = findViewById(R.id.btnBack);
+        toolbarWhoIsComing   = findViewById(R.id.toolbarWhoIsComing);
         tvTitle              = findViewById(R.id.tvTitle);
+        tvEventContext       = findViewById(R.id.tvEventContext);
         etSearchParticipants = findViewById(R.id.etSearchParticipants);
         rvParticipants       = findViewById(R.id.rvParticipants);
         tvEmptyParticipants  = findViewById(R.id.tvEmptyParticipants);
         btnScanQr            = findViewById(R.id.btnScanQr);
         btnCheckIn           = findViewById(R.id.btnCheckIn);
         btnBlacklist         = findViewById(R.id.btnBlacklist);
+    }
+
+    private void bindMode() {
+        btnScanQr.setVisibility(showBlacklisted ? View.GONE : View.VISIBLE);
+        btnCheckIn.setVisibility(showBlacklisted ? View.GONE : View.VISIBLE);
+        btnBlacklist.setVisibility(showBlacklisted ? View.GONE : View.VISIBLE);
+        tvEmptyParticipants.setText(showBlacklisted
+                ? R.string.no_blacklisted_attendees
+                : R.string.no_participants_yet);
     }
 
     private void setupRecyclerView() {
@@ -141,6 +165,23 @@ public class WhoIsComingActivity extends AppCompatActivity {
                     adapter.updateData(attendees);
                     updateEmptyState();
                 });
+    }
+
+    private void loadBlacklistedAttendees() {
+        stopAttendeesListener();
+        repository.getBlacklistedAttendees(eventId, new EventRepository.AttendeeListCallback() {
+            @Override
+            public void onSuccess(List<EventAttendee> attendees) {
+                adapter.updateData(attendees);
+                updateEmptyState();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                adapter.updateData(new ArrayList<>());
+                updateEmptyState();
+            }
+        });
     }
 
     private void stopAttendeesListener() {

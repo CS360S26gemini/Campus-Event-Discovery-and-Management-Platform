@@ -5,7 +5,9 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,11 +21,14 @@ import com.example.CampusEventDiscovery.model.Payment;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.repository.PaymentRepository;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.MockPaymentService;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -50,9 +55,13 @@ public class CheckoutActivity extends AppCompatActivity {
     private MaterialToolbar toolbarCheckout;
     private TextView tvCheckoutEventTitle;
     private TextView tvCheckoutSubtitle;
+    private TextView tvCreditBalance;
     private EditText etFullName;
     private EditText etLastName;
+    private LinearLayout layoutPaymentSection;
     private RadioGroup radioGroupPayment;
+    private RadioButton rbInAppCredit;
+    private TextInputLayout tilCardNumber;
     private EditText etCardNumber;
     private TextView tvCheckoutTotal;
     private ProgressBar progressBarCheckout;
@@ -68,15 +77,19 @@ public class CheckoutActivity extends AppCompatActivity {
     private String eventVenue;
     private double totalPrice;
     private String effectiveUserId;
+    private boolean walkthroughMode;
+    private double availableCreditBalance;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        com.example.CampusEventDiscovery.util.ThemeManager.applyAccentTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_checkout);
 
         eventRepository = new EventRepository();
         paymentRepository = new PaymentRepository();
         db = FirebaseFirestore.getInstance();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
 
         bindViews();
         readIntentExtras();
@@ -84,17 +97,26 @@ public class CheckoutActivity extends AppCompatActivity {
         setupToolbar();
         bindStaticUi();
         setupPaymentMethodToggle();
-        enforceAttendeeAccess();
+        if (!walkthroughMode) {
+            enforceAttendeeAccess();
+        }
         setupPayButton();
+        if (walkthroughMode) {
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "checkout");
+        }
     }
 
     private void bindViews() {
         toolbarCheckout      = findViewById(R.id.toolbarCheckout);
         tvCheckoutEventTitle = findViewById(R.id.tvCheckoutEventTitle);
         tvCheckoutSubtitle   = findViewById(R.id.tvCheckoutSubtitle);
+        tvCreditBalance      = findViewById(R.id.tvCreditBalance);
         etFullName           = findViewById(R.id.etFirstName);
         etLastName           = findViewById(R.id.etLastName);
+        layoutPaymentSection = findViewById(R.id.layoutPaymentSection);
         radioGroupPayment    = findViewById(R.id.radioGroupPayment);
+        rbInAppCredit        = findViewById(R.id.rbInAppCredit);
+        tilCardNumber        = findViewById(R.id.tilCardNumber);
         etCardNumber         = findViewById(R.id.etCardNumber);
         tvCheckoutTotal      = findViewById(R.id.tvCheckoutTotal);
         progressBarCheckout  = findViewById(R.id.progressBarCheckout);
@@ -123,14 +145,37 @@ public class CheckoutActivity extends AppCompatActivity {
     private void bindStaticUi() {
         tvCheckoutEventTitle.setText(eventTitle != null ? eventTitle : getString(R.string.app_name));
         tvCheckoutSubtitle.setText(getString(R.string.secure_your_spot_subtitle));
+        updateCreditBalanceUi();
 
-        if (totalPrice == 0.0) {
+        if (isFreeEvent()) {
             tvCheckoutTotal.setText(getString(R.string.checkout_total_free));
             btnPay.setText(getString(R.string.register_free));
+            layoutPaymentSection.setVisibility(View.GONE);
+            if (tvCreditBalance != null) {
+                tvCreditBalance.setVisibility(View.GONE);
+            }
+            radioGroupPayment.clearCheck();
+            etCardNumber.setText("");
+            tilCardNumber.setVisibility(View.GONE);
         } else {
             tvCheckoutTotal.setText(getString(R.string.checkout_total_pkr, totalPrice));
             btnPay.setText(getString(R.string.pay_now));
+            layoutPaymentSection.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void updateCreditBalanceUi() {
+        if (tvCreditBalance == null) {
+            return;
+        }
+
+        if (isFreeEvent()) {
+            tvCreditBalance.setVisibility(View.GONE);
+            return;
+        }
+
+        tvCreditBalance.setVisibility(View.VISIBLE);
+        tvCreditBalance.setText(getString(R.string.checkout_credit_balance, availableCreditBalance));
     }
 
     /**
@@ -139,11 +184,15 @@ public class CheckoutActivity extends AppCompatActivity {
      * JazzCash and Apple Pay do not.
      */
     private void setupPaymentMethodToggle() {
+        if (isFreeEvent()) {
+            return;
+        }
+
         radioGroupPayment.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rbCreditCard || checkedId == R.id.rbDebitCard) {
-                etCardNumber.setVisibility(View.VISIBLE);
+                tilCardNumber.setVisibility(View.VISIBLE);
             } else {
-                etCardNumber.setVisibility(View.GONE);
+                tilCardNumber.setVisibility(View.GONE);
                 etCardNumber.setText("");
             }
         });
@@ -159,6 +208,10 @@ public class CheckoutActivity extends AppCompatActivity {
      * redirected to their existing ticket without a new charge.
      */
     private void attemptPayment() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: no registration or payment was created.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (!validateForm()) return;
 
         if (effectiveUserId == null) {
@@ -187,7 +240,11 @@ public class CheckoutActivity extends AppCompatActivity {
                             return;
                         }
                     }
-                    processPayment();
+                    if (isCreditPaymentSelected()) {
+                        processCreditPayment();
+                    } else {
+                        processPayment();
+                    }
                 })
                 .addOnFailureListener(e -> {
                     showLoading(false);
@@ -211,6 +268,10 @@ public class CheckoutActivity extends AppCompatActivity {
             return false;
         }
 
+        if (isFreeEvent()) {
+            return true;
+        }
+
         if (radioGroupPayment.getCheckedRadioButtonId() == -1) {
             Toast.makeText(this, getString(R.string.please_select_payment_method), Toast.LENGTH_SHORT).show();
             return false;
@@ -228,6 +289,28 @@ public class CheckoutActivity extends AppCompatActivity {
         return true;
     }
 
+    private boolean isFreeEvent() {
+        return totalPrice <= 0.0;
+    }
+
+    private boolean isCreditPaymentSelected() {
+        return radioGroupPayment.getCheckedRadioButtonId() == R.id.rbInAppCredit;
+    }
+
+    private String resolveSelectedPaymentMethod() {
+        int checkedId = radioGroupPayment.getCheckedRadioButtonId();
+        if (checkedId == R.id.rbCreditCard) {
+            return Constants.PAYMENT_METHOD_CREDIT_CARD;
+        } else if (checkedId == R.id.rbDebitCard) {
+            return Constants.PAYMENT_METHOD_DEBIT_CARD;
+        } else if (checkedId == R.id.rbApplePay) {
+            return Constants.PAYMENT_METHOD_APPLE_PAY;
+        } else if (checkedId == R.id.rbInAppCredit) {
+            return Constants.PAYMENT_METHOD_IN_APP_CREDIT;
+        }
+        return Constants.PAYMENT_METHOD_JAZZCASH;
+    }
+
     /**
      * Processes the demo payment via MockPaymentService, saves the Payment
      * record, then delegates RSVP creation to EventRepository.rsvpEvent()
@@ -237,6 +320,8 @@ public class CheckoutActivity extends AppCompatActivity {
      */
     private void processPayment() {
         Payment demoPayment = MockPaymentService.processPayment(effectiveUserId, eventId, totalPrice);
+        demoPayment.setPaymentMethod(resolveSelectedPaymentMethod());
+        demoPayment.setProofUrl("");
 
         paymentRepository.savePayment(demoPayment, new FirestoreCallback() {
             @Override
@@ -252,6 +337,58 @@ public class CheckoutActivity extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void processCreditPayment() {
+        if (availableCreditBalance + 0.0001 < totalPrice) {
+            showLoading(false);
+            Toast.makeText(this, getString(R.string.credit_insufficient_balance), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        com.example.CampusEventDiscovery.model.Event eventShell =
+                new com.example.CampusEventDiscovery.model.Event();
+        eventShell.setEventId(eventId);
+        eventShell.setTitle(eventTitle);
+        if (eventDateMillis > 0L) {
+            eventShell.setDate(new Timestamp(new java.util.Date(eventDateMillis)));
+        }
+
+        String fullName = etFullName.getText().toString().trim()
+                + " " + etLastName.getText().toString().trim();
+
+        eventRepository.rsvpEventWithCredit(effectiveUserId, eventShell, fullName, totalPrice,
+                new EventRepository.ActionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        showLoading(false);
+                        fetchExistingRsvpAndShowTicket();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        showLoading(false);
+                        String msg = e.getMessage() != null ? e.getMessage() : "";
+                        if (msg.contains("Already registered")) {
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.already_registered_for_event),
+                                    Toast.LENGTH_LONG).show();
+                            fetchExistingRsvpAndShowTicket();
+                        } else if (msg.contains("Event full")) {
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.sold_out_toast),
+                                    Toast.LENGTH_SHORT).show();
+                        } else if (msg.contains("credit")) {
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.credit_insufficient_balance),
+                                    Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.rsvp_failed_message, msg),
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
     /**
@@ -339,6 +476,9 @@ public class CheckoutActivity extends AppCompatActivity {
         Map<String, Object> paymentMerge = new HashMap<>();
         paymentMerge.put("paymentStatus", "SUCCESS");
         paymentMerge.put("transactionId", payment.getTransactionId());
+        paymentMerge.put("paymentRef", payment.getTransactionId());
+        paymentMerge.put("paymentMethod", payment.getPaymentMethod());
+        paymentMerge.put("paymentProofUrl", payment.getProofUrl());
         paymentMerge.put("qrPayload", qrPayload);
         paymentMerge.put("qrExpired", false);
 
@@ -353,6 +493,9 @@ public class CheckoutActivity extends AppCompatActivity {
                     rsvp.setStatus("confirmed");
                     rsvp.setPaymentStatus("SUCCESS");
                     rsvp.setTransactionId(payment.getTransactionId());
+                    rsvp.setPaymentRef(payment.getTransactionId());
+                    rsvp.setPaymentMethod(payment.getPaymentMethod());
+                    rsvp.setPaymentProofUrl(payment.getProofUrl());
                     rsvp.setQrPayload(qrPayload);
                     rsvp.setCheckedIn(false);
                     rsvp.setQrExpired(false);
@@ -446,16 +589,28 @@ public class CheckoutActivity extends AppCompatActivity {
         eventRepository.getUserData(currentUser.getUid(), new EventRepository.UserCallback() {
             @Override
             public void onSuccess(com.example.CampusEventDiscovery.model.User user) {
-                if (!UserRoles.isAttendee(user.getRole())) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (user == null || !UserRoles.isAttendee(user.getRole())) {
                     Toast.makeText(CheckoutActivity.this,
                             getString(R.string.attendee_only_registration_message),
                             Toast.LENGTH_SHORT).show();
                     finish();
+                    return;
                 }
+
+                availableCreditBalance = user.getCreditBalance();
+                updateCreditBalanceUi();
             }
 
             @Override
             public void onError(Exception e) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                availableCreditBalance = 0.0;
+                updateCreditBalanceUi();
                 Toast.makeText(CheckoutActivity.this,
                         getString(R.string.attendee_only_registration_message),
                         Toast.LENGTH_SHORT).show();

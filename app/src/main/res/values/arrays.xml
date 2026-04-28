@@ -8,5 +8,68 @@
         <item>Arts</item>
         <item>Business</item>
         <item>Food &amp; Bev</item>
+        <item>Social</item>
+    </string-array>
+
+    <string-array name="interest_options">
+        <item>Music</item>
+        <item>Sports</item>
+        <item>Career</item>
+        <item>Academic</item>
+        <item>Arts</item>
+        <item>Business</item>
+        <item>Food &amp; Bev</item>
+        <item>Social</item>
+    </string-array>
+
+    <string-array name="campus_options">
+        <item>LUMS</item>
+    </string-array>
+
+    <string-array name="avatar_skin_tone_options">
+        <item>Light</item>
+        <item>Warm</item>
+        <item>Tan</item>
+        <item>Brown</item>
+        <item>Deep</item>
+    </string-array>
+
+    <string-array name="avatar_hair_style_options">
+        <item>Short</item>
+        <item>Long</item>
+        <item>Curly</item>
+        <item>Bun</item>
+        <item>Buzz</item>
+    </string-array>
+
+    <string-array name="avatar_hair_color_options">
+        <item>Black</item>
+        <item>Brown</item>
+        <item>Auburn</item>
+        <item>Blonde</item>
+        <item>Violet</item>
+    </string-array>
+
+    <string-array name="avatar_background_options">
+        <item>Purple</item>
+        <item>Teal</item>
+        <item>Blue</item>
+        <item>Coral</item>
+        <item>Graphite</item>
+    </string-array>
+
+    <string-array name="avatar_accessory_options">
+        <item>None</item>
+        <item>Glasses</item>
+        <item>Cap</item>
+        <item>Headphones</item>
+    </string-array>
+
+    <string-array name="avatar_outfit_options">
+        <item>Indigo</item>
+        <item>Green</item>
+        <item>Orange</item>
+        <item>Violet</item>
+        <item>Black</item>
     </string-array>
 </resources>

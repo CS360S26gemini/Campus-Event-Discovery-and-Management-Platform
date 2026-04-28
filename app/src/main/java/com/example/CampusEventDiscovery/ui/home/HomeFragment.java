@@ -8,11 +8,16 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewGroup;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,7 +38,10 @@ import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.ThemeManager;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
@@ -43,6 +51,7 @@ import com.google.firebase.auth.FirebaseUser;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -56,6 +65,10 @@ public class HomeFragment extends Fragment {
 
     private TextView tvWelcome;
     private MaterialButton btnSos;
+    private TextView tvRecommendedLabel;
+    private TextView tvRecommendedSubtitle;
+    private HorizontalScrollView recommendedEventsScroll;
+    private LinearLayout recommendedEventsContainer;
     private View featuredCardContainer;
     private MaterialCardView cardFeaturedEvent;
     private RecyclerView rvEvents;
@@ -78,6 +91,14 @@ public class HomeFragment extends Fragment {
     private String currentUserId;
     private User currentUser;
     private Event featuredEvent;
+    private final Handler recommendationCarouselHandler = new Handler(Looper.getMainLooper());
+    private final Runnable recommendationCarouselRunnable = new Runnable() {
+        @Override
+        public void run() {
+            advanceRecommendationCarousel();
+            recommendationCarouselHandler.postDelayed(this, 3000L);
+        }
+    };
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 boolean granted = false;
@@ -121,6 +142,10 @@ public class HomeFragment extends Fragment {
 
         tvWelcome = view.findViewById(R.id.tvWelcome);
         btnSos = view.findViewById(R.id.btnSos);
+        tvRecommendedLabel = view.findViewById(R.id.tvRecommendedLabel);
+        tvRecommendedSubtitle = view.findViewById(R.id.tvRecommendedSubtitle);
+        recommendedEventsScroll = view.findViewById(R.id.recommendedEventsScroll);
+        recommendedEventsContainer = view.findViewById(R.id.recommendedEventsContainer);
         featuredCardContainer = view.findViewById(R.id.featuredCardContainer);
         rvEvents = view.findViewById(R.id.rvEvents);
         progressBar = view.findViewById(R.id.progressBar);
@@ -140,14 +165,23 @@ public class HomeFragment extends Fragment {
         setupRecyclerView();
         setupSosButton();
         loadHomeData();
+        WalkthroughManager.maybeShow(requireActivity(), view, "home_attendee");
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        startRecommendationCarousel();
         if (getView() != null) {
             loadHomeData();
+            WalkthroughManager.maybeShow(requireActivity(), getView(), "home_attendee");
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        recommendationCarouselHandler.removeCallbacks(recommendationCarouselRunnable);
     }
 
     private void setupRecyclerView() {
@@ -185,6 +219,7 @@ public class HomeFragment extends Fragment {
             tvWelcome.setText(getString(R.string.welcome_back));
             btnSos.setEnabled(false);
             featuredCardContainer.setVisibility(View.GONE);
+            hideRecommendations();
             showLoading(false);
             updateEventList(new ArrayList<>());
             tvEmpty.setText(getString(R.string.no_events_found));
@@ -220,7 +255,7 @@ public class HomeFragment extends Fragment {
                 if (!isAdded()) return;
                 currentUser = user;
 
-                String name = user.getFullName();
+                String name = user == null ? null : user.getFullName();
                 if (TextUtils.isEmpty(name)) {
                     tvWelcome.setText(getString(R.string.welcome_back));
                 } else {
@@ -228,6 +263,7 @@ public class HomeFragment extends Fragment {
                 }
 
                 loadFeaturedEvent();
+                loadRecommendations(user == null ? null : user.getInterests());
 
                 repository.getUpcomingEvents(new EventRepository.EventListCallback() {
                     @Override
@@ -256,6 +292,7 @@ public class HomeFragment extends Fragment {
                     tvWelcome.setText(getString(R.string.welcome_back));
                 }
                 loadFeaturedEvent();
+                hideRecommendations();
 
                 repository.getUpcomingEvents(new EventRepository.EventListCallback() {
                     @Override
@@ -330,6 +367,9 @@ public class HomeFragment extends Fragment {
 
         boolean isSaved = event.getEventId() != null && savedEventIds.contains(event.getEventId());
         ivBannerHeart.setImageResource(isSaved ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+        ivBannerHeart.setColorFilter(isSaved
+                ? ThemeManager.getAccentColor(requireContext())
+                : ContextCompat.getColor(requireContext(), R.color.colorOnSurfaceVariant));
 
         if (!TextUtils.isEmpty(event.getThumbnailUrl())) {
             Glide.with(requireContext())
@@ -366,6 +406,7 @@ public class HomeFragment extends Fragment {
 
         if (isCurrentlySaved) {
             repository.unsaveEvent(currentUserId, event.getEventId(), () -> {
+                if (!isAdded()) return;
                 savedEventIds.remove(event.getEventId());
                 adapter.updateSavedIds(savedEventIds);
                 bindFeaturedEvent(featuredEvent);
@@ -374,6 +415,7 @@ public class HomeFragment extends Fragment {
             repository.saveEvent(currentUserId, event, new EventRepository.ActionCallback() {
                 @Override
                 public void onSuccess() {
+                    if (!isAdded()) return;
                     savedEventIds.add(event.getEventId());
                     adapter.updateSavedIds(savedEventIds);
                     bindFeaturedEvent(featuredEvent);
@@ -381,6 +423,7 @@ public class HomeFragment extends Fragment {
 
                 @Override
                 public void onError(Exception e) {
+                    if (!isAdded()) return;
                     Toast.makeText(requireContext(), "Failed to save event.", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -438,11 +481,13 @@ public class HomeFragment extends Fragment {
                 new EventRepository.ActionCallback() {
                     @Override
                     public void onSuccess() {
+                        if (!isAdded()) return;
                         Toast.makeText(requireContext(), getString(R.string.sos_sent), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(Exception e) {
+                        if (!isAdded()) return;
                         Toast.makeText(requireContext(), "Failed to send SOS.", Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -494,6 +539,163 @@ public class HomeFragment extends Fragment {
         } else {
             tvEmpty.setVisibility(View.GONE);
         }
+    }
+
+    private void loadRecommendations(List<String> interests) {
+        if (currentUserId == null) {
+            hideRecommendations();
+            return;
+        }
+
+        List<String> recentlyViewedIds = readRecentlyViewedIds();
+        repository.getScoredRecommendations(interests, recentlyViewedIds, new EventRepository.RecommendationCallback() {
+            @Override
+            public void onSuccess(List<Event> events, boolean trendingFallback, String topCategory) {
+                if (!isAdded()) return;
+                bindRecommendedEvents(events, trendingFallback, topCategory);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                hideRecommendations();
+            }
+        });
+    }
+
+    private List<String> readRecentlyViewedIds() {
+        String raw = requireContext()
+                .getSharedPreferences(Constants.PREFS_RECENTLY_VIEWED, Context.MODE_PRIVATE)
+                .getString(Constants.PREFS_RECENTLY_VIEWED_KEY, "");
+        LinkedHashSet<String> deduped = new LinkedHashSet<>();
+        if (!TextUtils.isEmpty(raw)) {
+            String[] ids = raw.split(",");
+            for (String id : ids) {
+                String value = id == null ? "" : id.trim();
+                if (!TextUtils.isEmpty(value)) {
+                    deduped.add(value);
+                }
+                if (deduped.size() == 5) {
+                    break;
+                }
+            }
+        }
+        return new ArrayList<>(deduped);
+    }
+
+    private void bindRecommendedEvents(List<Event> events, boolean trendingFallback, String topCategory) {
+        if (recommendedEventsContainer == null
+                || recommendedEventsScroll == null
+                || tvRecommendedLabel == null
+                || tvRecommendedSubtitle == null) {
+            return;
+        }
+
+        recommendedEventsContainer.removeAllViews();
+
+        if (events == null || events.isEmpty()) {
+            hideRecommendations();
+            return;
+        }
+
+        tvRecommendedLabel.setVisibility(View.VISIBLE);
+        tvRecommendedSubtitle.setVisibility(View.VISIBLE);
+        recommendedEventsScroll.setVisibility(View.VISIBLE);
+        if (trendingFallback) {
+            tvRecommendedLabel.setText(R.string.trending_on_campus);
+            tvRecommendedSubtitle.setText(R.string.popular_events_across_campus);
+        } else {
+            tvRecommendedLabel.setText(R.string.recommended_for_you);
+            tvRecommendedSubtitle.setText(getString(R.string.based_on_interest, safeText(topCategory, getString(R.string.app_name))));
+        }
+
+        int max = Math.min(5, events.size());
+
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        for (int i = 0; i < max; i++) {
+            Event event = events.get(i);
+            View card = inflater.inflate(R.layout.item_event_card_carousel, recommendedEventsContainer, false);
+            bindRecommendationCard(card, event, i < max - 1);
+            recommendedEventsContainer.addView(card);
+        }
+
+        recommendedEventsScroll.post(() -> recommendedEventsScroll.scrollTo(0, 0));
+        startRecommendationCarousel();
+    }
+
+    private void bindRecommendationCard(View card, Event event, boolean addTrailingGap) {
+        ImageView thumbnail = card.findViewById(R.id.ivCarouselThumbnail);
+        ImageView placeholder = card.findViewById(R.id.ivCarouselPlaceholderIcon);
+        TextView title = card.findViewById(R.id.tvCarouselTitle);
+        TextView date = card.findViewById(R.id.tvCarouselDate);
+        TextView attendees = card.findViewById(R.id.tvCarouselAttendees);
+
+        title.setText(safeText(event.getTitle(), getString(R.string.app_name)));
+        date.setText(formatDateTime(event.getDate()));
+        attendees.setText(event.getRsvpCount() + " registered");
+
+        if (!TextUtils.isEmpty(event.getThumbnailUrl())) {
+            placeholder.setVisibility(View.GONE);
+            Glide.with(requireContext())
+                    .load(event.getThumbnailUrl())
+                    .placeholder(R.drawable.bg_placeholder_image)
+                    .centerCrop()
+                    .into(thumbnail);
+        } else {
+            thumbnail.setImageResource(0);
+            thumbnail.setBackgroundResource(R.drawable.bg_placeholder_image);
+            placeholder.setVisibility(View.VISIBLE);
+        }
+
+        MarginLayoutParams layoutParams = (MarginLayoutParams) card.getLayoutParams();
+        layoutParams.setMarginEnd(addTrailingGap ? dpToPx(12) : 0);
+        card.setLayoutParams(layoutParams);
+        card.setOnClickListener(v -> openEventDetail(event));
+    }
+
+    private void hideRecommendations() {
+        if (tvRecommendedLabel != null) {
+            tvRecommendedLabel.setVisibility(View.GONE);
+        }
+        if (tvRecommendedSubtitle != null) {
+            tvRecommendedSubtitle.setVisibility(View.GONE);
+        }
+        if (recommendedEventsScroll != null) {
+            recommendedEventsScroll.setVisibility(View.GONE);
+        }
+        if (recommendedEventsContainer != null) {
+            recommendedEventsContainer.removeAllViews();
+        }
+        recommendationCarouselHandler.removeCallbacks(recommendationCarouselRunnable);
+    }
+
+    private void startRecommendationCarousel() {
+        recommendationCarouselHandler.removeCallbacks(recommendationCarouselRunnable);
+        if (recommendedEventsContainer != null && recommendedEventsContainer.getChildCount() > 1) {
+            recommendationCarouselHandler.postDelayed(recommendationCarouselRunnable, 3000L);
+        }
+    }
+
+    private void advanceRecommendationCarousel() {
+        if (recommendedEventsScroll == null || recommendedEventsContainer == null || recommendedEventsContainer.getChildCount() < 2) {
+            return;
+        }
+
+        int maxScroll = Math.max(0, recommendedEventsContainer.getWidth() - recommendedEventsScroll.getWidth());
+        if (maxScroll == 0) {
+            return;
+        }
+
+        int cardSpan = getResources().getDimensionPixelSize(R.dimen.event_carousel_card_width) + dpToPx(12);
+        int nextScrollX = recommendedEventsScroll.getScrollX() + cardSpan;
+        if (nextScrollX >= maxScroll) {
+            nextScrollX = 0;
+        }
+        recommendedEventsScroll.smoothScrollTo(nextScrollX, 0);
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private void showLoading(boolean isLoading) {

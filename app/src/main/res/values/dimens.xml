@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">16dp</dimen>
+    <dimen name="memory_album_photo_height">220dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+
+    <dimen name="event_card_margin_horizontal">16dp</dimen>
+    <dimen name="event_card_radius">16dp</dimen>
+    <dimen name="event_card_cover_height">200dp</dimen>
+    <dimen name="event_carousel_card_width">280dp</dimen>
+    <dimen name="event_carousel_cover_height">140dp</dimen>
+    <dimen name="bottom_nav_safe_padding">72dp</dimen>
+</resources>

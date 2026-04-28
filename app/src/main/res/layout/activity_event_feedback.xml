@@ -7,13 +7,12 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarFeedback"
+        style="@style/AppToolbarStyle"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorSurface"
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/ic_back"
-        app:title="@string/feedback_title"
-        app:titleTextColor="@color/colorOnBackground" />
+        app:title="@string/feedback_title" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -59,18 +58,21 @@
                 android:textColor="@color/colorOnBackground"
                 android:textSize="14sp" />
 
-            <EditText
-                android:id="@+id/etFeedbackReview"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
                 android:layout_width="match_parent"
-                android:layout_height="140dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:backgroundTint="@color/colorPrimary"
-                android:gravity="top|start"
-                android:hint="@string/feedback_review_hint"
-                android:inputType="textMultiLine"
-                android:padding="12dp"
-                android:textColor="@color/colorOnBackground"
-                android:textColorHint="@color/colorSecondary" />
+                android:hint="@string/feedback_review_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etFeedbackReview"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine"
+                    android:textColor="@color/colorOnBackground" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
                 android:id="@+id/tvSelectedPhotos"

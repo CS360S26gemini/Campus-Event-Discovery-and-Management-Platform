@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * User.java
  *
- * Model class representing a user document from the Firestore users collection.
+ * Model class representing a user document from the Firestore users collection.g
  * Aligned with the database design in /docs/db/initial_db.txt.
  */
 public class User {
@@ -20,10 +20,13 @@ public class User {
     private String university;
     private String location;
     private String profilePicUrl;
+    private boolean avatarEnabled;
+    private Map<String, Object> avatarConfig;
     private List<String> interests;
     private boolean darkMode;
     private String fcmToken;
     private Map<String, Object> googleCalendarToken;
+    private double creditBalance;
     private Timestamp createdAt;
 
     /**
@@ -31,7 +34,9 @@ public class User {
      */
     public User() {
         this.interests = new ArrayList<>();
+        this.avatarConfig = new HashMap<>();
         this.googleCalendarToken = new HashMap<>();
+        this.creditBalance = 0.0;
     }
 
     /**
@@ -51,9 +56,12 @@ public class User {
         this.university = university;
         this.location = location;
         this.profilePicUrl = profilePicUrl;
+        this.avatarEnabled = false;
+        this.avatarConfig = new HashMap<>();
         this.interests = interests != null ? interests : new ArrayList<>();
         this.darkMode = darkMode;
         this.googleCalendarToken = new HashMap<>();
+        this.creditBalance = 0.0;
         this.createdAt = Timestamp.now();
     }
 
@@ -107,6 +115,22 @@ public class User {
         this.profilePicUrl = profilePicUrl;
     }
 
+    public boolean isAvatarEnabled() {
+        return avatarEnabled;
+    }
+
+    public void setAvatarEnabled(boolean avatarEnabled) {
+        this.avatarEnabled = avatarEnabled;
+    }
+
+    public Map<String, Object> getAvatarConfig() {
+        return avatarConfig;
+    }
+
+    public void setAvatarConfig(Map<String, Object> avatarConfig) {
+        this.avatarConfig = avatarConfig != null ? avatarConfig : new HashMap<>();
+    }
+
     public List<String> getInterests() {
         return interests;
     }
@@ -137,6 +161,14 @@ public class User {
 
     public void setGoogleCalendarToken(Map<String, Object> googleCalendarToken) {
         this.googleCalendarToken = googleCalendarToken;
+    }
+
+    public double getCreditBalance() {
+        return creditBalance;
+    }
+
+    public void setCreditBalance(double creditBalance) {
+        this.creditBalance = creditBalance;
     }
 
     public Timestamp getCreatedAt() {

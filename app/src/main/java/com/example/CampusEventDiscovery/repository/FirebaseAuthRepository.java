@@ -2,6 +2,7 @@ package com.example.CampusEventDiscovery.repository;
 
 import com.example.CampusEventDiscovery.callback.AuthCallback;
 import com.example.CampusEventDiscovery.model.User;
+import com.example.CampusEventDiscovery.util.SignupValidator;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -22,6 +23,12 @@ public class FirebaseAuthRepository implements AuthRepository {
 
     @Override
     public void signup(String name, String email, String password, String role, AuthCallback callback) {
+        String passwordError = SignupValidator.validatePassword(password);
+        if (passwordError != null) {
+            callback.onFailure(passwordError);
+            return;
+        }
+
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
                     FirebaseUser firebaseUser = auth.getCurrentUser();

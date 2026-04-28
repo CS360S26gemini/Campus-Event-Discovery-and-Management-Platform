@@ -1,24 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorBackground">#F4F6FA</color>
-    <color name="colorSurface">#FFFFFF</color>
-    <color name="colorSurfaceRaised">#EFEAF8</color>
+    <color name="colorBackground">#FBF8FF</color>
+    <color name="colorOnBackground">#1D1A22</color>
+    <color name="colorSurface">#FFFBFF</color>
+    <color name="colorOnSurface">#1D1A22</color>
+    <color name="colorSurfaceVariant">#E8E0EB</color>
+    <color name="colorOnSurfaceVariant">#4A454E</color>
+    <color name="colorSurfaceRaised">#F0E7F7</color>
+
     <color name="colorPrimary">#7B2FBE</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorPrimaryContainer">#7B2FBE</color>
+    <color name="colorOnPrimaryContainer">#FFFFFF</color>
     <color name="colorPrimaryRipple">#337B2FBE</color>
-    <color name="colorOnBackground">#181B22</color>
-    <color name="colorSecondary">#667085</color>
-    <color name="colorSOS">#C62828</color>
-    <color name="colorSosRipple">#33C62828</color>
-    <color name="colorVerified">#14804A</color>
+
+    <color name="accent_blue_primary">#1E60B2</color>
+    <color name="accent_blue_on_primary">#FFFFFF</color>
+    <color name="accent_blue_container">#D8E8FF</color>
+    <color name="accent_blue_on_container">#0B274E</color>
+    <color name="accent_blue_ripple">#331E60B2</color>
+
+    <color name="accent_green_primary">#1F815C</color>
+    <color name="accent_green_on_primary">#FFFFFF</color>
+    <color name="accent_green_container">#D7F5E8</color>
+    <color name="accent_green_on_container">#0D3526</color>
+    <color name="accent_green_ripple">#331F815C</color>
+
+    <color name="accent_orange_primary">#C4582A</color>
+    <color name="accent_orange_on_primary">#FFFFFF</color>
+    <color name="accent_orange_container">#FFE1D2</color>
+    <color name="accent_orange_on_container">#4D1B09</color>
+    <color name="accent_orange_ripple">#33C4582A</color>
+
+    <color name="accent_pink_primary">#BC186E</color>
+    <color name="accent_pink_on_primary">#FFFFFF</color>
+    <color name="accent_pink_container">#FFD9E2</color>
+    <color name="accent_pink_on_container">#3E001D</color>
+
+    <color name="accent_teal_primary">#006A6A</color>
+    <color name="accent_teal_on_primary">#FFFFFF</color>
+    <color name="accent_teal_container">#6FF7F6</color>
+    <color name="accent_teal_on_container">#002020</color>
+
+    <color name="colorSecondary">#665A70</color>
+    <color name="colorOnSecondary">#FFFFFF</color>
+    <color name="colorSecondaryContainer">#EDDDF7</color>
+    <color name="colorOnSecondaryContainer">#21182A</color>
+
+    <color name="colorTertiary">#7C525D</color>
+    <color name="colorOnTertiary">#FFFFFF</color>
+    <color name="colorTertiaryContainer">#FFD9E2</color>
+    <color name="colorOnTertiaryContainer">#30111B</color>
+
+    <color name="colorError">#BA1A1A</color>
+    <color name="colorOnError">#FFFFFF</color>
+    <color name="colorErrorContainer">#FFDAD6</color>
+    <color name="colorOnErrorContainer">#410002</color>
+    <color name="colorSOS">#D90429</color>
+    <color name="colorSosRipple">#33D90429</color>
+
+    <color name="colorOutline">#7A757F</color>
+    <color name="colorOutlineVariant">#CCC4CF</color>
+    <color name="colorVerified">#2F6F4E</color>
     <color name="colorOnOverlay">#FFFFFF</color>
-    <color name="colorOnOverlaySecondary">#D5DAE3</color>
+    <color name="colorOnOverlaySecondary">#E8E0EB</color>
+
+    <color name="role_attendee_container">#DDE5FF</color>
+    <color name="role_attendee_on_container">#102A5E</color>
+    <color name="role_organizer_container">#D7F2E4</color>
+    <color name="role_organizer_on_container">#123725</color>
+    <color name="role_admin_container">#FFE1D8</color>
+    <color name="role_admin_on_container">#48190E</color>
 
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
     <color name="transparent">#00000000</color>
     <color name="chipStroke">#7B2FBE</color>
-    <color name="dividerColor">#D9DFE8</color>
+    <color name="dividerColor">#CCC4CF</color>
 
     <color name="nav_item_selected">#7B2FBE</color>
-    <color name="nav_item_unselected">#667085</color>
+    <color name="nav_item_unselected">#4A454E</color>
 </resources>

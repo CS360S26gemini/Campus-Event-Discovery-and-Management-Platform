@@ -3,7 +3,9 @@ package com.example.CampusEventDiscovery.ui.myevents;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,9 +31,12 @@ import com.example.CampusEventDiscovery.ui.event.EventFeedbackActivity;
 import com.example.CampusEventDiscovery.ui.event.OrganizerProposalDetailActivity;
 import com.example.CampusEventDiscovery.ui.event.TicketActivity;
 import com.example.CampusEventDiscovery.ui.organizer.OrganizerEventDetailActivity;
+import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -53,7 +58,10 @@ import java.util.Set;
  */
 public class MyEventsFragment extends Fragment {
 
+    private static final String ARG_SHOW_BACK_BUTTON = "show_back_button";
+
     private MaterialToolbar toolbarMyEvents;
+    private TextInputEditText etMyEventsSearch;
     
     private TextView tvSection1Header, tvSection2Header, tvSection3Header;
     private TextView tvEmptySection1, tvEmptySection2, tvEmptySection3;
@@ -75,9 +83,18 @@ public class MyEventsFragment extends Fragment {
 
     private String currentUserId;
     private String userRole = UserRoles.ATTENDEE;
+    private String searchQuery = "";
 
     public MyEventsFragment() {
         // Required empty public constructor
+    }
+
+    public static MyEventsFragment newInstance(boolean showBackButton) {
+        MyEventsFragment fragment = new MyEventsFragment();
+        Bundle args = new Bundle();
+        args.putBoolean(ARG_SHOW_BACK_BUTTON, showBackButton);
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Nullable
@@ -101,9 +118,11 @@ public class MyEventsFragment extends Fragment {
 
         bindViews(view);
         setupToolbar();
+        setupSearch();
         setupRecyclerViews();
         
         loadUserRoleAndData();
+        WalkthroughManager.maybeShow(requireActivity(), view, "my_events");
     }
 
     @Override
@@ -111,11 +130,13 @@ public class MyEventsFragment extends Fragment {
         super.onResume();
         if (getView() != null) {
             loadUserRoleAndData();
+            WalkthroughManager.maybeShow(requireActivity(), getView(), "my_events");
         }
     }
 
     private void bindViews(View view) {
         toolbarMyEvents = view.findViewById(R.id.toolbarMyEvents);
+        etMyEventsSearch = view.findViewById(R.id.etMyEventsSearch);
         
         tvSection1Header = view.findViewById(R.id.tvSection1Header);
         tvSection2Header = view.findViewById(R.id.tvSection2Header);
@@ -139,12 +160,33 @@ public class MyEventsFragment extends Fragment {
 
     private void setupToolbar() {
         if (toolbarMyEvents != null) {
-            toolbarMyEvents.setNavigationOnClickListener(v -> {
-                if (getActivity() != null) {
-                    getActivity().getSupportFragmentManager().popBackStack();
-                }
-            });
+            boolean showBackButton = getArguments() != null
+                    && getArguments().getBoolean(ARG_SHOW_BACK_BUTTON, false);
+            if (showBackButton) {
+                toolbarMyEvents.setNavigationIcon(R.drawable.ic_back);
+                toolbarMyEvents.setNavigationOnClickListener(v -> {
+                    if (getActivity() != null) {
+                        getActivity().getSupportFragmentManager().popBackStack();
+                    }
+                });
+            } else {
+                toolbarMyEvents.setNavigationIcon(null);
+                toolbarMyEvents.setNavigationOnClickListener(null);
+            }
         }
+    }
+
+    private void setupSearch() {
+        etMyEventsSearch.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                searchQuery = s == null ? "" : s.toString().trim();
+                applyFilters();
+            }
+        });
     }
 
     private void setupRecyclerViews() {
@@ -155,7 +197,7 @@ public class MyEventsFragment extends Fragment {
                 new EventAdapter.OnEventClickListener() {
                     @Override
                     public void onItemClick(Event event) {
-                        if (event == null || event.getEventId() == null) return;
+                        if (event == null || event.getEventId() == null || !canUseView()) return;
                         // For attendee RSVPs: if a QR ticket exists, open it directly
                         if (UserRoles.isAttendee(userRole)) {
                             openTicketOrDetail(event);
@@ -220,6 +262,10 @@ public class MyEventsFragment extends Fragment {
     }
 
     private void loadUserRoleAndData() {
+        if (!canUseView()) {
+            return;
+        }
+
         if (DevSessionManager.shouldUseBypass(requireContext())) {
             userRole = DevSessionManager.getBypassRole(requireContext());
             if (UserRoles.isOrganizer(userRole)) {
@@ -238,6 +284,10 @@ public class MyEventsFragment extends Fragment {
         repository.getUserData(currentUserId, new EventRepository.UserCallback() {
             @Override
             public void onSuccess(User user) {
+                if (!canUseView()) {
+                    return;
+                }
+
                 userRole = user == null ? UserRoles.ATTENDEE : UserRoles.sanitize(user.getRole());
                 if (TextUtils.isEmpty(userRole)) userRole = UserRoles.ATTENDEE;
                 
@@ -250,17 +300,27 @@ public class MyEventsFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (!canUseView()) {
+                    return;
+                }
+
                 loadAttendeeData();
             }
         });
     }
 
     private void loadAttendeeData() {
+        if (!canUseView()) {
+            return;
+        }
+
         if (toolbarMyEvents != null) {
             toolbarMyEvents.setTitle(R.string.my_events_header);
         }
         tvSection1Header.setText(R.string.my_events_section);
         tvSection2Header.setText(R.string.recently_viewed_section);
+        tvEmptySection1.setText(R.string.no_saved_events_help);
+        tvEmptySection2.setText(R.string.no_recent_events);
         
         tvSection3Header.setVisibility(View.GONE);
         rvSection3.setVisibility(View.GONE);
@@ -271,12 +331,19 @@ public class MyEventsFragment extends Fragment {
     }
 
     private void loadOrganizerData() {
+        if (!canUseView()) {
+            return;
+        }
+
         if (toolbarMyEvents != null) {
             toolbarMyEvents.setTitle(R.string.manage_events);
         }
         tvSection1Header.setText(R.string.approved_events_label);
         tvSection2Header.setText(R.string.pending_events_label);
         tvSection3Header.setText(R.string.rejected_proposals_label);
+        tvEmptySection1.setText(R.string.no_managed_events_help);
+        tvEmptySection2.setText(R.string.no_pending_events);
+        tvEmptySection3.setText(R.string.no_rejected_proposals);
         
         tvSection3Header.setVisibility(View.VISIBLE);
         divider2.setVisibility(View.VISIBLE);
@@ -287,6 +354,10 @@ public class MyEventsFragment extends Fragment {
 
     private void loadRsvps() {
         showLoading(progressBarSection1, true);
+        if (WalkthroughManager.isActive()) {
+            updateList(list1, ids1, adapter1, WalkthroughManager.getDemoEvents(), tvEmptySection1, progressBarSection1);
+            return;
+        }
         if (currentUserId == null) {
             updateList(list1, ids1, adapter1, new ArrayList<>(), tvEmptySection1, progressBarSection1);
             return;
@@ -295,21 +366,33 @@ public class MyEventsFragment extends Fragment {
         repository.getRsvps(currentUserId, new EventRepository.EventListCallback() {
             @Override
             public void onSuccess(List<Event> events) {
+                if (!canUseView()) {
+                    return;
+                }
+
                 updateList(list1, ids1, adapter1, events, tvEmptySection1, progressBarSection1);
             }
 
             @Override
             public void onError(Exception e) {
+                if (!canUseView()) {
+                    return;
+                }
+
                 updateList(list1, ids1, adapter1, new ArrayList<>(), tvEmptySection1, progressBarSection1);
             }
         });
     }
 
     private void loadRecentEvents() {
+        if (!canUseView()) {
+            return;
+        }
+
         showLoading(progressBarSection2, true);
         String stored = requireContext()
-                .getSharedPreferences("recently_viewed", android.content.Context.MODE_PRIVATE)
-                .getString("event_ids", "");
+                .getSharedPreferences(Constants.PREFS_RECENTLY_VIEWED, android.content.Context.MODE_PRIVATE)
+                .getString(Constants.PREFS_RECENTLY_VIEWED_KEY, "");
 
         if (TextUtils.isEmpty(stored)) {
             updateList(list2, ids2, adapter2, new ArrayList<>(), tvEmptySection2, progressBarSection2);
@@ -335,16 +418,28 @@ public class MyEventsFragment extends Fragment {
             repository.getEventById(id, new EventRepository.SingleEventCallback() {
                 @Override
                 public void onSuccess(Event event) {
+                    if (!canUseView()) {
+                        return;
+                    }
+
                     if (event != null) recentEvents.add(event);
                     checkFinish();
                 }
 
                 @Override
                 public void onError(Exception e) {
+                    if (!canUseView()) {
+                        return;
+                    }
+
                     checkFinish();
                 }
 
                 private void checkFinish() {
+                    if (!canUseView()) {
+                        return;
+                    }
+
                     completed[0]++;
                     if (completed[0] == total) {
                         updateList(list2, ids2, adapter2, recentEvents, tvEmptySection2, progressBarSection2);
@@ -359,11 +454,19 @@ public class MyEventsFragment extends Fragment {
         repository.getOrganizerEvents(currentUserId, new EventRepository.EventListCallback() {
             @Override
             public void onSuccess(List<Event> events) {
+                if (!canUseView()) {
+                    return;
+                }
+
                 updateList(list1, ids1, adapter1, events, tvEmptySection1, progressBarSection1);
             }
 
             @Override
             public void onError(Exception e) {
+                if (!canUseView()) {
+                    return;
+                }
+
                 updateList(list1, ids1, adapter1, new ArrayList<>(), tvEmptySection1, progressBarSection1);
             }
         });
@@ -375,6 +478,10 @@ public class MyEventsFragment extends Fragment {
         repository.getOrganizerProposals(currentUserId, new EventRepository.ProposalListCallback() {
             @Override
             public void onSuccess(List<EventProposal> proposals) {
+                if (!canUseView()) {
+                    return;
+                }
+
                 List<Event> pending = new ArrayList<>();
                 List<Event> rejected = new ArrayList<>();
                 
@@ -393,6 +500,10 @@ public class MyEventsFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (!canUseView()) {
+                    return;
+                }
+
                 updateList(list2, ids2, adapter2, new ArrayList<>(), tvEmptySection2, progressBarSection2);
                 updateList(list3, ids3, adapter3, new ArrayList<>(), tvEmptySection3, progressBarSection3);
             }
@@ -401,6 +512,10 @@ public class MyEventsFragment extends Fragment {
 
     private void updateList(List<Event> targetList, Set<String> targetIds, EventAdapter adapter, 
                             List<Event> newData, TextView emptyView, ProgressBar progressBar) {
+        if (!canUseView()) {
+            return;
+        }
+
         targetList.clear();
         targetIds.clear();
         if (newData != null) {
@@ -410,15 +525,66 @@ public class MyEventsFragment extends Fragment {
             }
         }
         adapter.updateSavedIds(targetIds);
-        adapter.updateData(new ArrayList<>(targetList));
+        List<Event> filtered = filterEvents(targetList);
+        adapter.updateData(filtered);
         
-        emptyView.setVisibility(targetList.isEmpty() ? View.VISIBLE : View.GONE);
+        emptyView.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         progressBar.setVisibility(View.GONE);
         
         // Handle visibility of the whole section if needed
-        if (rvSection1.getAdapter() == adapter) rvSection1.setVisibility(targetList.isEmpty() ? View.GONE : View.VISIBLE);
-        if (rvSection2.getAdapter() == adapter) rvSection2.setVisibility(targetList.isEmpty() ? View.GONE : View.VISIBLE);
-        if (rvSection3.getAdapter() == adapter) rvSection3.setVisibility(targetList.isEmpty() ? View.GONE : View.VISIBLE);
+        if (rvSection1.getAdapter() == adapter) rvSection1.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
+        if (rvSection2.getAdapter() == adapter) rvSection2.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
+        if (rvSection3.getAdapter() == adapter) rvSection3.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private void applyFilters() {
+        if (adapter1 == null || adapter2 == null || adapter3 == null) {
+            return;
+        }
+
+        List<Event> filtered1 = filterEvents(list1);
+        List<Event> filtered2 = filterEvents(list2);
+        List<Event> filtered3 = filterEvents(list3);
+
+        adapter1.updateData(filtered1);
+        adapter2.updateData(filtered2);
+        adapter3.updateData(filtered3);
+
+        tvEmptySection1.setVisibility(filtered1.isEmpty() ? View.VISIBLE : View.GONE);
+        rvSection1.setVisibility(filtered1.isEmpty() ? View.GONE : View.VISIBLE);
+        tvEmptySection2.setVisibility(filtered2.isEmpty() ? View.VISIBLE : View.GONE);
+        rvSection2.setVisibility(filtered2.isEmpty() ? View.GONE : View.VISIBLE);
+
+        boolean showThirdSection = tvSection3Header.getVisibility() == View.VISIBLE;
+        tvEmptySection3.setVisibility(showThirdSection && filtered3.isEmpty() ? View.VISIBLE : View.GONE);
+        rvSection3.setVisibility(showThirdSection && !filtered3.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private List<Event> filterEvents(List<Event> source) {
+        if (TextUtils.isEmpty(searchQuery)) {
+            return new ArrayList<>(source);
+        }
+
+        String needle = searchQuery.toLowerCase();
+        List<Event> filtered = new ArrayList<>();
+        for (Event event : source) {
+            if (event == null) {
+                continue;
+            }
+
+            String haystack = (safeText(event.getTitle())
+                    + " " + safeText(event.getLocation())
+                    + " " + safeText(event.getCategory())
+                    + " " + safeText(event.getStatus())).toLowerCase();
+            if (haystack.contains(needle)) {
+                filtered.add(event);
+            }
+        }
+        return filtered;
+    }
+
+    private String safeText(String value) {
+        return value == null ? "" : value;
     }
 
     private Event proposalToEvent(EventProposal p) {
@@ -438,19 +604,35 @@ public class MyEventsFragment extends Fragment {
     }
 
     private void showCancelRsvpDialog(Event event) {
+        if (!canUseView()) {
+            return;
+        }
+
         new AlertDialog.Builder(requireContext())
                 .setTitle(getString(R.string.cancel_rsvp))
                 .setMessage(getString(R.string.cancel_rsvp_message))
                 .setPositiveButton(getString(R.string.confirm), (dialog, which) -> {
+                    if (!canUseView()) {
+                        return;
+                    }
+
                     repository.cancelRsvp(currentUserId, event.getEventId(), new EventRepository.ActionCallback() {
                         @Override
                         public void onSuccess() {
+                            if (!canUseView()) {
+                                return;
+                            }
+
                             loadRsvps();
                             Toast.makeText(requireContext(), getString(R.string.rsvp_cancelled), Toast.LENGTH_SHORT).show();
                         }
 
                         @Override
                         public void onError(Exception e) {
+                            if (!canUseView()) {
+                                return;
+                            }
+
                             Toast.makeText(requireContext(), "Failed to cancel RSVP", Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -460,7 +642,7 @@ public class MyEventsFragment extends Fragment {
     }
 
     private void showAttendeeActionsDialog(Event event) {
-        if (event == null || TextUtils.isEmpty(event.getEventId()) || TextUtils.isEmpty(currentUserId)) {
+        if (event == null || TextUtils.isEmpty(event.getEventId()) || TextUtils.isEmpty(currentUserId) || !canUseView()) {
             return;
         }
 
@@ -474,12 +656,20 @@ public class MyEventsFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.attendee_actions_title)
                 .setItems(options.toArray(new String[0]), (dialog, which) -> {
+                    if (!canUseView()) {
+                        return;
+                    }
+
                     if (which == 0) {
                         // Open TicketActivity
                         FirebaseFirestore.getInstance().collection("users").document(currentUserId)
                                 .collection("rsvps").document(event.getEventId())
                                 .get()
                                 .addOnSuccessListener(doc -> {
+                                    if (!canUseView()) {
+                                        return;
+                                    }
+
                                     if (doc.exists()) {
                                         Rsvp rsvp = doc.toObject(Rsvp.class);
                                         if (rsvp != null) {
@@ -526,6 +716,10 @@ public class MyEventsFragment extends Fragment {
      * @param event The event whose ticket or detail screen should be opened.
      */
     private void openTicketOrDetail(Event event) {
+        if (!canUseView()) {
+            return;
+        }
+
         if (currentUserId == null || event.getEventId() == null) {
             openEventDetail(event);
             return;
@@ -536,6 +730,10 @@ public class MyEventsFragment extends Fragment {
                 .collection("rsvps").document(event.getEventId())
                 .get()
                 .addOnSuccessListener(snapshot -> {
+                    if (!canUseView()) {
+                        return;
+                    }
+
                     if (snapshot.exists()) {
                         Rsvp rsvp = snapshot.toObject(Rsvp.class);
                         if (rsvp != null
@@ -562,11 +760,15 @@ public class MyEventsFragment extends Fragment {
                     // No ticket found — open event detail as normal
                     openEventDetail(event);
                 })
-                .addOnFailureListener(e -> openEventDetail(event));
+                .addOnFailureListener(e -> {
+                    if (canUseView()) {
+                        openEventDetail(event);
+                    }
+                });
     }
 
     private void openEventDetail(Event event) {
-        if (event == null || event.getEventId() == null) return;
+        if (event == null || event.getEventId() == null || !canUseView()) return;
 
         if (UserRoles.isOrganizer(userRole)) {
             String status = event.getStatus() == null ? "" : event.getStatus().trim().toLowerCase();
@@ -586,5 +788,9 @@ public class MyEventsFragment extends Fragment {
         Intent intent = new Intent(requireContext(), EventDetailActivity.class);
         intent.putExtra("eventId", event.getEventId());
         startActivity(intent);
+    }
+
+    private boolean canUseView() {
+        return isAdded() && getView() != null;
     }
 }

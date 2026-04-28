@@ -11,18 +11,23 @@
         android:orientation="vertical"
         android:paddingTop="16dp">
 
-        <EditText
-            android:id="@+id/etSearch"
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/AppTextInputBoxStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:background="@drawable/bg_card_rounded"
-            android:drawableEnd="@android:drawable/ic_menu_search"
-            android:drawablePadding="8dp"
             android:hint="@string/search_for"
-            android:padding="14dp"
-            android:textColor="@color/colorOnBackground"
-            android:textColorHint="@color/colorSecondary" />
+            app:endIconContentDescription="@string/clear_search"
+            app:endIconMode="clear_text">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:textColor="@color/colorOnSurface" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <HorizontalScrollView
             android:layout_width="match_parent"
@@ -133,8 +138,14 @@
             <TextView
                 android:id="@+id/tvSortBy"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/sort_by_relevant"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/sort_events_title"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingHorizontal="@dimen/spacing_sm"
+                android:text="@string/sort_by_relevance"
                 android:textColor="@color/colorSecondary"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -146,7 +157,7 @@
             android:layout_marginTop="8dp"
             android:layout_weight="1"
             android:clipToPadding="false"
-            android:paddingBottom="12dp" />
+            android:paddingBottom="@dimen/bottom_nav_safe_padding" />
 
         <TextView
             android:id="@+id/tvEmptySearch"
@@ -154,9 +165,12 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="24dp"
-            android:text="@string/no_events_found"
-            android:textColor="@color/colorSecondary"
-            android:textSize="14sp"
+            android:text="@string/no_search_results_help"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorOnSurface"
+            android:drawableTop="@drawable/ic_search"
+            android:drawablePadding="@dimen/spacing_md"
+            android:gravity="center"
             android:visibility="gone" />
     </LinearLayout>
 

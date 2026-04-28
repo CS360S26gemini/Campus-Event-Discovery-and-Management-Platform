@@ -14,6 +14,8 @@ public class EventAttendee {
     private String qrToken;
     private boolean checkedIn;
     private Timestamp checkedInAt;
+    private boolean blacklisted;
+    private Timestamp blacklistedAt;
 
     public EventAttendee() {
     }
@@ -56,5 +58,21 @@ public class EventAttendee {
 
     public void setCheckedInAt(Timestamp checkedInAt) {
         this.checkedInAt = checkedInAt;
+    }
+
+    public boolean isBlacklisted() {
+        return blacklisted;
+    }
+
+    public void setBlacklisted(boolean blacklisted) {
+        this.blacklisted = blacklisted;
+    }
+
+    public Timestamp getBlacklistedAt() {
+        return blacklistedAt;
+    }
+
+    public void setBlacklistedAt(Timestamp blacklistedAt) {
+        this.blacklistedAt = blacklistedAt;
     }
 }

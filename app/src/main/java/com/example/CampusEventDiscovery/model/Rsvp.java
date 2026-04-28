@@ -20,7 +20,11 @@ public class Rsvp {
     private String status;
     private String paymentStatus;
     private String transactionId;
+    private String paymentRef;
+    private String paymentMethod;
+    private String paymentProofUrl;
     private String qrPayload;
+    private String qrCodeToken;
     private boolean checkedIn;
     private boolean qrExpired;
     private Timestamp rsvpAt;
@@ -77,8 +81,20 @@ public class Rsvp {
     public String getTransactionId() { return transactionId; }
     public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
 
+    public String getPaymentRef() { return paymentRef; }
+    public void setPaymentRef(String paymentRef) { this.paymentRef = paymentRef; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
+    public String getPaymentProofUrl() { return paymentProofUrl; }
+    public void setPaymentProofUrl(String paymentProofUrl) { this.paymentProofUrl = paymentProofUrl; }
+
     public String getQrPayload() { return qrPayload; }
     public void setQrPayload(String qrPayload) { this.qrPayload = qrPayload; }
+
+    public String getQrCodeToken() { return qrCodeToken; }
+    public void setQrCodeToken(String qrCodeToken) { this.qrCodeToken = qrCodeToken; }
 
     public boolean isCheckedIn() { return checkedIn; }
     public void setCheckedIn(boolean checkedIn) { this.checkedIn = checkedIn; }
