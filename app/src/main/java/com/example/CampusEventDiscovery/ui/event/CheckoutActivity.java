@@ -76,6 +76,9 @@ public class CheckoutActivity extends AppCompatActivity {
     private long eventDateMillis;
     private String eventVenue;
     private double totalPrice;
+    private String tierId;
+    private String tierName;
+    private double tierPrice;
     private String effectiveUserId;
     private boolean walkthroughMode;
     private double availableCreditBalance;
@@ -129,6 +132,9 @@ public class CheckoutActivity extends AppCompatActivity {
         eventDateMillis = getIntent().getLongExtra("eventDateMillis", -1L);
         eventVenue      = getIntent().getStringExtra("eventVenue");
         totalPrice      = getIntent().getDoubleExtra("totalPrice", 0.0);
+        tierId          = getIntent().getStringExtra("tierId");
+        tierName        = getIntent().getStringExtra("tierName");
+        tierPrice       = getIntent().getDoubleExtra("tierPrice", totalPrice);
     }
 
     private void resolveUserId() {
@@ -144,7 +150,11 @@ public class CheckoutActivity extends AppCompatActivity {
 
     private void bindStaticUi() {
         tvCheckoutEventTitle.setText(eventTitle != null ? eventTitle : getString(R.string.app_name));
-        tvCheckoutSubtitle.setText(getString(R.string.secure_your_spot_subtitle));
+        if (!TextUtils.isEmpty(tierName)) {
+            tvCheckoutSubtitle.setText(getString(R.string.ticket_tier_checkout_subtitle, tierName));
+        } else {
+            tvCheckoutSubtitle.setText(getString(R.string.secure_your_spot_subtitle));
+        }
         updateCreditBalanceUi();
 
         if (isFreeEvent()) {
@@ -322,6 +332,8 @@ public class CheckoutActivity extends AppCompatActivity {
         Payment demoPayment = MockPaymentService.processPayment(effectiveUserId, eventId, totalPrice);
         demoPayment.setPaymentMethod(resolveSelectedPaymentMethod());
         demoPayment.setProofUrl("");
+        demoPayment.setTierId(tierId);
+        demoPayment.setTierName(tierName);
 
         paymentRepository.savePayment(demoPayment, new FirestoreCallback() {
             @Override
@@ -357,7 +369,7 @@ public class CheckoutActivity extends AppCompatActivity {
         String fullName = etFullName.getText().toString().trim()
                 + " " + etLastName.getText().toString().trim();
 
-        eventRepository.rsvpEventWithCredit(effectiveUserId, eventShell, fullName, totalPrice,
+        eventRepository.rsvpEventWithCredit(effectiveUserId, eventShell, fullName, totalPrice, tierId, tierName, resolveSelectedTierPrice(),
                 new EventRepository.ActionCallback() {
                     @Override
                     public void onSuccess() {
@@ -418,7 +430,7 @@ public class CheckoutActivity extends AppCompatActivity {
         String fullName = etFullName.getText().toString().trim()
                 + " " + etLastName.getText().toString().trim();
 
-        eventRepository.rsvpEvent(effectiveUserId, eventShell, fullName,
+        eventRepository.rsvpEvent(effectiveUserId, eventShell, fullName, tierId, tierName, resolveSelectedTierPrice(),
                 new EventRepository.ActionCallback() {
                     @Override
                     public void onSuccess() {
@@ -474,11 +486,16 @@ public class CheckoutActivity extends AppCompatActivity {
         String qrPayload = qrJson.toString();
 
         Map<String, Object> paymentMerge = new HashMap<>();
-        paymentMerge.put("paymentStatus", "SUCCESS");
+        paymentMerge.put("paymentStatus", Constants.PAYMENT_CONFIRMED);
         paymentMerge.put("transactionId", payment.getTransactionId());
         paymentMerge.put("paymentRef", payment.getTransactionId());
         paymentMerge.put("paymentMethod", payment.getPaymentMethod());
         paymentMerge.put("paymentProofUrl", payment.getProofUrl());
+        paymentMerge.put("amount", payment.getAmount());
+        paymentMerge.put("ticketPrice", payment.getAmount());
+        paymentMerge.put("tierId", tierId);
+        paymentMerge.put("tierName", tierName);
+        paymentMerge.put("tierPrice", TextUtils.isEmpty(tierId) ? null : resolveSelectedTierPrice());
         paymentMerge.put("qrPayload", qrPayload);
         paymentMerge.put("qrExpired", false);
 
@@ -491,11 +508,15 @@ public class CheckoutActivity extends AppCompatActivity {
                     rsvp.setEventId(eventId);
                     rsvp.setTitle(eventTitle);
                     rsvp.setStatus("confirmed");
-                    rsvp.setPaymentStatus("SUCCESS");
+                    rsvp.setPaymentStatus(Constants.PAYMENT_CONFIRMED);
+                    rsvp.setAmount(payment.getAmount());
                     rsvp.setTransactionId(payment.getTransactionId());
                     rsvp.setPaymentRef(payment.getTransactionId());
                     rsvp.setPaymentMethod(payment.getPaymentMethod());
                     rsvp.setPaymentProofUrl(payment.getProofUrl());
+                    rsvp.setTierId(tierId);
+                    rsvp.setTierName(tierName);
+                    rsvp.setTierPrice(resolveSelectedTierPrice() != null ? resolveSelectedTierPrice() : 0.0);
                     rsvp.setQrPayload(qrPayload);
                     rsvp.setCheckedIn(false);
                     rsvp.setQrExpired(false);
@@ -564,6 +585,13 @@ public class CheckoutActivity extends AppCompatActivity {
     private void showLoading(boolean isLoading) {
         progressBarCheckout.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         btnPay.setEnabled(!isLoading);
+    }
+
+    private Double resolveSelectedTierPrice() {
+        if (TextUtils.isEmpty(tierId)) {
+            return null;
+        }
+        return tierPrice;
     }
 
     /**

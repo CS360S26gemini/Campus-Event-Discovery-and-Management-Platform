@@ -219,7 +219,11 @@ public class HomeAdminFragment extends Fragment {
                     e.setDate(p.getDate());
                     e.setLocation(p.getLocation());
                     e.setStatus(p.getStatus());
-                    e.setThumbnailUrl(""); // Prototyping: thumbnail handling
+                    String imageUrl = p.getThumbnailUrl();
+                    if (imageUrl == null || imageUrl.trim().isEmpty()) {
+                        imageUrl = p.getImageUrl();
+                    }
+                    e.setThumbnailUrl(imageUrl == null ? "" : imageUrl);
                     approvalEvents.add(e);
                 }
                 adapter.updateData(new ArrayList<>(approvalEvents));

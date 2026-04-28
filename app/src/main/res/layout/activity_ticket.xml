@@ -77,10 +77,28 @@
         android:textColor="@color/colorSecondary"
         android:textSize="12sp" />
 
+    <TextView
+        android:id="@+id/tvTicketRefundStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:textColor="@color/colorSecondary"
+        android:textSize="13sp" />
+
     <View
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_weight="1" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnTicketCancelRefund"
+        style="@style/AppSecondaryButtonStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:padding="14dp"
+        android:text="@string/cancel_ticket_refund" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnTicketDone"

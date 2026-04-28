@@ -39,6 +39,10 @@ public class Event {
     private double ticketPrice;
     private String imageUrl; // Cloudinary upload URL — mirrors thumbnailUrl for compatibility
 
+    // ─── CAMPUS LOCATION (Nausher) ───────────────────────────
+    private String locationKey;
+    private String locationDescription;
+
     public Event() {
     }
 
@@ -124,4 +128,9 @@ public class Event {
     public double getTicketPrice() { return ticketPrice; }
     public void setTicketPrice(double ticketPrice) { this.ticketPrice = ticketPrice; }
 
+    public String getLocationKey() { return locationKey; }
+    public void setLocationKey(String locationKey) { this.locationKey = locationKey; }
+
+    public String getLocationDescription() { return locationDescription; }
+    public void setLocationDescription(String locationDescription) { this.locationDescription = locationDescription; }
 }

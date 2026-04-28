@@ -110,7 +110,16 @@ public class OrganizerProposalDetailActivity extends AppCompatActivity {
         tvProposalStatus.setText(formatStatus(status));
         tvProposalSubmittedAt.setText(getString(R.string.proposal_submitted_at, formatDateTime(proposal.getSubmittedAt())));
         tvProposalDateTime.setText(formatDateTime(proposal.getDate()));
-        tvProposalVenue.setText(safeText(proposal.getLocation(), getString(R.string.placeholder_venue)));
+        
+        // Format location as "Room, Building"
+        String displayLocation = proposal.getLocation();
+        if (!TextUtils.isEmpty(proposal.getLocationDescription()) && !TextUtils.isEmpty(proposal.getLocationKey())) {
+            displayLocation = proposal.getLocationDescription() + ", " + proposal.getLocationKey();
+        } else if (!TextUtils.isEmpty(proposal.getLocationKey())) {
+            displayLocation = proposal.getLocationKey();
+        }
+        tvProposalVenue.setText(safeText(displayLocation, getString(R.string.placeholder_venue)));
+
         tvProposalDescription.setText(safeText(proposal.getDescription(), getString(R.string.placeholder_description)));
         tvProposalTags.setText(formatList(proposal.getTags()));
         tvProposalSponsors.setText(formatList(proposal.getSponsors()));

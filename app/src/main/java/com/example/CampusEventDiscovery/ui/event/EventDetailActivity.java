@@ -15,11 +15,15 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
+import com.example.CampusEventDiscovery.adapter.TicketTierOptionAdapter;
 import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.Rsvp;
+import com.example.CampusEventDiscovery.model.TicketTier;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
@@ -34,6 +38,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -46,9 +51,6 @@ import java.util.Set;
  * Shows full event details for a selected event.
  * Updated to show "View Ticket" if already registered.
  */
-
-// export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
-//export PATH="$JAVA_HOME/bin:$PATH"
 public class EventDetailActivity extends AppCompatActivity {
 
     private ImageView ivBanner;
@@ -64,6 +66,8 @@ public class EventDetailActivity extends AppCompatActivity {
     private TextView tvDescription;
     private TextView tvSpotsRemaining;
     private TextView tvPrice;
+    private TextView tvTicketTierLabel;
+    private RecyclerView rvTicketTiers;
     private com.google.android.material.button.MaterialButton btnTickets;
     private com.google.android.material.button.MaterialButton btnViewTicket;
 
@@ -73,6 +77,8 @@ public class EventDetailActivity extends AppCompatActivity {
     private String currentUserRole = "";
     private Event currentEvent;
     private Rsvp currentRsvp;
+    private final List<TicketTier> ticketTiers = new ArrayList<>();
+    private TicketTierOptionAdapter ticketTierPreviewAdapter;
     private final Set<String> savedEventIds = new HashSet<>();
     private boolean walkthroughMode;
 
@@ -103,6 +109,7 @@ public class EventDetailActivity extends AppCompatActivity {
             currentUserRole = UserRoles.ATTENDEE;
             currentEvent = WalkthroughManager.getDemoEvent();
             bindEvent(currentEvent);
+            bindTicketTiers(new ArrayList<>());
             WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "event_detail");
         } else {
             loadSavedState();
@@ -126,11 +133,14 @@ public class EventDetailActivity extends AppCompatActivity {
         tvDescription = findViewById(R.id.tvDescription);
         tvSpotsRemaining = findViewById(R.id.tvSpotsRemaining);
         tvPrice = findViewById(R.id.tvPrice);
+        tvTicketTierLabel = findViewById(R.id.tvTicketTierLabel);
+        rvTicketTiers = findViewById(R.id.rvTicketTiers);
         btnTickets = findViewById(R.id.btnTickets);
+        ticketTierPreviewAdapter = new TicketTierOptionAdapter(false, null);
+        rvTicketTiers.setLayoutManager(new LinearLayoutManager(this));
+        rvTicketTiers.setNestedScrollingEnabled(false);
+        rvTicketTiers.setAdapter(ticketTierPreviewAdapter);
         
-        // Add dynamic View Ticket button if not in layout, or bind it
-//        btnViewTicket = findViewById(R.id.btnViewTicket);
-        // btnViewTicket is optional — only bind if present in layout
         View rawBtn = findViewById(R.id.btnViewTicket);
         if (rawBtn instanceof com.google.android.material.button.MaterialButton) {
             btnViewTicket = (com.google.android.material.button.MaterialButton) rawBtn;
@@ -190,22 +200,35 @@ public class EventDetailActivity extends AppCompatActivity {
                 return;
             }
 
-            long remaining = Math.max(0L, currentEvent.getCapacity() - currentEvent.getRsvpCount());
+            long remaining = getEffectiveRemainingSpots();
             if (remaining <= 0) {
-                Toast.makeText(this, getString(R.string.sold_out_toast), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,
+                        hasVisibleTiers() ? getString(R.string.ticket_tier_sold_out_message) : getString(R.string.sold_out_toast),
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Launch CheckoutActivity for payment and QR ticket generation
-            Intent intent = new Intent(EventDetailActivity.this, CheckoutActivity.class);
-            intent.putExtra("eventId", currentEvent.getEventId());
-            intent.putExtra("eventTitle", safeText(currentEvent.getTitle(), getString(R.string.app_name)));
-            intent.putExtra("totalPrice", currentEvent.getTicketPrice());
-            intent.putExtra("eventDateMillis", currentEvent.getDate() != null
-                    ? currentEvent.getDate().toDate().getTime() : -1L);
-            intent.putExtra("eventVenue", safeText(currentEvent.getLocation(), ""));
-
-            startActivity(intent);
+            if (hasVisibleTiers()) {
+                Intent intent = new Intent(EventDetailActivity.this, BuyTicketActivity.class);
+                intent.putExtra("eventId", currentEvent.getEventId());
+                intent.putExtra("eventTitle", safeText(currentEvent.getTitle(), getString(R.string.app_name)));
+                intent.putExtra("eventDateMillis", currentEvent.getDate() != null
+                        ? currentEvent.getDate().toDate().getTime() : -1L);
+                intent.putExtra("eventVenue", safeText(resolveDisplayLocation(currentEvent), ""));
+                intent.putExtra("eventCapacity", currentEvent.getCapacity());
+                intent.putExtra("eventRsvpCount", currentEvent.getRsvpCount());
+                intent.putExtra("eventTicketPrice", currentEvent.getTicketPrice());
+                startActivity(intent);
+            } else {
+                Intent intent = new Intent(EventDetailActivity.this, CheckoutActivity.class);
+                intent.putExtra("eventId", currentEvent.getEventId());
+                intent.putExtra("eventTitle", safeText(currentEvent.getTitle(), getString(R.string.app_name)));
+                intent.putExtra("totalPrice", currentEvent.getTicketPrice());
+                intent.putExtra("eventDateMillis", currentEvent.getDate() != null
+                        ? currentEvent.getDate().toDate().getTime() : -1L);
+                intent.putExtra("eventVenue", safeText(resolveDisplayLocation(currentEvent), ""));
+                startActivity(intent);
+            }
         });
 
         if (btnViewTicket != null) {
@@ -313,6 +336,11 @@ public class EventDetailActivity extends AppCompatActivity {
             public void onSuccess(Event event) {
                 currentEvent = event;
                 bindEvent(event);
+                if (btnTickets != null) {
+                    btnTickets.setEnabled(false);
+                    btnTickets.setAlpha(0.6f);
+                }
+                loadTicketTiers();
                 trackRecentlyViewed(event.getEventId());
             }
 
@@ -327,22 +355,9 @@ public class EventDetailActivity extends AppCompatActivity {
     private void bindEvent(Event event) {
         tvTitle.setText(safeText(event.getTitle(), getString(R.string.app_name)));
         tvDateTime.setText(formatDateTime(event.getDate()));
-        tvVenue.setText(safeText(event.getLocation(), getString(R.string.placeholder_venue)));
+        tvVenue.setText(resolveDisplayLocation(event));
         tvRefundPolicy.setText(getString(R.string.refund_policy_body));
         tvDescription.setText(safeText(event.getDescription(), getString(R.string.placeholder_description)));
-        
-        if (event.getTicketPrice() == 0) {
-            tvPrice.setText(getString(R.string.price_free));
-        } else {
-            tvPrice.setText(String.format(Locale.getDefault(), "PKR %.2f", event.getTicketPrice()));
-        }
-
-        long remaining = Math.max(0L, event.getCapacity() - event.getRsvpCount());
-        if (remaining <= 0) {
-            tvSpotsRemaining.setText(getString(R.string.sold_out));
-        } else {
-            tvSpotsRemaining.setText(getString(R.string.spots_remaining, (int) remaining));
-        }
 
         if (!TextUtils.isEmpty(event.getThumbnailUrl())) {
             Glide.with(this)
@@ -355,8 +370,82 @@ public class EventDetailActivity extends AppCompatActivity {
             ivBanner.setBackgroundResource(R.drawable.bg_placeholder_image);
         }
 
+        bindTicketPricingSummary();
         updateHeartIcon();
         updateRegistrationCta();
+    }
+
+    private void loadTicketTiers() {
+        repository.getTiersForEvent(eventId, new EventRepository.TicketTierListCallback() {
+            @Override
+            public void onSuccess(List<TicketTier> tiers) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                bindTicketTiers(tiers);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                bindTicketTiers(new ArrayList<>());
+            }
+        });
+    }
+
+    private void bindTicketTiers(List<TicketTier> tiers) {
+        ticketTiers.clear();
+        if (tiers != null) {
+            ticketTiers.addAll(tiers);
+        }
+        ticketTierPreviewAdapter.submitList(ticketTiers);
+        boolean hasTiers = hasVisibleTiers();
+        tvTicketTierLabel.setVisibility(hasTiers ? View.VISIBLE : View.GONE);
+        rvTicketTiers.setVisibility(hasTiers ? View.VISIBLE : View.GONE);
+        bindTicketPricingSummary();
+        updateRegistrationCta();
+    }
+
+    private void bindTicketPricingSummary() {
+        if (currentEvent == null) {
+            return;
+        }
+
+        if (hasVisibleTiers()) {
+            double lowestPrice = Double.MAX_VALUE;
+            long totalRemaining = 0L;
+            boolean hasAvailableTier = false;
+
+            for (TicketTier tier : ticketTiers) {
+                lowestPrice = Math.min(lowestPrice, tier.getPrice());
+                totalRemaining += tier.getRemainingCapacity();
+                hasAvailableTier = hasAvailableTier || !tier.isSoldOut();
+            }
+
+            tvPrice.setText(lowestPrice <= 0.0
+                    ? getString(R.string.price_free)
+                    : getString(R.string.ticket_tier_preview_price, lowestPrice));
+            if (!hasAvailableTier) {
+                tvSpotsRemaining.setText(getString(R.string.sold_out));
+            } else {
+                tvSpotsRemaining.setText(getString(R.string.ticket_tier_spots_remaining_long, (int) totalRemaining));
+            }
+        } else {
+            if (currentEvent.getTicketPrice() == 0) {
+                tvPrice.setText(getString(R.string.price_free));
+            } else {
+                tvPrice.setText(String.format(Locale.getDefault(), "PKR %.2f", currentEvent.getTicketPrice()));
+            }
+
+            long remaining = Math.max(0L, currentEvent.getCapacity() - currentEvent.getRsvpCount());
+            if (remaining <= 0) {
+                tvSpotsRemaining.setText(getString(R.string.sold_out));
+            } else {
+                tvSpotsRemaining.setText(getString(R.string.spots_remaining, (int) remaining));
+            }
+        }
     }
 
     private void updateHeartIcon() {
@@ -381,7 +470,7 @@ public class EventDetailActivity extends AppCompatActivity {
             Intent intent = new Intent(Intent.ACTION_INSERT)
                     .setData(CalendarContract.Events.CONTENT_URI)
                     .putExtra(CalendarContract.Events.TITLE, safeText(currentEvent.getTitle(), getString(R.string.app_name)))
-                    .putExtra(CalendarContract.Events.EVENT_LOCATION, safeText(currentEvent.getLocation(), getString(R.string.placeholder_venue)));
+                    .putExtra(CalendarContract.Events.EVENT_LOCATION, tvVenue.getText().toString());
 
             Timestamp start = currentEvent.getDate();
 
@@ -402,16 +491,39 @@ public class EventDetailActivity extends AppCompatActivity {
     }
 
     private void openMap() {
-        if (currentEvent == null || TextUtils.isEmpty(currentEvent.getLocation())) {
+        if (currentEvent == null) {
             return;
         }
 
-        try {
-            Uri uri = Uri.parse("geo:0,0?q=" + Uri.encode(currentEvent.getLocation()));
-            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        // Internal Map Overriding Google Maps redirect
+        String locationKey = currentEvent.getLocationKey();
+        if (!TextUtils.isEmpty(locationKey)) {
+            Intent intent = new Intent(this, CampusMapActivity.class);
+            intent.putExtra("locationKey", locationKey);
             startActivity(intent);
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, getString(R.string.open_map_failed), Toast.LENGTH_SHORT).show();
+        } else {
+            // Fallback for events that don't have a specific key yet - try to match from location string
+            String matchedKey = null;
+            String location = currentEvent.getLocation() != null ? currentEvent.getLocation().toUpperCase() : "";
+            
+            if (location.contains(Constants.MAP_LOC_SSE)) matchedKey = Constants.MAP_LOC_SSE;
+            else if (location.contains(Constants.MAP_LOC_HSS)) matchedKey = Constants.MAP_LOC_HSS;
+            else if (location.contains(Constants.MAP_LOC_SAHSOL)) matchedKey = Constants.MAP_LOC_SAHSOL;
+            else if (location.contains("SPORTS") || location.contains("COMPLEX")) matchedKey = Constants.MAP_LOC_SPORTS_COMPLEX;
+            else if (location.contains("PARKING")) matchedKey = Constants.MAP_LOC_PARKING_LOT;
+            else if (location.contains("REDC")) matchedKey = Constants.MAP_LOC_REDC;
+            else if (location.contains("CRICKET") || location.contains("GROUND")) matchedKey = Constants.MAP_LOC_CRICKET_GROUND;
+            else if (location.contains(Constants.MAP_LOC_SDSB)) matchedKey = Constants.MAP_LOC_SDSB;
+            else if (location.contains(Constants.MAP_LOC_IST)) matchedKey = Constants.MAP_LOC_IST;
+            else if (location.contains("MASJID")) matchedKey = Constants.MAP_LOC_MASJID;
+
+            if (matchedKey != null) {
+                Intent intent = new Intent(this, CampusMapActivity.class);
+                intent.putExtra("locationKey", matchedKey);
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "Internal campus map not available for this location.", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -502,7 +614,36 @@ public class EventDetailActivity extends AppCompatActivity {
 
         btnTickets.setEnabled(true);
         btnTickets.setAlpha(1f);
-        btnTickets.setText(R.string.tickets_button);
+        btnTickets.setText(hasVisibleTiers() ? R.string.choose_ticket_tier : R.string.tickets_button);
+    }
+
+    private long getEffectiveRemainingSpots() {
+        if (hasVisibleTiers()) {
+            long remaining = 0L;
+            for (TicketTier tier : ticketTiers) {
+                remaining += tier.getRemainingCapacity();
+            }
+            return remaining;
+        }
+        return Math.max(0L, currentEvent != null ? currentEvent.getCapacity() - currentEvent.getRsvpCount() : 0L);
+    }
+
+    private boolean hasVisibleTiers() {
+        return !ticketTiers.isEmpty();
+    }
+
+    private String resolveDisplayLocation(Event event) {
+        if (event == null) {
+            return getString(R.string.placeholder_venue);
+        }
+
+        String displayLocation = event.getLocation();
+        if (!TextUtils.isEmpty(event.getLocationDescription()) && !TextUtils.isEmpty(event.getLocationKey())) {
+            displayLocation = event.getLocationDescription() + ", " + event.getLocationKey();
+        } else if (!TextUtils.isEmpty(event.getLocationKey())) {
+            displayLocation = event.getLocationKey();
+        }
+        return safeText(displayLocation, getString(R.string.placeholder_venue));
     }
 
     private long resolveEventEndMillis(Event event) {

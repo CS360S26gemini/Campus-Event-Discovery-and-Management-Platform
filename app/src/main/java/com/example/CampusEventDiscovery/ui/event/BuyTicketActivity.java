@@ -13,7 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.CampusEventDiscovery.R;
-import com.example.CampusEventDiscovery.adapter.TicketTierAdapter;
+import com.example.CampusEventDiscovery.adapter.TicketTierOptionAdapter;
+import com.example.CampusEventDiscovery.model.TicketTier;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
@@ -26,9 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * BuyTicketActivity.java
- *
- * Allows the user to choose ticket tiers and proceed to checkout.
+ * Allows the attendee to pick a single ticket tier before checkout.
  */
 public class BuyTicketActivity extends AppCompatActivity {
 
@@ -40,8 +39,9 @@ public class BuyTicketActivity extends AppCompatActivity {
     private TextView tvTotal;
     private MaterialButton btnBuy;
 
-    private TicketTierAdapter adapter;
     private EventRepository repository;
+    private TicketTierOptionAdapter adapter;
+    private final List<TicketTier> ticketTiers = new ArrayList<>();
 
     private String eventId;
     private String eventTitle;
@@ -49,6 +49,7 @@ public class BuyTicketActivity extends AppCompatActivity {
     private String eventVenue;
     private long eventCapacity;
     private long eventRsvpCount;
+    private double eventTicketPrice;
 
     private final ActivityResultLauncher<Intent> checkoutLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -69,9 +70,10 @@ public class BuyTicketActivity extends AppCompatActivity {
         readIntentExtras();
         setupToolbar();
         bindEventSummary();
-        setupTicketTiers();
+        setupTierList();
         enforceAttendeeAccess();
         setupBuyButton();
+        loadTicketTiers();
     }
 
     private void bindViews() {
@@ -91,6 +93,7 @@ public class BuyTicketActivity extends AppCompatActivity {
         eventVenue = getIntent().getStringExtra("eventVenue");
         eventCapacity = getIntent().getLongExtra("eventCapacity", 0L);
         eventRsvpCount = getIntent().getLongExtra("eventRsvpCount", 0L);
+        eventTicketPrice = getIntent().getDoubleExtra("eventTicketPrice", 0.0);
     }
 
     private void setupToolbar() {
@@ -109,46 +112,56 @@ public class BuyTicketActivity extends AppCompatActivity {
         }
 
         tvEventVenue.setText(eventVenue != null ? eventVenue : getString(R.string.placeholder_venue));
-        tvTotal.setText(getString(R.string.total_label, 0));
+        tvTotal.setText(eventTicketPrice <= 0.0
+                ? getString(R.string.checkout_total_free)
+                : getString(R.string.checkout_total_pkr, eventTicketPrice));
     }
 
-    private void setupTicketTiers() {
-        List<TicketTierAdapter.TicketTier> tiers = new ArrayList<>();
-        tiers.add(new TicketTierAdapter.TicketTier(
-                getString(R.string.ticket_tier_early_bird),
-                getString(R.string.ticket_desc_early_bird),
-                getString(R.string.ticket_date_range),
-                2500,
-                0
-        ));
-        tiers.add(new TicketTierAdapter.TicketTier(
-                getString(R.string.ticket_tier_vip),
-                getString(R.string.ticket_desc_vip),
-                getString(R.string.ticket_date_range),
-                10000,
-                0
-        ));
-        tiers.add(new TicketTierAdapter.TicketTier(
-                getString(R.string.ticket_tier_general),
-                getString(R.string.ticket_desc_general),
-                getString(R.string.ticket_date_range),
-                3000,
-                0
-        ));
-
-        adapter = new TicketTierAdapter(tiers, total ->
-                tvTotal.setText(getString(R.string.total_label, total)));
+    private void setupTierList() {
+        adapter = new TicketTierOptionAdapter(true, tier -> {
+            if (tier == null) {
+                tvTotal.setText(getString(R.string.checkout_total_pkr, eventTicketPrice));
+                return;
+            }
+            tvTotal.setText(tier.getPrice() <= 0.0
+                    ? getString(R.string.checkout_total_free)
+                    : getString(R.string.checkout_total_pkr, tier.getPrice()));
+        });
 
         rvTiers.setLayoutManager(new LinearLayoutManager(this));
         rvTiers.setAdapter(adapter);
     }
 
+    private void loadTicketTiers() {
+        repository.getTiersForEvent(eventId, new EventRepository.TicketTierListCallback() {
+            @Override
+            public void onSuccess(List<TicketTier> tiers) {
+                ticketTiers.clear();
+                if (tiers != null) {
+                    ticketTiers.addAll(tiers);
+                }
+                adapter.submitList(ticketTiers);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                ticketTiers.clear();
+                adapter.submitList(ticketTiers);
+            }
+        });
+    }
+
     private void setupBuyButton() {
         btnBuy.setOnClickListener(v -> {
-            int total = adapter.getTotalPrice();
+            TicketTier selectedTier = adapter.getSelectedTier();
 
-            if (total == 0) {
-                Toast.makeText(this, getString(R.string.please_select_ticket), Toast.LENGTH_SHORT).show();
+            if (!ticketTiers.isEmpty() && selectedTier == null) {
+                Toast.makeText(this, getString(R.string.ticket_tier_missing), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (selectedTier != null && selectedTier.isSoldOut()) {
+                Toast.makeText(this, getString(R.string.sold_out_toast), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -159,7 +172,12 @@ public class BuyTicketActivity extends AppCompatActivity {
             intent.putExtra("eventVenue", eventVenue);
             intent.putExtra("eventCapacity", eventCapacity);
             intent.putExtra("eventRsvpCount", eventRsvpCount);
-            intent.putExtra("totalPrice", total);
+            intent.putExtra("totalPrice", selectedTier != null ? selectedTier.getPrice() : eventTicketPrice);
+            if (selectedTier != null) {
+                intent.putExtra("tierId", selectedTier.getTierId());
+                intent.putExtra("tierName", selectedTier.getName());
+                intent.putExtra("tierPrice", selectedTier.getPrice());
+            }
 
             checkoutLauncher.launch(intent);
         });

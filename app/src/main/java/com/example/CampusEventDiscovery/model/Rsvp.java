@@ -23,12 +23,18 @@ public class Rsvp {
     private String paymentRef;
     private String paymentMethod;
     private String paymentProofUrl;
+    private double amount;
     private String qrPayload;
     private String qrCodeToken;
     private boolean checkedIn;
     private boolean qrExpired;
     private Timestamp rsvpAt;
     private Timestamp checkedInAt;
+
+    // Ticket Tier Fields (Nausher)
+    private String tierId;
+    private String tierName;
+    private double tierPrice;
 
     /**
      * Required empty constructor for Firestore deserialization.
@@ -90,6 +96,9 @@ public class Rsvp {
     public String getPaymentProofUrl() { return paymentProofUrl; }
     public void setPaymentProofUrl(String paymentProofUrl) { this.paymentProofUrl = paymentProofUrl; }
 
+    public double getAmount() { return amount; }
+    public void setAmount(double amount) { this.amount = amount; }
+
     public String getQrPayload() { return qrPayload; }
     public void setQrPayload(String qrPayload) { this.qrPayload = qrPayload; }
 
@@ -117,4 +126,14 @@ public class Rsvp {
     public void setCheckInTimestamp(long timestamp) {
         this.checkedInAt = new Timestamp(new java.util.Date(timestamp));
     }
+
+    // Getters and Setters for Ticket Tiers
+    public String getTierId() { return tierId; }
+    public void setTierId(String tierId) { this.tierId = tierId; }
+
+    public String getTierName() { return tierName; }
+    public void setTierName(String tierName) { this.tierName = tierName; }
+
+    public double getTierPrice() { return tierPrice; }
+    public void setTierPrice(double tierPrice) { this.tierPrice = tierPrice; }
 }

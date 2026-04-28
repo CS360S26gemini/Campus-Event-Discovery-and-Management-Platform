@@ -9,6 +9,7 @@ import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.model.Memory;
 import com.example.CampusEventDiscovery.model.Notification;
 import com.example.CampusEventDiscovery.model.Rsvp;
+import com.example.CampusEventDiscovery.model.TicketTier;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.model.VendorProposal;
 import com.example.CampusEventDiscovery.util.Constants;
@@ -166,6 +167,11 @@ public class EventRepository {
         void onError(Exception e);
     }
 
+    public interface TicketTierListCallback {
+        void onSuccess(List<TicketTier> tiers);
+        void onError(Exception e);
+    }
+
     public void incrementAttendeeCount(String eventId, ActionCallback cb) {
         if (TextUtils.isEmpty(eventId)) {
             if (cb != null) cb.onError(new IllegalArgumentException("eventId is empty"));
@@ -275,6 +281,34 @@ public class EventRepository {
                 });
     }
 
+    public void getTiersForEvent(String eventId, TicketTierListCallback cb) {
+        if (TextUtils.isEmpty(eventId)) {
+            if (cb != null) cb.onSuccess(new ArrayList<>());
+            return;
+        }
+
+        db.collection(COLLECTION_EVENTS)
+                .document(eventId)
+                .collection(Constants.SUBCOLLECTION_TICKET_TIERS)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<TicketTier> tiers = new ArrayList<>();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        TicketTier tier = doc.toObject(TicketTier.class);
+                        if (tier != null) {
+                            tier.setTierId(doc.getId());
+                            tiers.add(tier);
+                        }
+                    }
+                    Collections.sort(tiers, Comparator.comparingDouble(TicketTier::getPrice));
+                    if (cb != null) cb.onSuccess(tiers);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "getTiersForEvent failed", e);
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
     public ListenerRegistration observeEventById(String eventId, SingleEventCallback cb) {
         if (TextUtils.isEmpty(eventId)) {
             if (cb != null) cb.onError(new Exception("Event ID is empty"));
@@ -378,12 +412,20 @@ public class EventRepository {
     }
 
     public void rsvpEvent(String userId, Event event, String fullName, ActionCallback cb) {
+        rsvpEvent(userId, event, fullName, null, null, null, cb);
+    }
+
+    public void rsvpEvent(String userId,
+                          Event event,
+                          String fullName,
+                          String tierId,
+                          String tierName,
+                          Double tierPrice,
+                          ActionCallback cb) {
         if (userId == null || event == null || event.getEventId() == null) {
             if (cb != null) cb.onError(new Exception("Invalid data"));
             return;
         }
-
-        // Removed local capacity check to rely on Firestore source of truth inside transaction
 
         DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(event.getEventId());
         DocumentReference userRsvpRef = db.collection(COLLECTION_USERS).document(userId)
@@ -415,32 +457,66 @@ public class EventRepository {
                     Long rsvp = eventSnap.getLong("rsvpCount");
                     long rsvpCount = rsvp != null ? rsvp : 0L;
 
-                    if (rsvpCount >= capacity) throw new FirebaseFirestoreException("Event full", FirebaseFirestoreException.Code.ABORTED);
+                    if (rsvpCount >= capacity) {
+                        throw new FirebaseFirestoreException("Event full", FirebaseFirestoreException.Code.ABORTED);
+                    }
+
+                    boolean hasTicketTiers = eventHasTicketTiers(eventSnap);
+                    DocumentReference tierRef = null;
+                    String effectiveTierId = null;
+                    String effectiveTierName = null;
+                    Double effectiveTierPrice = null;
+
+                    if (hasTicketTiers) {
+                        if (TextUtils.isEmpty(tierId)) {
+                            throw new FirebaseFirestoreException("Ticket tier required", FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+                        }
+
+                        tierRef = eventRef.collection(Constants.SUBCOLLECTION_TICKET_TIERS).document(tierId);
+                        DocumentSnapshot tierSnap = transaction.get(tierRef);
+                        if (!tierSnap.exists()) {
+                            throw new FirebaseFirestoreException("Ticket tier not found", FirebaseFirestoreException.Code.NOT_FOUND);
+                        }
+
+                        long tierCapacity = getLongValue(tierSnap.getLong("capacity"));
+                        long tierRsvpCount = getLongValue(tierSnap.getLong("rsvpCount"));
+                        if (tierRsvpCount >= tierCapacity) {
+                            throw new FirebaseFirestoreException("Selected tier sold out", FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+                        }
+
+                        effectiveTierId = tierRef.getId();
+                        effectiveTierName = !TextUtils.isEmpty(tierName) ? tierName : tierSnap.getString("name");
+                        effectiveTierPrice = tierPrice != null ? tierPrice : tierSnap.getDouble("price");
+                    }
 
                     String qrToken = UUID.randomUUID().toString();
+                    double chargedAmount = hasTicketTiers
+                            ? resolveRefundAmount(effectiveTierPrice, null, eventSnap.getDouble("ticketPrice"))
+                            : resolveRefundAmount(null, null, eventSnap.getDouble("ticketPrice"));
 
-                    Map<String, Object> rsvpData = new HashMap<>();
-                    rsvpData.put("eventId", event.getEventId());
-                    rsvpData.put("title", event.getTitle());
-                    rsvpData.put("date", event.getDate());
-                    rsvpData.put("status", "confirmed");
-                    rsvpData.put("checkedIn", false);
-                    rsvpData.put("checkedInAt", null);
-                    rsvpData.put("qrExpired", false);
-                    rsvpData.put("qrCodeToken", qrToken);
-                    rsvpData.put("addedToCalendar", false);
-                    rsvpData.put("gcalEventId", "");
-                    rsvpData.put("rsvpAt", Timestamp.now());
+                    Map<String, Object> rsvpData = buildRsvpData(
+                            event,
+                            qrToken,
+                            chargedAmount,
+                            effectiveTierId,
+                            effectiveTierName,
+                            effectiveTierPrice,
+                            Timestamp.now()
+                    );
                     transaction.set(userRsvpRef, rsvpData);
 
-                    Map<String, Object> attendeeData = new HashMap<>();
-                    attendeeData.put("userId", userId);
-                    attendeeData.put("fullName", TextUtils.isEmpty(fullName) ? "Attendee" : fullName);
-                    attendeeData.put("qrToken", qrToken);
-                    attendeeData.put("checkedIn", false);
-                    attendeeData.put("checkedInAt", null);
+                    Map<String, Object> attendeeData = buildAttendeeData(
+                            userId,
+                            fullName,
+                            qrToken,
+                            effectiveTierId,
+                            effectiveTierName
+                    );
                     transaction.set(eventAttendeeRef, attendeeData);
 
+                    if (tierRef != null) {
+                        transaction.update(tierRef, "rsvpCount", FieldValue.increment(1));
+                    }
                     transaction.update(eventRef, "rsvpCount", FieldValue.increment(1));
 
                     return null;
@@ -455,16 +531,26 @@ public class EventRepository {
         }
 
         DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(eventId);
+        DocumentReference userRef = db.collection(COLLECTION_USERS).document(userId);
         DocumentReference userRsvpRef = db.collection(COLLECTION_USERS).document(userId).collection(SUBCOLLECTION_RSVPS).document(eventId);
         DocumentReference eventAttendeeRef = eventRef.collection(SUBCOLLECTION_ATTENDEES).document(userId);
 
         db.runTransaction(transaction -> {
                     DocumentSnapshot eventSnap = transaction.get(eventRef);
+                    DocumentSnapshot userSnap = transaction.get(userRef);
                     DocumentSnapshot userRsvpSnap = transaction.get(userRsvpRef);
                     DocumentSnapshot attendeeSnap = transaction.get(eventAttendeeRef);
 
                     boolean hadActiveRsvp = attendeeSnap.exists();
                     boolean wasCheckedIn = false;
+                    String tierId = null;
+                    String tierName = null;
+                    DocumentReference tierRef = null;
+                    DocumentSnapshot tierSnap = null;
+                    boolean shouldRefund = false;
+                    double refundAmount = 0.0;
+                    Timestamp cancelledAt = Timestamp.now();
+
                     if (userRsvpSnap.exists()) {
                         String currentStatus = userRsvpSnap.getString("status");
                         hadActiveRsvp = hadActiveRsvp || !"cancelled".equalsIgnoreCase(currentStatus);
@@ -472,10 +558,31 @@ public class EventRepository {
                         Boolean rsvpCheckedIn = userRsvpSnap.getBoolean("checkedIn");
                         wasCheckedIn = rsvpCheckedIn != null && rsvpCheckedIn;
 
+                        tierId = userRsvpSnap.getString("tierId");
+                        tierName = userRsvpSnap.getString("tierName");
+                        if (hadActiveRsvp && !TextUtils.isEmpty(tierId)) {
+                            tierRef = eventRef.collection(Constants.SUBCOLLECTION_TICKET_TIERS).document(tierId);
+                            tierSnap = transaction.get(tierRef);
+                        }
+
+                        refundAmount = resolveCancellationAmount(eventSnap, userRsvpSnap);
+                        shouldRefund = hadActiveRsvp
+                                && refundAmount > 0.0
+                                && isRefundEligible(
+                                        eventSnap != null ? eventSnap.getTimestamp("date") : null,
+                                        cancelledAt,
+                                        false
+                                );
+
                         Map<String, Object> cancelledRsvpData = new HashMap<>();
                         cancelledRsvpData.put("status", "cancelled");
                         cancelledRsvpData.put("addedToCalendar", false);
                         cancelledRsvpData.put("gcalEventId", "");
+                        cancelledRsvpData.put("cancelledAt", cancelledAt);
+                        if (shouldRefund) {
+                            cancelledRsvpData.put("paymentStatus", Constants.PAYMENT_REFUNDED);
+                            cancelledRsvpData.put("refundAmount", refundAmount);
+                        }
                         transaction.set(userRsvpRef, cancelledRsvpData, SetOptions.merge());
                     }
 
@@ -498,6 +605,41 @@ public class EventRepository {
                         }
 
                         transaction.update(eventRef, eventUpdates);
+                    }
+
+                    if (hadActiveRsvp && tierRef != null && tierSnap != null) {
+                        if (tierSnap.exists()) {
+                            long currentTierCount = getLongValue(tierSnap.getLong("rsvpCount"));
+                            transaction.update(tierRef, "rsvpCount", Math.max(0L, currentTierCount - 1L));
+                        }
+                    }
+
+                    if (shouldRefund) {
+                        DocumentReference refundRef = db.collection(Constants.COLLECTION_CREDIT_TRANSACTIONS).document();
+                        double currentCreditBalance = userSnap != null && userSnap.exists()
+                                ? normalizeRefundAmount(userSnap.getDouble("creditBalance") != null
+                                ? userSnap.getDouble("creditBalance") : 0.0)
+                                : 0.0;
+                        double updatedCreditBalance = currentCreditBalance + refundAmount;
+
+                        Map<String, Object> creditTransaction = new HashMap<>();
+                        creditTransaction.put("userId", userId);
+                        creditTransaction.put("type", Constants.CREDIT_TRANSACTION_REFUND);
+                        creditTransaction.put("amount", refundAmount);
+                        creditTransaction.put("eventId", eventId);
+                        creditTransaction.put("eventTitle", userRsvpSnap.getString("title"));
+                        creditTransaction.put("tierId", tierId);
+                        creditTransaction.put("tierName", tierName);
+                        creditTransaction.put("createdAt", cancelledAt);
+                        creditTransaction.put("originalPaymentMethod", userRsvpSnap.getString("paymentMethod"));
+                        creditTransaction.put("paymentTransactionId", userRsvpSnap.getString("transactionId"));
+                        creditTransaction.put("creditBalanceBefore", currentCreditBalance);
+                        creditTransaction.put("creditBalanceAfter", updatedCreditBalance);
+                        transaction.set(refundRef, creditTransaction);
+
+                        Map<String, Object> userCreditUpdate = new HashMap<>();
+                        userCreditUpdate.put("creditBalance", updatedCreditBalance);
+                        transaction.set(userRef, userCreditUpdate, SetOptions.merge());
                     }
                     return null;
                 }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
@@ -842,6 +984,11 @@ public class EventRepository {
                             "adminNote", "",
                             "reviewedAt", Timestamp.now());
                     transaction.set(eventRef, proposalToApprovedEvent(proposal));
+                    transaction.set(eventRef, buildTierMetadata(proposal), SetOptions.merge());
+                    for (Map<String, Object> tierMap : normalizeProposalTiers(proposal.getTiers())) {
+                        DocumentReference tierRef = eventRef.collection(Constants.SUBCOLLECTION_TICKET_TIERS).document();
+                        transaction.set(tierRef, tierMap);
+                    }
 
                     if (!TextUtils.isEmpty(proposal.getOrganizerId())) {
                         DocumentReference notificationRef = db.collection(COLLECTION_NOTIFICATIONS)
@@ -1047,6 +1194,85 @@ public class EventRepository {
                 .addOnFailureListener(cb::onError);
     }
 
+    public void isUserBlacklisted(String eventId, String userId, BooleanCallback cb) {
+        if (TextUtils.isEmpty(eventId) || TextUtils.isEmpty(userId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Event ID and user ID are required"));
+            return;
+        }
+
+        DocumentReference eventBlacklistRef = db.collection(COLLECTION_EVENTS)
+                .document(eventId)
+                .collection(SUBCOLLECTION_BLACKLIST)
+                .document(userId);
+        DocumentReference platformBlacklistRef = db.collection(Constants.COLLECTION_PLATFORM_BLACKLIST)
+                .document(userId);
+
+        eventBlacklistRef.get()
+                .addOnSuccessListener(eventDoc -> {
+                    if (eventDoc.exists()) {
+                        if (cb != null) cb.onSuccess(true);
+                        return;
+                    }
+
+                    platformBlacklistRef.get()
+                            .addOnSuccessListener(platformDoc -> {
+                                if (cb != null) cb.onSuccess(platformDoc.exists());
+                            })
+                            .addOnFailureListener(e -> {
+                                if (cb != null) cb.onError(e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
+    public void blacklistUserByEmail(String eventId,
+                                     String email,
+                                     String organizerId,
+                                     String reason,
+                                     ActionCallback cb) {
+        if (TextUtils.isEmpty(eventId) || TextUtils.isEmpty(email)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Event ID and email are required"));
+            return;
+        }
+
+        db.collection(COLLECTION_USERS)
+                .whereEqualTo("email", email.trim())
+                .limit(1)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots == null || queryDocumentSnapshots.isEmpty()) {
+                        if (cb != null) cb.onError(new Exception("User not found"));
+                        return;
+                    }
+
+                    DocumentSnapshot userDoc = queryDocumentSnapshots.getDocuments().get(0);
+                    String userId = userDoc.getId();
+                    Map<String, Object> blacklistData = new HashMap<>();
+                    blacklistData.put("userId", userId);
+                    blacklistData.put("email", email.trim());
+                    blacklistData.put("organizerId", organizerId == null ? "" : organizerId);
+                    blacklistData.put("reason", reason == null ? "" : reason);
+                    blacklistData.put("blacklistedAt", Timestamp.now());
+
+                    db.collection(COLLECTION_EVENTS)
+                            .document(eventId)
+                            .collection(SUBCOLLECTION_BLACKLIST)
+                            .document(userId)
+                            .set(blacklistData)
+                            .addOnSuccessListener(unused -> {
+                                if (cb != null) cb.onSuccess();
+                            })
+                            .addOnFailureListener(e -> {
+                                if (cb != null) cb.onError(e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
     public void checkInAttendeeByQrToken(String eventId, String qrToken, ActionCallback cb) {
         if (TextUtils.isEmpty(eventId) || TextUtils.isEmpty(qrToken)) {
             if (cb != null) cb.onError(new IllegalArgumentException("Event ID and check-in code are required"));
@@ -1193,8 +1419,7 @@ public class EventRepository {
     public void sendSosReport(String reporterId,
                               String reporterName,
                               String description,
-                              double lat,
-                              double lng,
+                              double lat, double lng,
                               ActionCallback cb) {
         Map<String, Object> report = new HashMap<>();
         report.put("reporterId", reporterId);
@@ -1212,7 +1437,7 @@ public class EventRepository {
         report.put("submittedAt", Timestamp.now());
         report.put("resolvedAt", null);
 
-        db.collection(COLLECTION_REPORTS)
+        db.collection(Constants.COLLECTION_SOS_ALERTS)
                 .add(report)
                 .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
@@ -1453,6 +1678,8 @@ public class EventRepository {
         event.setDate(startTime);
         event.setEndTime(endTime);
         event.setLocation(proposal.getLocation());
+        event.setLocationKey(proposal.getLocationKey());
+        event.setLocationDescription(proposal.getLocationDescription());
         event.setCapacity(proposal.getCapacity());
         event.setRsvpCount(0L);
         event.setCheckedInCount(0L);
@@ -1821,20 +2048,25 @@ public class EventRepository {
         return Math.max(0.0, amount);
     }
 
-    private double resolveCancellationAmount(DocumentSnapshot eventSnap, DocumentSnapshot userRsvpSnap) {
-        Double storedAmount = null;
-        if (userRsvpSnap != null) {
-            storedAmount = userRsvpSnap.getDouble("amount");
-            if (storedAmount == null) {
-                storedAmount = userRsvpSnap.getDouble("ticketPrice");
-            }
+    public static double resolveRefundAmount(Double tierPrice, Double amount, Double ticketPrice) {
+        Double storedAmount = tierPrice;
+        if (storedAmount == null) {
+            storedAmount = amount;
         }
-
-        if (storedAmount == null && eventSnap != null) {
-            storedAmount = eventSnap.getDouble("ticketPrice");
+        if (storedAmount == null) {
+            storedAmount = ticketPrice;
         }
-
         return normalizeRefundAmount(storedAmount != null ? storedAmount : 0.0);
+    }
+
+    private double resolveCancellationAmount(DocumentSnapshot eventSnap, DocumentSnapshot userRsvpSnap) {
+        Double tierPrice = userRsvpSnap != null ? userRsvpSnap.getDouble("tierPrice") : null;
+        Double amount = userRsvpSnap != null ? userRsvpSnap.getDouble("amount") : null;
+        Double ticketPrice = userRsvpSnap != null ? userRsvpSnap.getDouble("ticketPrice") : null;
+        if (ticketPrice == null && eventSnap != null) {
+            ticketPrice = eventSnap.getDouble("ticketPrice");
+        }
+        return resolveRefundAmount(tierPrice, amount, ticketPrice);
     }
 
     // ─── RSVPS FOR MEMORIES (ui-update) ──────────────────────────────────────
@@ -1913,6 +2145,17 @@ public class EventRepository {
     // ─── IN-APP CREDIT RSVP (Yahya) ──────────────────────────────────────────
 
     public void rsvpEventWithCredit(String userId, Event event, String fullName, double amount, ActionCallback cb) {
+        rsvpEventWithCredit(userId, event, fullName, amount, null, null, null, cb);
+    }
+
+    public void rsvpEventWithCredit(String userId,
+                                    Event event,
+                                    String fullName,
+                                    double amount,
+                                    String tierId,
+                                    String tierName,
+                                    Double tierPrice,
+                                    ActionCallback cb) {
         if (userId == null || event == null || event.getEventId() == null) {
             if (cb != null) cb.onError(new Exception("Invalid data"));
             return;
@@ -1969,6 +2212,34 @@ public class EventRepository {
                         throw new FirebaseFirestoreException("Event full", FirebaseFirestoreException.Code.ABORTED);
                     }
 
+                    boolean hasTicketTiers = eventHasTicketTiers(eventSnap);
+                    DocumentReference tierRef = null;
+                    String effectiveTierId = null;
+                    String effectiveTierName = null;
+                    Double effectiveTierPrice = null;
+
+                    if (hasTicketTiers) {
+                        if (TextUtils.isEmpty(tierId)) {
+                            throw new FirebaseFirestoreException("Ticket tier required", FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+                        }
+
+                        tierRef = eventRef.collection(Constants.SUBCOLLECTION_TICKET_TIERS).document(tierId);
+                        DocumentSnapshot tierSnap = transaction.get(tierRef);
+                        if (!tierSnap.exists()) {
+                            throw new FirebaseFirestoreException("Ticket tier not found", FirebaseFirestoreException.Code.NOT_FOUND);
+                        }
+
+                        long tierCapacity = getLongValue(tierSnap.getLong("capacity"));
+                        long tierRsvpCount = getLongValue(tierSnap.getLong("rsvpCount"));
+                        if (tierRsvpCount >= tierCapacity) {
+                            throw new FirebaseFirestoreException("Selected tier sold out", FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+                        }
+
+                        effectiveTierId = tierRef.getId();
+                        effectiveTierName = !TextUtils.isEmpty(tierName) ? tierName : tierSnap.getString("name");
+                        effectiveTierPrice = tierPrice != null ? tierPrice : tierSnap.getDouble("price");
+                    }
+
                     String transactionId = "credit_" + UUID.randomUUID().toString().replace("-", "");
                     String qrToken = UUID.randomUUID().toString();
                     Timestamp now = Timestamp.now();
@@ -1982,6 +2253,8 @@ public class EventRepository {
                     paymentData.put("timestamp", now.toDate().getTime());
                     paymentData.put("paymentMethod", Constants.PAYMENT_METHOD_IN_APP_CREDIT);
                     paymentData.put("proofUrl", "");
+                    paymentData.put("tierId", effectiveTierId);
+                    paymentData.put("tierName", effectiveTierName);
                     transaction.set(paymentRef, paymentData);
 
                     Map<String, Object> creditTransaction = new HashMap<>();
@@ -1993,41 +2266,159 @@ public class EventRepository {
                     creditTransaction.put("originalAmount", safeAmount);
                     creditTransaction.put("createdAt", now);
                     creditTransaction.put("paymentTransactionId", transactionId);
+                    creditTransaction.put("tierId", effectiveTierId);
+                    creditTransaction.put("tierName", effectiveTierName);
                     transaction.set(creditTransactionRef, creditTransaction);
 
-                    Map<String, Object> rsvpData = new HashMap<>();
-                    rsvpData.put("eventId", event.getEventId());
-                    rsvpData.put("title", event.getTitle());
-                    rsvpData.put("date", event.getDate());
-                    rsvpData.put("status", "confirmed");
+                    Map<String, Object> rsvpData = buildRsvpData(
+                            event,
+                            qrToken,
+                            safeAmount,
+                            effectiveTierId,
+                            effectiveTierName,
+                            effectiveTierPrice,
+                            now
+                    );
                     rsvpData.put("paymentStatus", Constants.PAYMENT_CONFIRMED);
                     rsvpData.put("transactionId", transactionId);
                     rsvpData.put("paymentRef", transactionId);
                     rsvpData.put("paymentMethod", Constants.PAYMENT_METHOD_IN_APP_CREDIT);
                     rsvpData.put("paymentProofUrl", "");
-                    rsvpData.put("checkedIn", false);
-                    rsvpData.put("checkedInAt", null);
-                    rsvpData.put("qrExpired", false);
-                    rsvpData.put("qrCodeToken", qrToken);
-                    rsvpData.put("addedToCalendar", false);
-                    rsvpData.put("gcalEventId", "");
-                    rsvpData.put("rsvpAt", now);
                     transaction.set(userRsvpRef, rsvpData);
 
-                    Map<String, Object> attendeeData = new HashMap<>();
-                    attendeeData.put("userId", userId);
-                    attendeeData.put("fullName", TextUtils.isEmpty(fullName) ? "Attendee" : fullName);
-                    attendeeData.put("qrToken", qrToken);
-                    attendeeData.put("checkedIn", false);
-                    attendeeData.put("checkedInAt", null);
+                    Map<String, Object> attendeeData = buildAttendeeData(
+                            userId,
+                            fullName,
+                            qrToken,
+                            effectiveTierId,
+                            effectiveTierName
+                    );
                     transaction.set(eventAttendeeRef, attendeeData);
 
                     transaction.set(userRef, Collections.singletonMap("creditBalance", FieldValue.increment(-safeAmount)), SetOptions.merge());
+                    if (tierRef != null) {
+                        transaction.update(tierRef, "rsvpCount", FieldValue.increment(1));
+                    }
                     transaction.update(eventRef, "rsvpCount", FieldValue.increment(1));
 
                     return null;
                 }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
+    }
+
+    private boolean eventHasTicketTiers(DocumentSnapshot eventSnap) {
+        return eventSnap != null && Boolean.TRUE.equals(eventSnap.getBoolean("hasTicketTiers"));
+    }
+
+    private long getLongValue(Long value) {
+        return value != null ? value : 0L;
+    }
+
+    private Map<String, Object> buildRsvpData(Event event,
+                                              String qrToken,
+                                              double chargedAmount,
+                                              String tierId,
+                                              String tierName,
+                                              Double tierPrice,
+                                              Timestamp now) {
+        Map<String, Object> rsvpData = new HashMap<>();
+        rsvpData.put("eventId", event.getEventId());
+        rsvpData.put("title", event.getTitle());
+        rsvpData.put("date", event.getDate());
+        rsvpData.put("status", "confirmed");
+        rsvpData.put("checkedIn", false);
+        rsvpData.put("checkedInAt", null);
+        rsvpData.put("qrExpired", false);
+        rsvpData.put("qrCodeToken", qrToken);
+        rsvpData.put("addedToCalendar", false);
+        rsvpData.put("gcalEventId", "");
+        rsvpData.put("rsvpAt", now);
+        rsvpData.put("amount", chargedAmount);
+        rsvpData.put("ticketPrice", chargedAmount);
+        rsvpData.put("tierId", tierId);
+        rsvpData.put("tierName", tierName);
+        rsvpData.put("tierPrice", tierPrice);
+        return rsvpData;
+    }
+
+    private Map<String, Object> buildAttendeeData(String userId,
+                                                  String fullName,
+                                                  String qrToken,
+                                                  String tierId,
+                                                  String tierName) {
+        Map<String, Object> attendeeData = new HashMap<>();
+        attendeeData.put("userId", userId);
+        attendeeData.put("fullName", TextUtils.isEmpty(fullName) ? "Attendee" : fullName);
+        attendeeData.put("qrToken", qrToken);
+        attendeeData.put("checkedIn", false);
+        attendeeData.put("checkedInAt", null);
+        attendeeData.put("tierId", tierId);
+        attendeeData.put("tierName", tierName);
+        return attendeeData;
+    }
+
+    private Map<String, Object> buildTierMetadata(EventProposal proposal) {
+        Map<String, Object> metadata = new HashMap<>();
+        List<Map<String, Object>> tiers = normalizeProposalTiers(proposal.getTiers());
+        metadata.put("hasTicketTiers", !tiers.isEmpty());
+        metadata.put("ticketTierCount", tiers.size());
+        return metadata;
+    }
+
+    private List<Map<String, Object>> normalizeProposalTiers(List<Map<String, Object>> tiers) {
+        List<Map<String, Object>> normalized = new ArrayList<>();
+        if (tiers == null) {
+            return normalized;
+        }
+
+        for (Map<String, Object> tier : tiers) {
+            if (tier == null) {
+                continue;
+            }
+
+            String name = tier.get("name") instanceof String ? ((String) tier.get("name")).trim() : "";
+            if (TextUtils.isEmpty(name)) {
+                continue;
+            }
+
+            Map<String, Object> tierData = new HashMap<>();
+            tierData.put("name", name);
+            tierData.put("price", getDoubleValue(tier.get("price")));
+            tierData.put("capacity", getLongObjectValue(tier.get("capacity")));
+            tierData.put("rsvpCount", 0L);
+            tierData.put("description", tier.get("description") instanceof String ? ((String) tier.get("description")).trim() : "");
+            normalized.add(tierData);
+        }
+
+        return normalized;
+    }
+
+    private long getLongObjectValue(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Long.parseLong(((String) value).trim());
+            } catch (NumberFormatException ignored) {
+                return 0L;
+            }
+        }
+        return 0L;
+    }
+
+    private double getDoubleValue(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Double.parseDouble(((String) value).trim());
+            } catch (NumberFormatException ignored) {
+                return 0.0;
+            }
+        }
+        return 0.0;
     }
 
     // ─── VENDOR PROPOSALS (ui-update) ────────────────────────────────────────

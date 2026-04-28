@@ -11,6 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.EventProposal;
 import com.example.CampusEventDiscovery.repository.EventRepository;
@@ -145,7 +146,16 @@ public class EventApprovalActivity extends AppCompatActivity {
     private void bindProposal(EventProposal proposal) {
         tvTitle.setText(proposal.getTitle());
         tvDateTime.setText(formatDateTime(proposal.getDate()));
-        tvVenue.setText(proposal.getLocation());
+        
+        // Format location as "Room, Building"
+        String displayLocation = proposal.getLocation();
+        if (!TextUtils.isEmpty(proposal.getLocationDescription()) && !TextUtils.isEmpty(proposal.getLocationKey())) {
+            displayLocation = proposal.getLocationDescription() + ", " + proposal.getLocationKey();
+        } else if (!TextUtils.isEmpty(proposal.getLocationKey())) {
+            displayLocation = proposal.getLocationKey();
+        }
+        tvVenue.setText(displayLocation);
+
         tvDescription.setText(proposal.getDescription());
 
         if (tvPriceInfo != null) {
@@ -156,7 +166,18 @@ public class EventApprovalActivity extends AppCompatActivity {
             }
         }
 
-        ivBanner.setImageResource(R.drawable.bg_placeholder_image);
+        String imageUrl = !TextUtils.isEmpty(proposal.getImageUrl())
+                ? proposal.getImageUrl()
+                : proposal.getThumbnailUrl();
+        if (!TextUtils.isEmpty(imageUrl)) {
+            Glide.with(this)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.bg_placeholder_image)
+                    .centerCrop()
+                    .into(ivBanner);
+        } else {
+            ivBanner.setImageResource(R.drawable.bg_placeholder_image);
+        }
     }
 
     private void showRejectDialog() {

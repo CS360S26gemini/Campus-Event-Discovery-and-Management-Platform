@@ -2,10 +2,11 @@ package com.example.CampusEventDiscovery.ui.event;
 
 import android.graphics.Matrix;
 import android.graphics.PointF;
-import android.graphics.drawable.Drawable;
+import android.graphics.RectF;
 import android.os.Bundle;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.view.View;
+import android.view.ScaleGestureDetector;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
@@ -13,141 +14,178 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.util.Constants;
-import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.google.android.material.appbar.MaterialToolbar;
 
 /**
  * CampusMapActivity.java
  *
- * Displays a zoomable and pannable map image with boundary constraints.
- * Ensures the image starts centered and cannot be zoomed out beyond fitting the screen.
+ * Displays a zoomable and pannable image of a specific campus building.
+ * Improved to show the full image initially and handle zooming more naturally.
  */
-public class CampusMapActivity extends AppCompatActivity implements View.OnTouchListener {
+public class CampusMapActivity extends AppCompatActivity {
 
     private ImageView ivCampusMap;
+    private MaterialToolbar toolbarMap;
+
     private Matrix matrix = new Matrix();
     private Matrix savedMatrix = new Matrix();
-
-    // States
     private static final int NONE = 0;
     private static final int DRAG = 1;
     private static final int ZOOM = 2;
     private int mode = NONE;
 
-    // Zooming/Panning tracking
     private PointF start = new PointF();
-    private PointF mid = new PointF();
-    private float oldDist = 1f;
     private float minScale = 1f;
     private float maxScale = 5f;
 
+    private ScaleGestureDetector mScaleDetector;
+    private GestureDetector mGestureDetector;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        ThemeManager.applyAccentTheme(this);
+        com.example.CampusEventDiscovery.util.ThemeManager.applyAccentTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_campus_map);
 
-        MaterialToolbar toolbar = findViewById(R.id.toolbarCampusMap);
-        toolbar.setNavigationOnClickListener(v -> finish());
-
         ivCampusMap = findViewById(R.id.ivCampusMap);
-        ivCampusMap.setScaleType(ImageView.ScaleType.MATRIX);
-        ivCampusMap.setOnTouchListener(this);
-        
+        toolbarMap = findViewById(R.id.toolbarMap);
+
+        toolbarMap.setNavigationOnClickListener(v -> finish());
+
         String locationKey = getIntent().getStringExtra("locationKey");
         if (locationKey != null) {
-            toolbar.setTitle("Map: " + locationKey);
+            toolbarMap.setTitle(locationKey);
             ivCampusMap.setImageResource(getMapResource(locationKey));
-        } else {
-            ivCampusMap.setImageResource(R.drawable.map_hss);
         }
 
-        // Initialize matrix after the view is laid out to center the image
-        ivCampusMap.post(this::initializeMapMatrix);
+        setupZoomLogic();
+
+        // Initialize matrix to fit the image when the view is laid out
+        ivCampusMap.post(() -> {
+            if (ivCampusMap.getDrawable() == null) return;
+            
+            float viewWidth = ivCampusMap.getWidth();
+            float viewHeight = ivCampusMap.getHeight();
+            float drawableWidth = ivCampusMap.getDrawable().getIntrinsicWidth();
+            float drawableHeight = ivCampusMap.getDrawable().getIntrinsicHeight();
+
+            float scaleX = viewWidth / drawableWidth;
+            float scaleY = viewHeight / drawableHeight;
+            minScale = Math.min(scaleX, scaleY);
+            
+            matrix.setScale(minScale, minScale);
+            
+            // Center the image
+            float redundantXSpace = viewWidth - (minScale * drawableWidth);
+            float redundantYSpace = viewHeight - (minScale * drawableHeight);
+            matrix.postTranslate(redundantXSpace / 2, redundantYSpace / 2);
+            
+            ivCampusMap.setImageMatrix(matrix);
+        });
     }
 
-    private void initializeMapMatrix() {
-        Drawable drawable = ivCampusMap.getDrawable();
-        if (drawable == null) return;
-
-        float viewWidth = ivCampusMap.getWidth();
-        float viewHeight = ivCampusMap.getHeight();
-        float imgWidth = drawable.getIntrinsicWidth();
-        float imgHeight = drawable.getIntrinsicHeight();
-
-        // Calculate scale to fit image to screen (aspect fit)
-        float scaleX = viewWidth / imgWidth;
-        float scaleY = viewHeight / imgHeight;
-        minScale = Math.min(scaleX, scaleY);
-        
-        matrix.setScale(minScale, minScale);
-
-        // Center the image
-        float redundantXSpace = viewWidth - (minScale * imgWidth);
-        float redundantYSpace = viewHeight - (minScale * imgHeight);
-        matrix.postTranslate(redundantXSpace / 2, redundantYSpace / 2);
-
-        ivCampusMap.setImageMatrix(matrix);
+    private int getMapResource(String key) {
+        switch (key) {
+            case Constants.MAP_LOC_SSE:            return R.drawable.map_sse;
+            case Constants.MAP_LOC_HSS:            return R.drawable.map_hss;
+            case Constants.MAP_LOC_SAHSOL:         return R.drawable.map_sahsol;
+            case Constants.MAP_LOC_SPORTS_COMPLEX: return R.drawable.map_sportscomplex;
+            case Constants.MAP_LOC_PARKING_LOT:    return R.drawable.map_parkinglot;
+            case Constants.MAP_LOC_REDC:           return R.drawable.map_redc;
+            case Constants.MAP_LOC_CRICKET_GROUND: return R.drawable.map_cricketground;
+            case Constants.MAP_LOC_SDSB:           return R.drawable.map_sdsb;
+            case Constants.MAP_LOC_IST:            return R.drawable.map_ist;
+            case Constants.MAP_LOC_MASJID:         return R.drawable.map_masjid;
+            default:                               return R.drawable.map_sse;
+        }
     }
 
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        ImageView view = (ImageView) v;
+    private void setupZoomLogic() {
+        mScaleDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            @Override
+            public boolean onScale(ScaleGestureDetector detector) {
+                float scaleFactor = detector.getScaleFactor();
+                float[] values = new float[9];
+                matrix.getValues(values);
+                float currentScale = values[Matrix.MSCALE_X];
 
-        switch (event.getAction() & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_DOWN:
-                savedMatrix.set(matrix);
-                start.set(event.getX(), event.getY());
-                mode = DRAG;
-                break;
+                if (currentScale * scaleFactor < minScale) {
+                    scaleFactor = minScale / currentScale;
+                } else if (currentScale * scaleFactor > maxScale) {
+                    scaleFactor = maxScale / currentScale;
+                }
 
-            case MotionEvent.ACTION_POINTER_DOWN:
-                oldDist = spacing(event);
-                if (oldDist > 10f) {
+                matrix.postScale(scaleFactor, scaleFactor, detector.getFocusX(), detector.getFocusY());
+                checkBounds();
+                ivCampusMap.setImageMatrix(matrix);
+                return true;
+            }
+        });
+
+        mGestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                float[] values = new float[9];
+                matrix.getValues(values);
+                float currentScale = values[Matrix.MSCALE_X];
+                
+                if (currentScale > minScale * 1.1f) {
+                    // Reset to min scale
+                    float viewWidth = ivCampusMap.getWidth();
+                    float viewHeight = ivCampusMap.getHeight();
+                    float drawableWidth = ivCampusMap.getDrawable().getIntrinsicWidth();
+                    float drawableHeight = ivCampusMap.getDrawable().getIntrinsicHeight();
+                    
+                    matrix.setScale(minScale, minScale);
+                    matrix.postTranslate((viewWidth - minScale * drawableWidth) / 2, 
+                                       (viewHeight - minScale * drawableHeight) / 2);
+                } else {
+                    matrix.postScale(2.0f, 2.0f, e.getX(), e.getY());
+                }
+                checkBounds();
+                ivCampusMap.setImageMatrix(matrix);
+                return true;
+            }
+        });
+
+        ivCampusMap.setOnTouchListener((v, event) -> {
+            mScaleDetector.onTouchEvent(event);
+            mGestureDetector.onTouchEvent(event);
+
+            PointF curr = new PointF(event.getX(), event.getY());
+
+            switch (event.getAction() & MotionEvent.ACTION_MASK) {
+                case MotionEvent.ACTION_DOWN:
                     savedMatrix.set(matrix);
-                    midPoint(mid, event);
-                    mode = ZOOM;
-                }
-                break;
-
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_POINTER_UP:
-                mode = NONE;
-                break;
-
-            case MotionEvent.ACTION_MOVE:
-                if (mode == DRAG) {
-                    matrix.set(savedMatrix);
-                    matrix.postTranslate(event.getX() - start.x, event.getY() - start.y);
-                } else if (mode == ZOOM) {
-                    float newDist = spacing(event);
-                    if (newDist > 10f) {
+                    start.set(curr);
+                    mode = DRAG;
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    if (mode == DRAG) {
+                        float dx = curr.x - start.x;
+                        float dy = curr.y - start.y;
                         matrix.set(savedMatrix);
-                        float scale = newDist / oldDist;
-                        
-                        // Limit zoom out to minScale
-                        float[] values = new float[9];
-                        matrix.getValues(values);
-                        float currentScale = values[Matrix.MSCALE_X];
-                        if (currentScale * scale < minScale) {
-                            scale = minScale / currentScale;
-                        } else if (currentScale * scale > maxScale) {
-                            scale = maxScale / currentScale;
-                        }
-                        
-                        matrix.postScale(scale, scale, mid.x, mid.y);
+                        matrix.postTranslate(dx, dy);
+                        checkBounds();
                     }
-                }
-                break;
-        }
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_POINTER_UP:
+                    mode = NONE;
+                    break;
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    mode = ZOOM;
+                    break;
+            }
 
-        // Boundary checks to prevent dragging image off screen
-        checkBounds();
-        view.setImageMatrix(matrix);
-        return true;
+            ivCampusMap.setImageMatrix(matrix);
+            return true;
+        });
     }
 
     private void checkBounds() {
+        if (ivCampusMap.getDrawable() == null) return;
+
         float[] values = new float[9];
         matrix.getValues(values);
         float transX = values[Matrix.MTRANS_X];
@@ -155,60 +193,29 @@ public class CampusMapActivity extends AppCompatActivity implements View.OnTouch
         float scaleX = values[Matrix.MSCALE_X];
         float scaleY = values[Matrix.MSCALE_Y];
 
-        Drawable d = ivCampusMap.getDrawable();
-        if (d == null) return;
-
-        float imgWidth = d.getIntrinsicWidth() * scaleX;
-        float imgHeight = d.getIntrinsicHeight() * scaleY;
         float viewWidth = ivCampusMap.getWidth();
         float viewHeight = ivCampusMap.getHeight();
+        float drawableWidth = ivCampusMap.getDrawable().getIntrinsicWidth() * scaleX;
+        float drawableHeight = ivCampusMap.getDrawable().getIntrinsicHeight() * scaleY;
 
-        // Prevent dragging away from edges if image is smaller than view
-        if (imgWidth < viewWidth) {
-            transX = (viewWidth - imgWidth) / 2;
+        // Constraint X
+        if (drawableWidth < viewWidth) {
+            transX = (viewWidth - drawableWidth) / 2;
         } else {
             if (transX > 0) transX = 0;
-            if (transX < viewWidth - imgWidth) transX = viewWidth - imgWidth;
+            if (transX < viewWidth - drawableWidth) transX = viewWidth - drawableWidth;
         }
 
-        if (imgHeight < viewHeight) {
-            transY = (viewHeight - imgHeight) / 2;
+        // Constraint Y
+        if (drawableHeight < viewHeight) {
+            transY = (viewHeight - drawableHeight) / 2;
         } else {
             if (transY > 0) transY = 0;
-            if (transY < viewHeight - imgHeight) transY = viewHeight - imgHeight;
+            if (transY < viewHeight - drawableHeight) transY = viewHeight - drawableHeight;
         }
 
         values[Matrix.MTRANS_X] = transX;
         values[Matrix.MTRANS_Y] = transY;
         matrix.setValues(values);
-    }
-
-    private float spacing(MotionEvent event) {
-        float x = event.getX(0) - event.getX(1);
-        float y = event.getY(0) - event.getY(1);
-        return (float) Math.sqrt(x * x + y * y);
-    }
-
-    private void midPoint(PointF point, MotionEvent event) {
-        float x = event.getX(0) + event.getX(1);
-        float y = event.getY(0) + event.getY(1);
-        point.set(x / 2, y / 2);
-    }
-
-    private int getMapResource(String key) {
-        if (key == null) return R.drawable.map_hss;
-
-        switch (key) {
-            case Constants.MAP_LOC_SSE: return R.drawable.map_sse;
-            case Constants.MAP_LOC_SDSB: return R.drawable.map_sdsb;
-            case Constants.MAP_LOC_SAHSOL: return R.drawable.map_sahsol;
-            case Constants.MAP_LOC_SPORTS_COMPLEX: return R.drawable.map_sportscomplex;
-            case Constants.MAP_LOC_PARKING_LOT: return R.drawable.map_parkinglot;
-            case Constants.MAP_LOC_REDC: return R.drawable.map_redc;
-            case Constants.MAP_LOC_CRICKET_GROUND: return R.drawable.map_cricketground;
-            case Constants.MAP_LOC_IST: return R.drawable.map_ist;
-            case Constants.MAP_LOC_MASJID: return R.drawable.map_masjid;
-            default: return R.drawable.map_hss;
-        }
     }
 }

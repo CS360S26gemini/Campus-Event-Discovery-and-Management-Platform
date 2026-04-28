@@ -184,19 +184,36 @@
                     android:textColor="@color/colorOnSurface" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Location Description Details (Room/Floor) -->
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/AppTextInputBoxStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_md"
-                android:hint="@string/venue">
+                android:hint="@string/location_details_label">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etVenue"
+                    android:id="@+id/etLocationDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:imeOptions="actionNext"
-                    android:inputType="textPostalAddress" />
+                    android:inputType="textCapSentences" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Campus Building Dropdown -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputDropdownStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/campus_building_label">
+
+                <AutoCompleteTextView
+                    android:id="@+id/actvBuilding"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:textColor="@color/colorOnSurface" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -230,6 +247,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilTicketPrice"
                 style="@style/AppTextInputBoxStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -243,6 +261,52 @@
                     android:imeOptions="actionNext"
                     android:inputType="numberDecimal" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchUseTicketTiers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:text="@string/use_ticket_tiers_label" />
+
+            <LinearLayout
+                android:id="@+id/layoutTierSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ticket_tiers_label"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="@color/colorOnBackground" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_xs"
+                    android:text="@string/ticket_tiers_helper"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="@color/colorSecondary" />
+
+                <LinearLayout
+                    android:id="@+id/layoutTierContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_sm"
+                    android:orientation="vertical" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddTier"
+                    style="@style/AppSecondaryButtonStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_sm"
+                    android:text="@string/add_ticket_tier" />
+            </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/AppTextInputBoxStyle"

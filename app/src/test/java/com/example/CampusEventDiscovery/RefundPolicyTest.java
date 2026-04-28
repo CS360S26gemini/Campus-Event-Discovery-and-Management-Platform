@@ -44,4 +44,19 @@ public class RefundPolicyTest {
     public void normalizeRefundAmount_neverReturnsNegative() {
         assertTrue(EventRepository.normalizeRefundAmount(-250.0) == 0.0);
     }
+
+    @Test
+    public void resolveRefundAmount_prefersTierPriceWhenPresent() {
+        double resolved = EventRepository.resolveRefundAmount(1800.0, 1200.0, 900.0);
+        assertTrue(resolved == 1800.0);
+    }
+
+    @Test
+    public void resolveRefundAmount_fallsBackToAmountThenTicketPrice() {
+        double fromAmount = EventRepository.resolveRefundAmount(null, 1200.0, 900.0);
+        double fromTicketPrice = EventRepository.resolveRefundAmount(null, null, 900.0);
+
+        assertTrue(fromAmount == 1200.0);
+        assertTrue(fromTicketPrice == 900.0);
+    }
 }

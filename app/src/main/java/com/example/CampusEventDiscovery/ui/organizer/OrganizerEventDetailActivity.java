@@ -210,7 +210,15 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
                 currentEvent = event;
                 tvTitle.setText(event.getTitle());
                 tvDateTime.setText(formatDateTime(event.getDate()));
-                tvVenue.setText(event.getLocation());
+                
+                // Format location as "Room, Building"
+                String displayLocation = event.getLocation();
+                if (!TextUtils.isEmpty(event.getLocationDescription()) && !TextUtils.isEmpty(event.getLocationKey())) {
+                    displayLocation = event.getLocationDescription() + ", " + event.getLocationKey();
+                } else if (!TextUtils.isEmpty(event.getLocationKey())) {
+                    displayLocation = event.getLocationKey();
+                }
+                tvVenue.setText(displayLocation);
 
                 long rsvp = event.getRsvpCount();
                 long capacity = event.getCapacity();

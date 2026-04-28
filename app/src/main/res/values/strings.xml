@@ -252,6 +252,15 @@
     <string name="cancel">Cancel</string>
     <string name="confirm">Confirm</string>
     <string name="rsvp_cancelled">RSVP cancelled</string>
+    <string name="cancel_ticket_refund">Cancel Ticket</string>
+    <string name="refund_available_status">Eligible for in-app credit refund until 3 days before the event.</string>
+    <string name="refund_unavailable_status">Refunds close 3 days before the event.</string>
+    <string name="refund_checked_in_status">Checked-in tickets cannot be cancelled.</string>
+    <string name="refund_cancel_confirm_message">Cancel this ticket now? If the refund window is still open, the amount will return to your in-app credit balance.</string>
+    <string name="refund_cancel_success">Ticket cancelled.</string>
+    <string name="refund_cancel_failed">Unable to cancel ticket.</string>
+    <string name="refund_loading_status">Checking refund eligibility...</string>
+    <string name="refund_not_signed_in_status">Sign in to manage this ticket.</string>
 
     <string name="calendar_header">Event Calendar</string>
     <string name="dates_with_events">Dates with events: %1$s</string>
@@ -668,5 +677,26 @@
     <string name="ticket_tiers_label">Ticket Tiers</string>
     <string name="no_tiers_error">Please add at least one tier if "Use Tiers" is enabled.</string>
     <string name="invalid_tier_data">Please fill in all details for each tier correctly.</string>
+    <string name="use_ticket_tiers_label">Use Ticket Tiers</string>
+    <string name="ticket_tiers_helper">Organizers can define multiple pricing options before the event goes live. Tier settings cannot be edited after approval.</string>
+    <string name="add_ticket_tier">Add Ticket Tier</string>
+    <string name="ticket_tier_number">Tier %1$d</string>
+    <string name="tier_capacity_exceeds_event_capacity">Total tier capacity cannot exceed event capacity.</string>
+    <string name="choose_ticket_tier">Choose a Ticket Tier</string>
+    <string name="tier_select_before_checkout">Select a tier to continue</string>
+    <string name="ticket_tier_preview_price">From PKR %1$.2f</string>
+    <string name="ticket_tier_selected">Selected</string>
+    <string name="ticket_tier_spots_remaining">%1$d spots remaining</string>
+    <string name="ticket_tier_spots_remaining_long">%1$d spots remaining across all tiers</string>
+    <string name="ticket_tier_checkout_subtitle">Secure your %1$s ticket</string>
+    <string name="ticket_tier_not_required">Standard admission</string>
+    <string name="ticket_tier_sold_out_message">All ticket tiers are sold out</string>
+    <string name="ticket_tier_missing">Please choose a ticket tier</string>
+
+    <!-- Campus Map (Nausher) -->
+    <string name="campus_building_label">Campus Building</string>
+    <string name="location_details_label">Room / Floor Details</string>
+    <string name="location_details_hint">e.g. Room 201, 2nd Floor</string>
+    <string name="formatted_location_label">%1$s, %2$s</string>
 
 </resources>

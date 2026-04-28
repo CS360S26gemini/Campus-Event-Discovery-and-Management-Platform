@@ -21,6 +21,10 @@ public class Payment {
     private String paymentMethod;
     private String proofUrl;
 
+    // Ticket Tier Fields (Nausher)
+    private String tierId;
+    private String tierName;
+
     /**
      * Required empty constructor for Firestore deserialization.
      */
@@ -120,4 +124,11 @@ public class Payment {
     public void setProofUrl(String proofUrl) {
         this.proofUrl = proofUrl;
     }
+
+    // Getters and Setters for Ticket Tiers
+    public String getTierId() { return tierId; }
+    public void setTierId(String tierId) { this.tierId = tierId; }
+
+    public String getTierName() { return tierName; }
+    public void setTierName(String tierName) { this.tierName = tierName; }
 }
