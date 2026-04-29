@@ -1,4 +1,4 @@
-# Refund System Fix — Campus Event Discovery Platform
+# Refund System Fix 
 **Author: Yahya**
 **Date: April 29, 2026**
 
@@ -14,10 +14,10 @@ This document details the investigation, root cause analysis, and complete fix f
 
 ### Symptom
 When a user purchased a ticket using in-app credits and then cancelled that ticket:
-- The RSVP document in Firestore would correctly update its `status` field to `"cancelled"` ✅
-- The user's `creditBalance` field in Firestore was **never updated** ❌
-- No `credit_transactions` refund document was ever created ❌
-- The cancel button on the ticket screen was sometimes **disabled** even for tickets that should have been cancellable ❌
+- The RSVP document in Firestore would correctly update its `status` field to `"cancelled"` 
+- The user's `creditBalance` field in Firestore was **never updated** 
+- No `credit_transactions` refund document was ever created 
+- The cancel button on the ticket screen was sometimes **disabled** even for tickets that should have been cancellable 
 
 ### What Was Already Working (Before This Fix)
 - Adding in-app credits manually via Firestore worked correctly
@@ -177,7 +177,7 @@ Updated and added the following string resources:
 
 ## Test Results
 
-### Test 1 — Basic paid-ticket refund (within 3-day window) ✅ PASSED
+### Test 1  Basic paid-ticket refund (within 3-day window)  PASSED
 
 **Setup:**
 - User `creditBalance` set to `2000` via Firestore
@@ -191,14 +191,14 @@ Updated and added the following string resources:
 4. Tapped Cancel Ticket → Confirmed
 
 **Verified in Firestore:**
-- `users/{uid}/rsvps/{eventId}` → `status: "cancelled"`, `paymentStatus: "refunded"`, `refundAmount: 1000` ✅
-- `credit_transactions` → new document with `type: "refund"`, `amount: 1000` ✅
-- `users/{uid}` → `creditBalance` updated back to `2000` ✅
-- In-app credit balance reflected correctly inside the app ✅
+- `users/{uid}/rsvps/{eventId}` → `status: "cancelled"`, `paymentStatus: "refunded"`, `refundAmount: 1000` 
+- `credit_transactions` → new document with `type: "refund"`, `amount: 1000` 
+- `users/{uid}` → `creditBalance` updated back to `2000` 
+- In-app credit balance reflected correctly inside the app 
 
 ---
 
-### Test 2 — Refund window expired (simulated old purchase) ✅ PASSED
+### Test 2 — Refund window expired (simulated old purchase)  PASSED
 
 **Setup:**
 - Same ticket from Test 1 flow, but `rsvpAt` field in Firestore was manually edited to a date 4 days in the past (April 25, 2026)
@@ -208,10 +208,10 @@ Updated and added the following string resources:
 2. Navigated to the ticket screen
 
 **Results:**
-- Status showed "Refund window closed — tickets can only be refunded within 3 days of purchase." ✅
-- Cancel button was greyed out and non-interactive ✅
-- Credit balance was completely unchanged ✅
-- No transaction documents were created ✅
+- Status showed "Refund window closed — tickets can only be refunded within 3 days of purchase." 
+- Cancel button was greyed out and non-interactive 
+- Credit balance was completely unchanged 
+- No transaction documents were created 
 
 ---
 
