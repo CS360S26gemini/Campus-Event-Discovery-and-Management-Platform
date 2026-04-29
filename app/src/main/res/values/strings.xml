@@ -253,14 +253,18 @@
     <string name="confirm">Confirm</string>
     <string name="rsvp_cancelled">RSVP cancelled</string>
     <string name="cancel_ticket_refund">Cancel Ticket</string>
-    <string name="refund_available_status">Eligible for in-app credit refund until 3 days before the event.</string>
-    <string name="refund_unavailable_status">Refunds close 3 days before the event.</string>
+    <string name="refund_available_status">Refund available — cancel within 3 days of purchase for a full credit refund.</string>
+    <string name="refund_window_expired_status">Refund window closed — tickets can only be refunded within 3 days of purchase.</string>
+    <string name="refund_unavailable_status">This ticket is not eligible for a refund.</string>
     <string name="refund_checked_in_status">Checked-in tickets cannot be cancelled.</string>
-    <string name="refund_cancel_confirm_message">Cancel this ticket now? If the refund window is still open, the amount will return to your in-app credit balance.</string>
-    <string name="refund_cancel_success">Ticket cancelled.</string>
-    <string name="refund_cancel_failed">Unable to cancel ticket.</string>
-    <string name="refund_loading_status">Checking refund eligibility...</string>
+    <string name="refund_cancel_confirm_message">Cancel this ticket? The amount paid will be returned to your in-app credit balance.</string>
+    <string name="free_ticket_cancel_confirm_message">Cancel this registration? No payment was made so no refund will be issued.</string>
+    <string name="refund_cancel_success">Ticket cancelled. Credits have been refunded.</string>
+    <string name="free_ticket_cancel_success">Registration cancelled.</string>
+    <string name="refund_cancel_failed">Unable to cancel ticket. Please try again.</string>
+    <string name="refund_loading_status">Checking ticket status…</string>
     <string name="refund_not_signed_in_status">Sign in to manage this ticket.</string>
+    <string name="free_ticket_cancel_status">Free ticket — cancelling will remove your registration.</string>
 
     <string name="calendar_header">Event Calendar</string>
     <string name="dates_with_events">Dates with events: %1$s</string>

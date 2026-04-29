@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackground"
-    android:gravity="center_horizontal"
     android:orientation="vertical">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -16,97 +15,113 @@
         app:navigationIcon="@drawable/ic_back"
         app:title="@string/your_ticket" />
 
-    <LinearLayout
+    <!-- Scrollable content area -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:gravity="center_horizontal"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/your_ticket"
+                android:textColor="@color/colorOnBackground"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/AppMaterialCardView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="@android:color/white">
+
+                <ImageView
+                    android:id="@+id/ivTicketQrCode"
+                    android:layout_width="260dp"
+                    android:layout_height="260dp"
+                    android:padding="12dp"
+                    android:scaleType="fitCenter" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvTicketEventName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:gravity="center"
+                android:text="Event Name"
+                android:textColor="@color/colorOnBackground"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvTicketEventDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Date &amp; Time"
+                android:textColor="@color/colorSecondary"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tvTicketTxnId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Txn ID: ..."
+                android:textColor="@color/colorSecondary"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/tvTicketRefundStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:textColor="@color/colorSecondary"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Buttons always pinned to bottom -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="20dp"
+        android:background="@color/colorBackground">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/your_ticket"
-        android:textColor="@color/colorOnBackground"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTicketCancelRefund"
+            style="@style/AppSecondaryButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="14dp"
+            android:text="@string/cancel_ticket_refund" />
 
-    <com.google.android.material.card.MaterialCardView
-        style="@style/AppMaterialCardView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        app:cardBackgroundColor="@android:color/white">
-
-        <ImageView
-        android:id="@+id/ivTicketQrCode"
-            android:layout_width="300dp"
-            android:layout_height="300dp"
-            android:padding="16dp"
-            android:scaleType="fitCenter" />
-    </com.google.android.material.card.MaterialCardView>
-
-    <TextView
-        android:id="@+id/tvTicketEventName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="Event Name"
-        android:textColor="@color/colorOnBackground"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:gravity="center" />
-
-    <TextView
-        android:id="@+id/tvTicketEventDate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Date &amp; Time"
-        android:textColor="@color/colorSecondary"
-        android:textSize="16sp" />
-
-    <TextView
-        android:id="@+id/tvTicketTxnId"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Txn ID: ..."
-        android:textColor="@color/colorSecondary"
-        android:textSize="12sp" />
-
-    <TextView
-        android:id="@+id/tvTicketRefundStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:textColor="@color/colorSecondary"
-        android:textSize="13sp" />
-
-    <View
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnTicketCancelRefund"
-        style="@style/AppSecondaryButtonStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:padding="14dp"
-        android:text="@string/cancel_ticket_refund" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnTicketDone"
-        style="@style/AppButtonStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="14dp"
-        android:text="@string/done" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTicketDone"
+            style="@style/AppButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="14dp"
+            android:text="@string/done" />
 
     </LinearLayout>
 

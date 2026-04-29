@@ -566,13 +566,14 @@ public class EventRepository {
                         }
 
                         refundAmount = resolveCancellationAmount(eventSnap, userRsvpSnap);
+                        // Refund if the ticket was paid, the user never checked in, and the
+                        // cancellation is within the 3-day purchase window.
                         shouldRefund = hadActiveRsvp
+                                && !wasCheckedIn
                                 && refundAmount > 0.0
-                                && isRefundEligible(
-                                        eventSnap != null ? eventSnap.getTimestamp("date") : null,
-                                        cancelledAt,
-                                        false
-                                );
+                                && isPurchasedWithin3Days(
+                                userRsvpSnap.getTimestamp("rsvpAt"),
+                                cancelledAt);
 
                         Map<String, Object> cancelledRsvpData = new HashMap<>();
                         cancelledRsvpData.put("status", "cancelled");
@@ -2042,6 +2043,20 @@ public class EventRepository {
         }
         long remaining = eventDate.toDate().getTime() - cancellationTime.toDate().getTime();
         return remaining >= REFUND_WINDOW_MILLIS;
+    }
+
+    /**
+     * Returns true when the ticket was purchased (rsvpAt) within the 3-day refund window.
+     * If rsvpAt is missing (legacy records) we allow the refund so old tickets are not
+     * silently broken.
+     */
+    public static boolean isPurchasedWithin3Days(Timestamp purchasedAt, Timestamp now) {
+        if (purchasedAt == null || now == null) {
+            // Missing timestamp — allow refund rather than silently blocking valid requests
+            return true;
+        }
+        long elapsed = now.toDate().getTime() - purchasedAt.toDate().getTime();
+        return elapsed >= 0 && elapsed <= REFUND_WINDOW_MILLIS;
     }
 
     public static double normalizeRefundAmount(double amount) {

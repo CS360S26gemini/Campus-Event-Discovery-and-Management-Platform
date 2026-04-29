@@ -23,7 +23,7 @@ public class Rsvp {
     private String paymentRef;
     private String paymentMethod;
     private String paymentProofUrl;
-    private double amount;
+    private Double amount;
     private String qrPayload;
     private String qrCodeToken;
     private boolean checkedIn;
@@ -34,7 +34,7 @@ public class Rsvp {
     // Ticket Tier Fields (Nausher)
     private String tierId;
     private String tierName;
-    private double tierPrice;
+    private Double tierPrice;
 
     /**
      * Required empty constructor for Firestore deserialization.
@@ -96,8 +96,8 @@ public class Rsvp {
     public String getPaymentProofUrl() { return paymentProofUrl; }
     public void setPaymentProofUrl(String paymentProofUrl) { this.paymentProofUrl = paymentProofUrl; }
 
-    public double getAmount() { return amount; }
-    public void setAmount(double amount) { this.amount = amount; }
+    public double getAmount() { return amount != null ? amount : 0.0; }
+    public void setAmount(Double amount) { this.amount = amount; }
 
     public String getQrPayload() { return qrPayload; }
     public void setQrPayload(String qrPayload) { this.qrPayload = qrPayload; }
@@ -134,6 +134,6 @@ public class Rsvp {
     public String getTierName() { return tierName; }
     public void setTierName(String tierName) { this.tierName = tierName; }
 
-    public double getTierPrice() { return tierPrice; }
-    public void setTierPrice(double tierPrice) { this.tierPrice = tierPrice; }
+    public double getTierPrice() { return tierPrice != null ? tierPrice : 0.0; }
+    public void setTierPrice(Double tierPrice) { this.tierPrice = tierPrice; }
 }
