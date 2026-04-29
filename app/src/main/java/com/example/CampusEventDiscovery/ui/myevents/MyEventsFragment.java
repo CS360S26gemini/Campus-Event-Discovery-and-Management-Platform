@@ -97,6 +97,10 @@ public class MyEventsFragment extends Fragment {
         return fragment;
     }
 
+    public boolean showsBackButton() {
+        return getArguments() != null && getArguments().getBoolean(ARG_SHOW_BACK_BUTTON, false);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -160,9 +164,7 @@ public class MyEventsFragment extends Fragment {
 
     private void setupToolbar() {
         if (toolbarMyEvents != null) {
-            boolean showBackButton = getArguments() != null
-                    && getArguments().getBoolean(ARG_SHOW_BACK_BUTTON, false);
-            if (showBackButton) {
+            if (showsBackButton()) {
                 toolbarMyEvents.setNavigationIcon(R.drawable.ic_back);
                 toolbarMyEvents.setNavigationOnClickListener(v -> {
                     if (getActivity() != null) {

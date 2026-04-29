@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
 
     // List of keys representing main screens where bottom navigation should be visible.
     private static final List<String> MAIN_SCREEN_KEYS = Arrays.asList(
-            "home_admin", "home_organizer", "home_attendee", "search", "calendar", "favourites", "profile", "my_events", "vendors"
+            "home_admin", "home_organizer", "home_attendee", "search", "favourites", "profile", "my_events", "vendors"
     );
 
     @Override
@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
 
         auth = FirebaseAuth.getInstance();
         repository = new EventRepository();
+        getSupportFragmentManager().addOnBackStackChangedListener(this::syncBottomNavForVisibleFragment);
 
         setupBottomNavigation();
         
@@ -364,7 +365,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void openHelpSupport() {
+    public void openHelpSupport() {
         if (!canUpdateUi() || getSupportFragmentManager().isStateSaved()) {
             return;
         }
@@ -377,6 +378,36 @@ public class MainActivity extends AppCompatActivity {
                 true
         );
         currentNavigationKey = "help";
+        updateBottomNavVisibility(currentNavigationKey);
+    }
+
+    public void openCalendarScreen() {
+        if (!canUpdateUi() || getSupportFragmentManager().isStateSaved()) {
+            return;
+        }
+        NavigationTransitions.replace(
+                getSupportFragmentManager(),
+                R.id.fragmentContainer,
+                new EventCalendarFragment(),
+                true,
+                true
+        );
+        currentNavigationKey = "calendar";
+        updateBottomNavVisibility(currentNavigationKey);
+    }
+
+    public void openProfileMyEvents() {
+        if (!canUpdateUi() || getSupportFragmentManager().isStateSaved()) {
+            return;
+        }
+        NavigationTransitions.replace(
+                getSupportFragmentManager(),
+                R.id.fragmentContainer,
+                MyEventsFragment.newInstance(true),
+                true,
+                true
+        );
+        currentNavigationKey = "profile_my_events";
         updateBottomNavVisibility(currentNavigationKey);
     }
 
@@ -399,6 +430,30 @@ public class MainActivity extends AppCompatActivity {
             bottomNavigationView.setVisibility(View.VISIBLE);
         } else {
             bottomNavigationView.setVisibility(View.GONE);
+        }
+    }
+
+    private void syncBottomNavForVisibleFragment() {
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragmentContainer);
+        if (fragment instanceof EventCalendarFragment) {
+            currentNavigationKey = "calendar";
+            updateBottomNavVisibility(currentNavigationKey);
+            return;
+        }
+        if (fragment instanceof HelpFragment) {
+            currentNavigationKey = "help";
+            updateBottomNavVisibility(currentNavigationKey);
+            return;
+        }
+        if (fragment instanceof MyEventsFragment && ((MyEventsFragment) fragment).showsBackButton()) {
+            currentNavigationKey = "profile_my_events";
+            updateBottomNavVisibility(currentNavigationKey);
+            return;
+        }
+        if (fragment instanceof ProfileFragment) {
+            currentNavigationKey = "profile";
+            updateSelectedNavItem(R.id.nav_profile);
+            updateBottomNavVisibility(currentNavigationKey);
         }
     }
 

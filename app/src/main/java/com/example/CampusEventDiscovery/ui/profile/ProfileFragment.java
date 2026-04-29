@@ -36,8 +36,6 @@ import com.example.CampusEventDiscovery.WelcomeActivity;
 import com.example.CampusEventDiscovery.model.AvatarConfig;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
-import com.example.CampusEventDiscovery.ui.calendar.EventCalendarFragment;
-import com.example.CampusEventDiscovery.ui.myevents.MyEventsFragment;
 import com.example.CampusEventDiscovery.ui.organizer.CreateEventActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ManageEventsActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
@@ -45,7 +43,6 @@ import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.example.CampusEventDiscovery.util.AvatarRenderer;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
-import com.example.CampusEventDiscovery.util.NavigationTransitions;
 import com.example.CampusEventDiscovery.util.ScrollResettable;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
@@ -276,13 +273,7 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
         bindDarkModeListener();
 
         rowMyEvents.setOnClickListener(v -> runAfterTouchFeedback(v, () ->
-                NavigationTransitions.replace(
-                        requireActivity().getSupportFragmentManager(),
-                        R.id.fragmentContainer,
-                        MyEventsFragment.newInstance(true),
-                        true,
-                        true
-                )
+                ((com.example.CampusEventDiscovery.MainActivity) requireActivity()).openProfileMyEvents()
         ));
 
         rowMemories.setOnClickListener(v -> runAfterTouchFeedback(v, () -> {
@@ -305,13 +296,7 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
                 startActivity(new Intent(requireContext(), SOSDashboardActivity.class))));
 
         rowCalendar.setOnClickListener(v -> runAfterTouchFeedback(v, () ->
-                NavigationTransitions.replace(
-                        requireActivity().getSupportFragmentManager(),
-                        R.id.fragmentContainer,
-                        new EventCalendarFragment(),
-                        true,
-                        true
-                )
+                ((com.example.CampusEventDiscovery.MainActivity) requireActivity()).openCalendarScreen()
         ));
 
         rowNotifications.setOnClickListener(v -> runAfterTouchFeedback(v, () -> {
@@ -325,13 +310,7 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
         }));
 
         btnHelp.setOnClickListener(v -> runAfterTouchFeedback(v, () ->
-                NavigationTransitions.replace(
-                        requireActivity().getSupportFragmentManager(),
-                        R.id.fragmentContainer,
-                        new HelpFragment(),
-                        true,
-                        true
-                )
+                ((com.example.CampusEventDiscovery.MainActivity) requireActivity()).openHelpSupport()
         ));
 
         btnLogout.setOnClickListener(v -> runAfterTouchFeedback(v, this::showLogoutDialog));

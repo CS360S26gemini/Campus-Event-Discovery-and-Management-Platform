@@ -100,10 +100,18 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <LinearLayout
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_md"
+                android:text="@string/event_start_time_date_label"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="@color/colorOnBackground" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
                 android:orientation="horizontal">
 
                 <com.google.android.material.card.MaterialCardView
@@ -173,7 +181,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_md"
-                android:text="@string/event_end_time_label"
+                android:text="@string/event_ending_time_date_label"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
                 android:textColor="@color/colorOnBackground" />
 
