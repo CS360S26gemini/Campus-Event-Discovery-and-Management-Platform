@@ -22,6 +22,7 @@ public class EventProposal {
     private String category;
     private List<String> tags;
     private Timestamp date;
+    private Timestamp endTime;
     private String location;
     private long capacity;
     private List<String> sponsors;
@@ -105,6 +106,9 @@ public class EventProposal {
 
     public Timestamp getDate() { return date; }
     public void setDate(Timestamp date) { this.date = date; }
+
+    public Timestamp getEndTime() { return endTime; }
+    public void setEndTime(Timestamp endTime) { this.endTime = endTime; }
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }

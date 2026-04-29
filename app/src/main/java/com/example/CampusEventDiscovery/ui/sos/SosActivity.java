@@ -235,10 +235,10 @@ public class SosActivity extends AppCompatActivity {
                 lng,
                 mapsUrl,
                 System.currentTimeMillis(),
-                "ACTIVE"
+                "active"
         );
 
-        new SosRepository().sendSosAlert(alert, organizerId, adminIds, new SosRepository.SosCallback() {
+        new SosRepository().sendCheckedInEventSosAlert(alert, currentUserId, organizerId, adminIds, new SosRepository.SosCallback() {
             @Override
             public void onSuccess() {
                 getSharedPreferences("sos_prefs", MODE_PRIVATE)

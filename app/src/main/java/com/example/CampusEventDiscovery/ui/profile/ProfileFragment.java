@@ -46,6 +46,7 @@ import com.example.CampusEventDiscovery.util.AvatarRenderer;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.NavigationTransitions;
+import com.example.CampusEventDiscovery.util.ScrollResettable;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.google.android.material.button.MaterialButton;
@@ -70,7 +71,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
  *
  * Profile and settings screen.
  */
-public class ProfileFragment extends Fragment {
+public class ProfileFragment extends Fragment implements ScrollResettable {
 
     private static final String TAG = "ProfileFragment";
     private static final long TAP_FEEDBACK_DELAY_MS = 140L;
@@ -111,6 +112,8 @@ public class ProfileFragment extends Fragment {
     private MaterialButton tvEditPhoto;
     private TextView tvFullName;
     private TextView tvEmail;
+    private TextView tvCreditBalance;
+    private View layoutCreditBalance;
     private Chip chipRole;
     private Switch switchDarkMode;
     private View cardDarkMode;
@@ -238,6 +241,8 @@ public class ProfileFragment extends Fragment {
         tvEditPhoto = view.findViewById(R.id.tvEditPhoto);
         tvFullName = view.findViewById(R.id.tvFullName);
         tvEmail = view.findViewById(R.id.tvEmail);
+        tvCreditBalance = view.findViewById(R.id.tvCreditBalance);
+        layoutCreditBalance = view.findViewById(R.id.layoutCreditBalance);
         chipRole = view.findViewById(R.id.chipRole);
         switchDarkMode = view.findViewById(R.id.switchDarkMode);
         cardDarkMode = view.findViewById(R.id.cardDarkMode);
@@ -664,6 +669,7 @@ public class ProfileFragment extends Fragment {
             bindRoleBadge();
             tvFullName.setText(currentDisplayName);
             tvEmail.setText(DevSessionManager.getDisplayEmail(requireContext()));
+            bindCreditBalance(0.0);
             switchDarkMode.setOnCheckedChangeListener(null);
             switchDarkMode.setChecked(ThemeManager.isDarkModeEnabled(requireContext()));
             bindDarkModeListener();
@@ -682,6 +688,7 @@ public class ProfileFragment extends Fragment {
             currentAvatarEnabled = false;
             tvFullName.setText(getString(R.string.guest_user));
             tvEmail.setText(getString(R.string.unknown_email));
+            bindCreditBalance(0.0);
             currentRole = UserRoles.ATTENDEE;
             currentAvatarConfig = AvatarConfig.defaultsFor(currentDisplayName, currentRole);
             bindAvatar(currentAvatarConfig);
@@ -729,6 +736,7 @@ public class ProfileFragment extends Fragment {
                 currentAvatarConfig = AvatarConfig.fromMap(user.getAvatarConfig(), currentDisplayName, currentRole);
                 bindRoleBadge();
                 bindRoleNavigationRows();
+                bindCreditBalance(user.getCreditBalance());
 
                 switchDarkMode.setOnCheckedChangeListener(null);
                 switchDarkMode.setChecked(user.isDarkMode());
@@ -792,11 +800,26 @@ public class ProfileFragment extends Fragment {
 
         sectionAttendeeTools.setVisibility(attendee ? View.VISIBLE : View.GONE);
         sectionOrganizerTools.setVisibility(organizer || admin ? View.VISIBLE : View.GONE);
+        if (layoutCreditBalance != null) {
+            layoutCreditBalance.setVisibility(attendee ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void hideRoleNavigationRows() {
         sectionAttendeeTools.setVisibility(View.GONE);
         sectionOrganizerTools.setVisibility(View.GONE);
+        if (layoutCreditBalance != null) {
+            layoutCreditBalance.setVisibility(View.GONE);
+        }
+    }
+
+    private void bindCreditBalance(double creditBalance) {
+        if (tvCreditBalance != null) {
+            tvCreditBalance.setText(getString(R.string.credit_balance_format, creditBalance));
+        }
+        if (layoutCreditBalance != null) {
+            layoutCreditBalance.setVisibility(UserRoles.isAttendee(currentRole) ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void bindPhoto(String profilePicUrl) {
@@ -936,6 +959,15 @@ public class ProfileFragment extends Fragment {
                 profileScrollView.scrollTo(0, pendingScrollY);
             }
         }, 120L);
+    }
+
+    @Override
+    public void resetScrollToTop() {
+        pendingScrollY = 0;
+        lastKnownScrollY = 0;
+        if (profileScrollView != null) {
+            profileScrollView.post(() -> profileScrollView.scrollTo(0, 0));
+        }
     }
 
     private void runAfterTouchFeedback(View sourceView, Runnable action) {

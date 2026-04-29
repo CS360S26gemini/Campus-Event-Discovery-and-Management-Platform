@@ -28,6 +28,7 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.EventShareHelper;
+import com.example.CampusEventDiscovery.util.EventTimeUtils;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
@@ -70,6 +71,7 @@ public class EventDetailActivity extends AppCompatActivity {
     private RecyclerView rvTicketTiers;
     private com.google.android.material.button.MaterialButton btnTickets;
     private com.google.android.material.button.MaterialButton btnViewTicket;
+    private com.google.android.material.button.MaterialButton btnEventSos;
 
     private EventRepository repository;
     private String eventId;
@@ -136,6 +138,7 @@ public class EventDetailActivity extends AppCompatActivity {
         tvTicketTierLabel = findViewById(R.id.tvTicketTierLabel);
         rvTicketTiers = findViewById(R.id.rvTicketTiers);
         btnTickets = findViewById(R.id.btnTickets);
+        btnEventSos = findViewById(R.id.btnEventSos);
         ticketTierPreviewAdapter = new TicketTierOptionAdapter(false, null);
         rvTicketTiers.setLayoutManager(new LinearLayoutManager(this));
         rvTicketTiers.setNestedScrollingEnabled(false);
@@ -244,6 +247,10 @@ public class EventDetailActivity extends AppCompatActivity {
                 }
             });
         }
+
+        if (btnEventSos != null) {
+            btnEventSos.setOnClickListener(v -> openSosForCurrentEvent());
+        }
     }
 
     private void checkRsvpStatus() {
@@ -258,6 +265,7 @@ public class EventDetailActivity extends AppCompatActivity {
                         if (currentRsvp != null && !"cancelled".equalsIgnoreCase(currentRsvp.getStatus())) {
                             showViewTicketButton();
                         }
+                        updateSosButtonState();
                     }
                 });
     }
@@ -274,12 +282,14 @@ public class EventDetailActivity extends AppCompatActivity {
         if (DevSessionManager.shouldUseBypass(this)) {
             currentUserRole = DevSessionManager.getBypassRole(this);
             updateRegistrationCta();
+            updateSosButtonState();
             return;
         }
 
         if (currentUserId == null) {
             currentUserRole = "";
             updateRegistrationCta();
+            updateSosButtonState();
             return;
         }
 
@@ -291,6 +301,7 @@ public class EventDetailActivity extends AppCompatActivity {
                 }
                 currentUserRole = user == null ? "" : UserRoles.sanitize(user.getRole());
                 updateRegistrationCta();
+                updateSosButtonState();
             }
 
             @Override
@@ -300,6 +311,7 @@ public class EventDetailActivity extends AppCompatActivity {
                 }
                 currentUserRole = "";
                 updateRegistrationCta();
+                updateSosButtonState();
             }
         });
     }
@@ -373,6 +385,59 @@ public class EventDetailActivity extends AppCompatActivity {
         bindTicketPricingSummary();
         updateHeartIcon();
         updateRegistrationCta();
+        updateSosButtonState();
+    }
+
+    private void updateSosButtonState() {
+        if (btnEventSos == null) {
+            return;
+        }
+
+        boolean showForAttendee = currentUserId != null && UserRoles.isAttendee(currentUserRole);
+        boolean hasActiveRsvp = currentRsvp != null && !"cancelled".equalsIgnoreCase(currentRsvp.getStatus());
+        if (!showForAttendee || !hasActiveRsvp || currentEvent == null) {
+            btnEventSos.setVisibility(View.GONE);
+            return;
+        }
+
+        boolean checkedIn = currentRsvp.isCheckedIn() || "attended".equalsIgnoreCase(currentRsvp.getStatus());
+        boolean allowed = EventTimeUtils.isSosAllowed(
+                checkedIn,
+                currentEvent.getDate(),
+                currentEvent.getEndTime(),
+                System.currentTimeMillis()
+        );
+
+        btnEventSos.setVisibility(View.VISIBLE);
+        btnEventSos.setEnabled(allowed);
+        btnEventSos.setAlpha(allowed ? 1f : 0.6f);
+        if (!checkedIn) {
+            btnEventSos.setText(R.string.sos_check_in_required);
+        } else if (!allowed) {
+            btnEventSos.setText(R.string.sos_window_expired);
+        } else {
+            btnEventSos.setText(R.string.sos_event_button);
+        }
+    }
+
+    private void openSosForCurrentEvent() {
+        if (currentEvent == null || currentRsvp == null) {
+            Toast.makeText(this, getString(R.string.sos_not_available), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        boolean checkedIn = currentRsvp.isCheckedIn() || "attended".equalsIgnoreCase(currentRsvp.getStatus());
+        if (!EventTimeUtils.isSosAllowed(checkedIn, currentEvent.getDate(), currentEvent.getEndTime(), System.currentTimeMillis())) {
+            Toast.makeText(this, getString(checkedIn ? R.string.sos_window_expired : R.string.sos_check_in_required), Toast.LENGTH_SHORT).show();
+            updateSosButtonState();
+            return;
+        }
+
+        Intent intent = new Intent(this, com.example.CampusEventDiscovery.ui.sos.SosActivity.class);
+        intent.putExtra("eventId", currentEvent.getEventId());
+        intent.putExtra("eventName", safeText(currentEvent.getTitle(), getString(R.string.app_name)));
+        intent.putExtra("organizerId", currentEvent.getOrganizerId());
+        startActivity(intent);
     }
 
     private void loadTicketTiers() {

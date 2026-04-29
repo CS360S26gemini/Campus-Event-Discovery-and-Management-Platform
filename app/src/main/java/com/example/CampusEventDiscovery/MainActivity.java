@@ -5,12 +5,16 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.Constants;
@@ -27,6 +31,7 @@ import com.example.CampusEventDiscovery.ui.myevents.MyEventsFragment;
 import com.example.CampusEventDiscovery.ui.vendors.VendorManagementFragment;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.NavigationTransitions;
+import com.example.CampusEventDiscovery.util.ScrollResettable;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
@@ -263,16 +268,16 @@ public class MainActivity extends AppCompatActivity {
 
         if (itemId == R.id.nav_home) {
             if (UserRoles.isAdmin(currentRole)) {
-                return navigateTo("home_admin", R.id.nav_home);
+                return navigateToFromBottomNav("home_admin", R.id.nav_home);
             } else if (UserRoles.isOrganizer(currentRole)) {
-                return navigateTo("home_organizer", R.id.nav_home);
+                return navigateToFromBottomNav("home_organizer", R.id.nav_home);
             } else {
-                return navigateTo("home_attendee", R.id.nav_home);
+                return navigateToFromBottomNav("home_attendee", R.id.nav_home);
             }
         }
 
         if (itemId == R.id.nav_search) {
-            return navigateTo("search", R.id.nav_search);
+            return navigateToFromBottomNav("search", R.id.nav_search);
         }
 
         if (itemId == R.id.nav_action) {
@@ -281,26 +286,34 @@ public class MainActivity extends AppCompatActivity {
                 updateSelectedNavItem(R.id.nav_home);
                 return true;
             } else if (!UserRoles.canManageEvents(currentRole)) {
-                return navigateTo("my_events", R.id.nav_action);
+                return navigateToFromBottomNav("my_events", R.id.nav_action);
             }
             return true;
         }
 
         if (itemId == R.id.nav_favourites) {
             if (UserRoles.canManageEvents(currentRole)) {
-                return navigateTo("vendors", R.id.nav_favourites);
+                return navigateToFromBottomNav("vendors", R.id.nav_favourites);
             }
-            return navigateTo("favourites", R.id.nav_favourites);
+            return navigateToFromBottomNav("favourites", R.id.nav_favourites);
         }
 
         if (itemId == R.id.nav_profile) {
-            return navigateTo("profile", R.id.nav_profile);
+            return navigateToFromBottomNav("profile", R.id.nav_profile);
         }
 
         return false;
     }
 
     private boolean navigateTo(String key, int selectedItemId) {
+        return navigateTo(key, selectedItemId, false);
+    }
+
+    private boolean navigateToFromBottomNav(String key, int selectedItemId) {
+        return navigateTo(key, selectedItemId, true);
+    }
+
+    private boolean navigateTo(String key, int selectedItemId, boolean resetScrollToTop) {
         if (!canUpdateUi() || getSupportFragmentManager().isStateSaved()) {
             return false;
         }
@@ -311,6 +324,9 @@ public class MainActivity extends AppCompatActivity {
                 && getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) != null) {
             updateSelectedNavItem(selectedItemId);
             updateBottomNavVisibility(key);
+            if (resetScrollToTop) {
+                resetCurrentFragmentScrollToTop();
+            }
             return true;
         }
 
@@ -318,6 +334,9 @@ public class MainActivity extends AppCompatActivity {
         currentNavigationKey = key;
         updateSelectedNavItem(selectedItemId);
         updateBottomNavVisibility(key);
+        if (resetScrollToTop) {
+            resetCurrentFragmentScrollToTop();
+        }
         return true;
     }
 
@@ -429,6 +448,40 @@ public class MainActivity extends AppCompatActivity {
                 false,
                 animate
         );
+    }
+
+    private void resetCurrentFragmentScrollToTop() {
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragmentContainer);
+        if (fragment == null) {
+            return;
+        }
+
+        if (fragment instanceof ScrollResettable) {
+            ((ScrollResettable) fragment).resetScrollToTop();
+            return;
+        }
+
+        View root = fragment.getView();
+        if (root != null) {
+            root.post(() -> scrollViewTreeToTop(root));
+        }
+    }
+
+    private void scrollViewTreeToTop(View view) {
+        if (view instanceof RecyclerView) {
+            ((RecyclerView) view).scrollToPosition(0);
+        } else if (view instanceof NestedScrollView) {
+            ((NestedScrollView) view).scrollTo(0, 0);
+        } else if (view instanceof ScrollView) {
+            ((ScrollView) view).scrollTo(0, 0);
+        }
+
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                scrollViewTreeToTop(group.getChildAt(i));
+            }
+        }
     }
 
     private void showLoading(boolean isLoading) {

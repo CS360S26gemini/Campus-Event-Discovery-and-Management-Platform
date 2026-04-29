@@ -36,6 +36,7 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.EventTimeUtils;
 import com.example.CampusEventDiscovery.util.EventValidator;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -68,8 +69,12 @@ public class CreateEventActivity extends AppCompatActivity {
     private MaterialButton btnSelectImage;
     private TextView tvSelectedDate;
     private TextView tvSelectedTime;
+    private TextView tvSelectedEndDate;
+    private TextView tvSelectedEndTime;
     private MaterialButton btnPickDate;
     private MaterialButton btnPickTime;
+    private MaterialButton btnPickEndDate;
+    private MaterialButton btnPickEndTime;
     private AutoCompleteTextView actvCategory;
     private AutoCompleteTextView actvBuilding;
     private EditText etLocationDescription;
@@ -91,7 +96,9 @@ public class CreateEventActivity extends AppCompatActivity {
     private EventRepository repository;
 
     private Calendar selectedDateCalendar;
+    private Calendar selectedEndCalendar;
     private Timestamp selectedTimestamp;
+    private Timestamp selectedEndTimestamp;
     private Uri selectedImageUri;
     private boolean hasSelectedDate;
     private boolean hasSelectedTime;
@@ -131,6 +138,11 @@ public class CreateEventActivity extends AppCompatActivity {
         selectedDateCalendar = Calendar.getInstance();
         selectedDateCalendar.set(Calendar.SECOND, 0);
         selectedDateCalendar.set(Calendar.MILLISECOND, 0);
+        selectedEndCalendar = Calendar.getInstance();
+        selectedEndCalendar.set(Calendar.HOUR_OF_DAY, EventTimeUtils.DEFAULT_END_HOUR_OF_DAY);
+        selectedEndCalendar.set(Calendar.MINUTE, EventTimeUtils.DEFAULT_END_MINUTE);
+        selectedEndCalendar.set(Calendar.SECOND, 0);
+        selectedEndCalendar.set(Calendar.MILLISECOND, 0);
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         currentUserId = currentUser != null ? currentUser.getUid() : DevSessionManager.getEffectiveUserId(this);
@@ -143,6 +155,8 @@ public class CreateEventActivity extends AppCompatActivity {
         setupTierControls();
         setupDatePicker();
         setupTimePicker();
+        setupEndDatePicker();
+        setupEndTimePicker();
         preloadOrganizerName();
         setupSubmitButton();
         if (walkthroughMode) {
@@ -162,8 +176,12 @@ public class CreateEventActivity extends AppCompatActivity {
         btnSelectImage = findViewById(R.id.btnSelectImage);
         tvSelectedDate = findViewById(R.id.tvSelectedDate);
         tvSelectedTime = findViewById(R.id.tvSelectedTime);
+        tvSelectedEndDate = findViewById(R.id.tvSelectedEndDate);
+        tvSelectedEndTime = findViewById(R.id.tvSelectedEndTime);
         btnPickDate = findViewById(R.id.btnPickDate);
         btnPickTime = findViewById(R.id.btnPickTime);
+        btnPickEndDate = findViewById(R.id.btnPickEndDate);
+        btnPickEndTime = findViewById(R.id.btnPickEndTime);
         actvCategory = findViewById(R.id.actvCategory);
         actvBuilding = findViewById(R.id.actvBuilding);
         etLocationDescription = findViewById(R.id.etLocationDescription);
@@ -333,6 +351,7 @@ public class CreateEventActivity extends AppCompatActivity {
                         SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault());
                         tvSelectedDate.setText(getString(R.string.selected_date_label, sdf.format(selectedDateCalendar.getTime())));
                         tvSelectedDate.setTextColor(getColor(R.color.colorOnBackground));
+                        syncDefaultEndDateIfNeeded();
                         refreshSelectedTimestamp();
                     },
                     year,
@@ -363,6 +382,68 @@ public class CreateEventActivity extends AppCompatActivity {
                         SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
                         tvSelectedTime.setText(getString(R.string.selected_time_label, sdf.format(selectedDateCalendar.getTime())));
                         tvSelectedTime.setTextColor(getColor(R.color.colorOnBackground));
+                        syncDefaultEndDateIfNeeded();
+                        refreshSelectedTimestamp();
+                    },
+                    hour,
+                    minute,
+                    false
+            );
+
+            dialog.show();
+        });
+    }
+
+    private void setupEndDatePicker() {
+        btnPickEndDate.setOnClickListener(v -> {
+            if (!hasSelectedDate) {
+                Toast.makeText(this, getString(R.string.date_and_time_required), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int year = selectedEndCalendar.get(Calendar.YEAR);
+            int month = selectedEndCalendar.get(Calendar.MONTH);
+            int day = selectedEndCalendar.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog dialog = new DatePickerDialog(
+                    CreateEventActivity.this,
+                    (view, selectedYear, selectedMonth, selectedDay) -> {
+                        selectedEndCalendar.set(Calendar.YEAR, selectedYear);
+                        selectedEndCalendar.set(Calendar.MONTH, selectedMonth);
+                        selectedEndCalendar.set(Calendar.DAY_OF_MONTH, selectedDay);
+                        selectedEndCalendar.set(Calendar.SECOND, 0);
+                        selectedEndCalendar.set(Calendar.MILLISECOND, 0);
+                        updateEndDateLabel();
+                        refreshSelectedTimestamp();
+                    },
+                    year,
+                    month,
+                    day
+            );
+
+            dialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1_000L);
+            dialog.show();
+        });
+    }
+
+    private void setupEndTimePicker() {
+        btnPickEndTime.setOnClickListener(v -> {
+            if (!hasSelectedDate) {
+                Toast.makeText(this, getString(R.string.date_and_time_required), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int hour = selectedEndCalendar.get(Calendar.HOUR_OF_DAY);
+            int minute = selectedEndCalendar.get(Calendar.MINUTE);
+
+            TimePickerDialog dialog = new TimePickerDialog(
+                    CreateEventActivity.this,
+                    (view, selectedHour, selectedMinute) -> {
+                        selectedEndCalendar.set(Calendar.HOUR_OF_DAY, selectedHour);
+                        selectedEndCalendar.set(Calendar.MINUTE, selectedMinute);
+                        selectedEndCalendar.set(Calendar.SECOND, 0);
+                        selectedEndCalendar.set(Calendar.MILLISECOND, 0);
+                        updateEndTimeLabel();
                         refreshSelectedTimestamp();
                     },
                     hour,
@@ -377,9 +458,34 @@ public class CreateEventActivity extends AppCompatActivity {
     private void refreshSelectedTimestamp() {
         if (hasSelectedDate && hasSelectedTime) {
             selectedTimestamp = new Timestamp(selectedDateCalendar.getTime());
+            selectedEndTimestamp = new Timestamp(selectedEndCalendar.getTime());
         } else {
             selectedTimestamp = null;
+            selectedEndTimestamp = null;
         }
+    }
+
+    private void syncDefaultEndDateIfNeeded() {
+        selectedEndCalendar.set(Calendar.YEAR, selectedDateCalendar.get(Calendar.YEAR));
+        selectedEndCalendar.set(Calendar.MONTH, selectedDateCalendar.get(Calendar.MONTH));
+        selectedEndCalendar.set(Calendar.DAY_OF_MONTH, selectedDateCalendar.get(Calendar.DAY_OF_MONTH));
+        if (!selectedEndCalendar.after(selectedDateCalendar)) {
+            selectedEndCalendar.add(Calendar.DATE, 1);
+        }
+        updateEndDateLabel();
+        updateEndTimeLabel();
+    }
+
+    private void updateEndDateLabel() {
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault());
+        tvSelectedEndDate.setText(getString(R.string.selected_date_label, sdf.format(selectedEndCalendar.getTime())));
+        tvSelectedEndDate.setTextColor(getColor(R.color.colorOnBackground));
+    }
+
+    private void updateEndTimeLabel() {
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        tvSelectedEndTime.setText(getString(R.string.selected_time_label, sdf.format(selectedEndCalendar.getTime())));
+        tvSelectedEndTime.setTextColor(getColor(R.color.colorOnBackground));
     }
 
     private void preloadOrganizerName() {
@@ -447,6 +553,11 @@ public class CreateEventActivity extends AppCompatActivity {
             return;
         }
 
+        if (selectedEndTimestamp == null || !selectedEndTimestamp.toDate().after(selectedTimestamp.toDate())) {
+            Toast.makeText(this, getString(R.string.event_end_after_start_required), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (TextUtils.isEmpty(buildingKey)) {
             Toast.makeText(this, "Please select a building", Toast.LENGTH_SHORT).show();
             return;
@@ -489,7 +600,7 @@ public class CreateEventActivity extends AppCompatActivity {
             if (tiers == null) {
                 return;
             }
-            ticketPrice = 0.0;
+            ticketPrice = resolveLowestTierPrice(tiers);
         }
 
         // Using buildingKey as the main location string for validation
@@ -519,6 +630,7 @@ public class CreateEventActivity extends AppCompatActivity {
         proposal.setCategory(category);
         proposal.setTags(tags);
         proposal.setDate(selectedTimestamp);
+        proposal.setEndTime(selectedEndTimestamp);
         proposal.setLocation(buildingKey);
         proposal.setLocationKey(buildingKey);
         proposal.setLocationDescription(locationDesc);
@@ -653,6 +765,34 @@ public class CreateEventActivity extends AppCompatActivity {
         }
 
         return tiers;
+    }
+
+    private double resolveLowestTierPrice(List<Map<String, Object>> tiers) {
+        if (tiers == null || tiers.isEmpty()) {
+            return 0.0;
+        }
+
+        double lowestPrice = Double.MAX_VALUE;
+        for (Map<String, Object> tier : tiers) {
+            if (tier == null) {
+                continue;
+            }
+
+            Object priceValue = tier.get("price");
+            double price;
+            if (priceValue instanceof Number) {
+                price = ((Number) priceValue).doubleValue();
+            } else {
+                try {
+                    price = Double.parseDouble(String.valueOf(priceValue));
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+            }
+            lowestPrice = Math.min(lowestPrice, price);
+        }
+
+        return lowestPrice == Double.MAX_VALUE ? 0.0 : lowestPrice;
     }
 
     private List<String> parseCommaSeparated(String rawValue, boolean normalizeLowerCase) {

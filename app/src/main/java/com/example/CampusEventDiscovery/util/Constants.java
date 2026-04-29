@@ -18,6 +18,8 @@ public final class Constants {
     public static final String COLLECTION_NOTIFICATIONS = "notifications";
 
     public static final String SUBCOLLECTION_MESSAGES = "messages";
+    public static final String SUBCOLLECTION_ATTENDEES = "attendees";
+    public static final String SUBCOLLECTION_RSVPS = "rsvps";
 
     // Level 2 Sprint — New Constants (Hussain + Nausher + Yahya)
     public static final String SUBCOLLECTION_TICKET_TIERS        = "ticket_tiers";

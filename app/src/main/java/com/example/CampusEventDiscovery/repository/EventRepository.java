@@ -13,6 +13,7 @@ import com.example.CampusEventDiscovery.model.TicketTier;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.model.VendorProposal;
 import com.example.CampusEventDiscovery.util.Constants;
+import com.example.CampusEventDiscovery.util.EventTimeUtils;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
@@ -66,8 +67,12 @@ public class EventRepository {
     private static final String DOCUMENT_SETTINGS = "settings";
     private static final String COLLECTION_VENDOR_PROPOSALS = "vendorProposals";
 
-    private static final int REFUND_WINDOW_DAYS = 3;
-    private static final long REFUND_WINDOW_MILLIS = REFUND_WINDOW_DAYS * 24L * 60L * 60L * 1000L;
+    private static final int ATTENDEE_CANCELLATION_WINDOW_DAYS = 3;
+    private static final int ORGANIZER_CANCELLATION_WINDOW_DAYS = 5;
+    private static final long ATTENDEE_CANCELLATION_WINDOW_MILLIS =
+            ATTENDEE_CANCELLATION_WINDOW_DAYS * 24L * 60L * 60L * 1000L;
+    private static final long ORGANIZER_CANCELLATION_WINDOW_MILLIS =
+            ORGANIZER_CANCELLATION_WINDOW_DAYS * 24L * 60L * 60L * 1000L;
 
     private static final int FIRESTORE_WHERE_IN_LIMIT = 10;
 
@@ -436,6 +441,9 @@ public class EventRepository {
         db.runTransaction(transaction -> {
                     DocumentSnapshot eventSnap = transaction.get(eventRef);
                     if (!eventSnap.exists()) throw new FirebaseFirestoreException("Event not found", FirebaseFirestoreException.Code.NOT_FOUND);
+                    if (!"active".equalsIgnoreCase(eventSnap.getString("status"))) {
+                        throw new FirebaseFirestoreException("Event is not active", FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+                    }
 
                     DocumentSnapshot existingRsvpSnap = transaction.get(userRsvpRef);
                     DocumentSnapshot existingAttendeeSnap = transaction.get(eventAttendeeRef);
@@ -565,15 +573,20 @@ public class EventRepository {
                             tierSnap = transaction.get(tierRef);
                         }
 
+                        Timestamp eventDate = resolveEventDate(eventSnap, userRsvpSnap);
+                        if (hadActiveRsvp && !isAttendeeCancellationAllowed(eventDate, cancelledAt)) {
+                            throw new FirebaseFirestoreException(
+                                    "Tickets can only be cancelled at least 3 days before the event.",
+                                    FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+                        }
+
                         refundAmount = resolveCancellationAmount(eventSnap, userRsvpSnap);
                         // Refund if the ticket was paid, the user never checked in, and the
-                        // cancellation is within the 3-day purchase window.
+                        // cancellation is at least 3 days before the event.
                         shouldRefund = hadActiveRsvp
                                 && !wasCheckedIn
                                 && refundAmount > 0.0
-                                && isPurchasedWithin3Days(
-                                userRsvpSnap.getTimestamp("rsvpAt"),
-                                cancelledAt);
+                                && isRefundEligible(eventDate, cancelledAt, false);
 
                         Map<String, Object> cancelledRsvpData = new HashMap<>();
                         cancelledRsvpData.put("status", "cancelled");
@@ -984,9 +997,10 @@ public class EventRepository {
                             "approvedEventId", eventRef.getId(),
                             "adminNote", "",
                             "reviewedAt", Timestamp.now());
-                    transaction.set(eventRef, proposalToApprovedEvent(proposal));
-                    transaction.set(eventRef, buildTierMetadata(proposal), SetOptions.merge());
-                    for (Map<String, Object> tierMap : normalizeProposalTiers(proposal.getTiers())) {
+                    List<Map<String, Object>> normalizedTiers = normalizeProposalTiers(proposal.getTiers());
+                    transaction.set(eventRef, proposalToApprovedEvent(proposal, normalizedTiers));
+                    transaction.set(eventRef, buildTierMetadata(normalizedTiers), SetOptions.merge());
+                    for (Map<String, Object> tierMap : normalizedTiers) {
                         DocumentReference tierRef = eventRef.collection(Constants.SUBCOLLECTION_TICKET_TIERS).document();
                         transaction.set(tierRef, tierMap);
                     }
@@ -1061,14 +1075,177 @@ public class EventRepository {
             return;
         }
 
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("status", "deleted");
-        updates.put("deletedAt", Timestamp.now());
-        updates.put("deletedBy", deletedByUserId == null ? "" : deletedByUserId);
+        DocumentReference eventRef = db.collection(COLLECTION_EVENTS).document(eventId);
 
-        db.collection(COLLECTION_EVENTS).document(eventId)
-                .set(updates, SetOptions.merge())
-                .addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+        eventRef.collection(SUBCOLLECTION_ATTENDEES)
+                .get()
+                .addOnSuccessListener(attendeeSnaps -> db.runTransaction(transaction -> {
+            Timestamp cancelledAt = Timestamp.now();
+            DocumentSnapshot eventSnap = transaction.get(eventRef);
+            if (!eventSnap.exists()) {
+                throw new FirebaseFirestoreException(
+                        "Event not found.",
+                        FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+
+            String currentStatus = eventSnap.getString("status");
+            if ("cancelled".equalsIgnoreCase(currentStatus) || "deleted".equalsIgnoreCase(currentStatus)) {
+                throw new FirebaseFirestoreException(
+                        "Event is already cancelled.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+
+            Timestamp eventDate = eventSnap.getTimestamp("date");
+            if (!isOrganizerCancellationAllowed(eventDate, cancelledAt)) {
+                throw new FirebaseFirestoreException(
+                        "Events can only be cancelled at least 5 days before the event.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+
+            String organizerId = eventSnap.getString("organizerId");
+            if (!TextUtils.isEmpty(organizerId)
+                    && !TextUtils.isEmpty(deletedByUserId)
+                    && !TextUtils.equals(organizerId, deletedByUserId)) {
+                DocumentSnapshot actorSnap = transaction.get(db.collection(COLLECTION_USERS).document(deletedByUserId));
+                String role = actorSnap.exists() ? actorSnap.getString("role") : "";
+                if (!"admin".equalsIgnoreCase(role)) {
+                    throw new FirebaseFirestoreException(
+                            "Only the event organizer or an admin can cancel this event.",
+                            FirebaseFirestoreException.Code.PERMISSION_DENIED);
+                }
+            }
+
+            List<OrganizerCancellationRecord> records = new ArrayList<>();
+            List<DocumentReference> staleAttendeeRefs = new ArrayList<>();
+            Set<String> tierIds = new HashSet<>();
+
+            for (DocumentSnapshot attendeeSnap : attendeeSnaps.getDocuments()) {
+                String attendeeUserId = attendeeSnap.getString("userId");
+                if (TextUtils.isEmpty(attendeeUserId)) {
+                    attendeeUserId = attendeeSnap.getId();
+                }
+                if (TextUtils.isEmpty(attendeeUserId)) {
+                    continue;
+                }
+
+                DocumentReference attendeeRef = eventRef.collection(SUBCOLLECTION_ATTENDEES).document(attendeeSnap.getId());
+                DocumentReference userRef = db.collection(COLLECTION_USERS).document(attendeeUserId);
+                DocumentReference userRsvpRef = userRef.collection(SUBCOLLECTION_RSVPS).document(eventId);
+                DocumentSnapshot userSnap = transaction.get(userRef);
+                DocumentSnapshot userRsvpSnap = transaction.get(userRsvpRef);
+
+                if (userRsvpSnap.exists()) {
+                    String rsvpStatus = userRsvpSnap.getString("status");
+                    if ("cancelled".equalsIgnoreCase(rsvpStatus)) {
+                        staleAttendeeRefs.add(attendeeRef);
+                        continue;
+                    }
+                }
+
+                double refundAmount = userRsvpSnap.exists()
+                        ? resolveCancellationAmount(eventSnap, userRsvpSnap)
+                        : 0.0;
+                String tierId = userRsvpSnap.exists() ? userRsvpSnap.getString("tierId") : null;
+                if (!TextUtils.isEmpty(tierId)) {
+                    tierIds.add(tierId);
+                }
+
+                records.add(new OrganizerCancellationRecord(
+                        attendeeUserId,
+                        attendeeRef,
+                        userRef,
+                        userRsvpRef,
+                        userSnap,
+                        userRsvpSnap,
+                        refundAmount,
+                        tierId,
+                        userRsvpSnap.exists() ? userRsvpSnap.getString("tierName") : null
+                ));
+            }
+
+            Map<String, Object> eventUpdates = new HashMap<>();
+            eventUpdates.put("status", "cancelled");
+            eventUpdates.put("cancelledAt", cancelledAt);
+            eventUpdates.put("cancelledBy", deletedByUserId == null ? "" : deletedByUserId);
+            eventUpdates.put("deletedAt", cancelledAt);
+            eventUpdates.put("deletedBy", deletedByUserId == null ? "" : deletedByUserId);
+            eventUpdates.put("rsvpCount", 0L);
+            eventUpdates.put("checkedInCount", 0L);
+            transaction.set(eventRef, eventUpdates, SetOptions.merge());
+
+            for (DocumentReference staleAttendeeRef : staleAttendeeRefs) {
+                transaction.delete(staleAttendeeRef);
+            }
+
+            String eventTitle = eventSnap.getString("title");
+            for (OrganizerCancellationRecord record : records) {
+                Map<String, Object> cancelledRsvpData = new HashMap<>();
+                cancelledRsvpData.put("status", "cancelled");
+                cancelledRsvpData.put("addedToCalendar", false);
+                cancelledRsvpData.put("gcalEventId", "");
+                cancelledRsvpData.put("cancelledAt", cancelledAt);
+                cancelledRsvpData.put("cancelledByOrganizer", true);
+                cancelledRsvpData.put("qrExpired", true);
+
+                if (record.refundAmount > 0.0) {
+                    cancelledRsvpData.put("paymentStatus", Constants.PAYMENT_REFUNDED);
+                    cancelledRsvpData.put("refundAmount", record.refundAmount);
+                }
+                transaction.set(record.userRsvpRef, cancelledRsvpData, SetOptions.merge());
+                transaction.delete(record.attendeeRef);
+
+                if (record.refundAmount > 0.0) {
+                    double currentCreditBalance = record.userSnap != null && record.userSnap.exists()
+                            ? normalizeRefundAmount(record.userSnap.getDouble("creditBalance") != null
+                            ? record.userSnap.getDouble("creditBalance") : 0.0)
+                            : 0.0;
+                    double updatedCreditBalance = currentCreditBalance + record.refundAmount;
+
+                    DocumentReference refundRef = db.collection(Constants.COLLECTION_CREDIT_TRANSACTIONS).document();
+                    Map<String, Object> creditTransaction = new HashMap<>();
+                    creditTransaction.put("userId", record.userId);
+                    creditTransaction.put("type", Constants.CREDIT_TRANSACTION_REFUND);
+                    creditTransaction.put("amount", record.refundAmount);
+                    creditTransaction.put("eventId", eventId);
+                    creditTransaction.put("eventTitle", TextUtils.isEmpty(eventTitle) ? record.userRsvpSnap.getString("title") : eventTitle);
+                    creditTransaction.put("tierId", record.tierId);
+                    creditTransaction.put("tierName", record.tierName);
+                    creditTransaction.put("createdAt", cancelledAt);
+                    creditTransaction.put("reason", "ORGANIZER_EVENT_CANCELLED");
+                    creditTransaction.put("originalPaymentMethod", record.userRsvpSnap.getString("paymentMethod"));
+                    creditTransaction.put("paymentTransactionId", record.userRsvpSnap.getString("transactionId"));
+                    creditTransaction.put("creditBalanceBefore", currentCreditBalance);
+                    creditTransaction.put("creditBalanceAfter", updatedCreditBalance);
+                    transaction.set(refundRef, creditTransaction);
+
+                    Map<String, Object> userCreditUpdate = new HashMap<>();
+                    userCreditUpdate.put("creditBalance", updatedCreditBalance);
+                    transaction.set(record.userRef, userCreditUpdate, SetOptions.merge());
+                }
+
+                DocumentReference notificationRef = db.collection(COLLECTION_NOTIFICATIONS)
+                        .document(record.userId)
+                        .collection(SUBCOLLECTION_MESSAGES)
+                        .document();
+                transaction.set(notificationRef, buildNotification(
+                        "Event cancelled",
+                        (TextUtils.isEmpty(eventTitle) ? "This event" : eventTitle)
+                                + " was cancelled by the organizer. Paid tickets were refunded as in-app credit.",
+                        "event_cancelled",
+                        eventId
+                ));
+            }
+
+            for (String tierId : tierIds) {
+                transaction.set(
+                        eventRef.collection(Constants.SUBCOLLECTION_TICKET_TIERS).document(tierId),
+                        Collections.singletonMap("rsvpCount", 0L),
+                        SetOptions.merge());
+            }
+
+            return null;
+        }).addOnSuccessListener(unused -> { if (cb != null) cb.onSuccess(); })
+                .addOnFailureListener(e -> { if (cb != null) cb.onError(e); }))
                 .addOnFailureListener(e -> { if (cb != null) cb.onError(e); });
     }
 
@@ -1666,12 +1843,13 @@ public class EventRepository {
     }
 
     private Event proposalToApprovedEvent(EventProposal proposal) {
+        return proposalToApprovedEvent(proposal, normalizeProposalTiers(proposal.getTiers()));
+    }
+
+    private Event proposalToApprovedEvent(EventProposal proposal, List<Map<String, Object>> normalizedTiers) {
         Event event = new Event();
         Timestamp startTime = proposal.getDate();
-        Timestamp endTime = null;
-        if (startTime != null) {
-            endTime = new Timestamp(new Date(startTime.toDate().getTime() + 2L * 60L * 60L * 1000L));
-        }
+        Timestamp endTime = EventTimeUtils.resolveEndTime(startTime, proposal.getEndTime());
         event.setTitle(proposal.getTitle());
         event.setDescription(proposal.getDescription());
         event.setCategory(proposal.getCategory());
@@ -1695,7 +1873,7 @@ public class EventRepository {
         event.setRatingCount(0L);
         event.setStatus("active");
         event.setCreatedAt(proposal.getSubmittedAt() != null ? proposal.getSubmittedAt() : Timestamp.now());
-        event.setTicketPrice(proposal.getTicketPrice());
+        event.setTicketPrice(resolveEventSummaryTicketPrice(proposal, normalizedTiers));
         return event;
     }
 
@@ -2035,14 +2213,25 @@ public class EventRepository {
     // ─── REFUND HELPERS (Yahya) ───────────────────────────────────────────────
 
     public static boolean isRefundEligible(Timestamp eventDate, Timestamp cancellationTime, boolean organizerInitiated) {
-        if (organizerInitiated) {
-            return true;
-        }
+        return organizerInitiated
+                ? isOrganizerCancellationAllowed(eventDate, cancellationTime)
+                : isAttendeeCancellationAllowed(eventDate, cancellationTime);
+    }
+
+    public static boolean isAttendeeCancellationAllowed(Timestamp eventDate, Timestamp cancellationTime) {
         if (eventDate == null || cancellationTime == null) {
             return false;
         }
         long remaining = eventDate.toDate().getTime() - cancellationTime.toDate().getTime();
-        return remaining >= REFUND_WINDOW_MILLIS;
+        return remaining >= ATTENDEE_CANCELLATION_WINDOW_MILLIS;
+    }
+
+    public static boolean isOrganizerCancellationAllowed(Timestamp eventDate, Timestamp cancellationTime) {
+        if (eventDate == null || cancellationTime == null) {
+            return false;
+        }
+        long remaining = eventDate.toDate().getTime() - cancellationTime.toDate().getTime();
+        return remaining >= ORGANIZER_CANCELLATION_WINDOW_MILLIS;
     }
 
     /**
@@ -2056,7 +2245,7 @@ public class EventRepository {
             return true;
         }
         long elapsed = now.toDate().getTime() - purchasedAt.toDate().getTime();
-        return elapsed >= 0 && elapsed <= REFUND_WINDOW_MILLIS;
+        return elapsed >= 0 && elapsed <= ATTENDEE_CANCELLATION_WINDOW_MILLIS;
     }
 
     public static double normalizeRefundAmount(double amount) {
@@ -2082,6 +2271,46 @@ public class EventRepository {
             ticketPrice = eventSnap.getDouble("ticketPrice");
         }
         return resolveRefundAmount(tierPrice, amount, ticketPrice);
+    }
+
+    private Timestamp resolveEventDate(DocumentSnapshot eventSnap, DocumentSnapshot userRsvpSnap) {
+        Timestamp eventDate = eventSnap != null && eventSnap.exists() ? eventSnap.getTimestamp("date") : null;
+        if (eventDate == null && userRsvpSnap != null && userRsvpSnap.exists()) {
+            eventDate = userRsvpSnap.getTimestamp("date");
+        }
+        return eventDate;
+    }
+
+    private static class OrganizerCancellationRecord {
+        final String userId;
+        final DocumentReference attendeeRef;
+        final DocumentReference userRef;
+        final DocumentReference userRsvpRef;
+        final DocumentSnapshot userSnap;
+        final DocumentSnapshot userRsvpSnap;
+        final double refundAmount;
+        final String tierId;
+        final String tierName;
+
+        OrganizerCancellationRecord(String userId,
+                                    DocumentReference attendeeRef,
+                                    DocumentReference userRef,
+                                    DocumentReference userRsvpRef,
+                                    DocumentSnapshot userSnap,
+                                    DocumentSnapshot userRsvpSnap,
+                                    double refundAmount,
+                                    String tierId,
+                                    String tierName) {
+            this.userId = userId;
+            this.attendeeRef = attendeeRef;
+            this.userRef = userRef;
+            this.userRsvpRef = userRsvpRef;
+            this.userSnap = userSnap;
+            this.userRsvpSnap = userRsvpSnap;
+            this.refundAmount = refundAmount;
+            this.tierId = tierId;
+            this.tierName = tierName;
+        }
     }
 
     // ─── RSVPS FOR MEMORIES (ui-update) ──────────────────────────────────────
@@ -2190,6 +2419,9 @@ public class EventRepository {
                     DocumentSnapshot eventSnap = transaction.get(eventRef);
                     if (!eventSnap.exists()) {
                         throw new FirebaseFirestoreException("Event not found", FirebaseFirestoreException.Code.NOT_FOUND);
+                    }
+                    if (!"active".equalsIgnoreCase(eventSnap.getString("status"))) {
+                        throw new FirebaseFirestoreException("Event is not active", FirebaseFirestoreException.Code.FAILED_PRECONDITION);
                     }
 
                     DocumentSnapshot existingRsvpSnap = transaction.get(userRsvpRef);
@@ -2373,11 +2605,30 @@ public class EventRepository {
     }
 
     private Map<String, Object> buildTierMetadata(EventProposal proposal) {
+        return buildTierMetadata(normalizeProposalTiers(proposal.getTiers()));
+    }
+
+    private Map<String, Object> buildTierMetadata(List<Map<String, Object>> tiers) {
         Map<String, Object> metadata = new HashMap<>();
-        List<Map<String, Object>> tiers = normalizeProposalTiers(proposal.getTiers());
         metadata.put("hasTicketTiers", !tiers.isEmpty());
         metadata.put("ticketTierCount", tiers.size());
         return metadata;
+    }
+
+    private double resolveEventSummaryTicketPrice(EventProposal proposal, List<Map<String, Object>> tiers) {
+        if (tiers == null || tiers.isEmpty()) {
+            return proposal.getTicketPrice();
+        }
+
+        double lowestPrice = Double.MAX_VALUE;
+        for (Map<String, Object> tier : tiers) {
+            if (tier == null) {
+                continue;
+            }
+            lowestPrice = Math.min(lowestPrice, getDoubleValue(tier.get("price")));
+        }
+
+        return lowestPrice == Double.MAX_VALUE ? proposal.getTicketPrice() : lowestPrice;
     }
 
     private List<Map<String, Object>> normalizeProposalTiers(List<Map<String, Object>> tiers) {

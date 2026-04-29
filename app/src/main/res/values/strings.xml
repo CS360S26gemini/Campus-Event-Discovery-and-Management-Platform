@@ -91,7 +91,7 @@
     <string name="my_events_count">My Events %1$d</string>
     <string name="recently_viewed_events">Recently Viewed Events</string>
     <string name="cancel_rsvp">Cancel RSVP?</string>
-    <string name="cancel_rsvp_message">Are you sure you want to cancel your RSVP? If you are eligible, the ticket amount will return to your in-app credit balance.</string>
+    <string name="cancel_rsvp_message">Are you sure you want to cancel your RSVP? Tickets can only be cancelled at least 3 days before the event. Paid tickets will return to your in-app credit balance.</string>
 
     <string name="event_calendar">Event Calendar</string>
     <string name="upcoming_events">Upcoming Events</string>
@@ -198,7 +198,7 @@
 
     <string name="event_not_found">Event not found.</string>
     <string name="failed_to_load_event">Failed to load event.</string>
-    <string name="refund_policy_body">Refunds are issued as in-app credit only. Cancel more than 3 days before the event to receive 100%% credit. Organizer cancellations are refunded in full. No cash, bank, or Stripe refunds are issued.</string>
+    <string name="refund_policy_body">Refunds are issued as in-app credit only. Attendees can cancel at least 3 days before the event for 100%% credit. Organizers can cancel an event at least 5 days before it starts; paid tickets are refunded in full. No cash, bank, or Stripe refunds are issued.</string>
     <string name="open_map_failed">No map app found.</string>
     <string name="calendar_add_failed">No calendar app found.</string>
     <string name="buy_tickets_coming_next">Buy Ticket screen placeholder - Phase 13 will replace this.</string>
@@ -253,8 +253,8 @@
     <string name="confirm">Confirm</string>
     <string name="rsvp_cancelled">RSVP cancelled</string>
     <string name="cancel_ticket_refund">Cancel Ticket</string>
-    <string name="refund_available_status">Refund available — cancel within 3 days of purchase for a full credit refund.</string>
-    <string name="refund_window_expired_status">Refund window closed — tickets can only be refunded within 3 days of purchase.</string>
+    <string name="refund_available_status">Refund available — cancel at least 3 days before the event for a full credit refund.</string>
+    <string name="refund_window_expired_status">Cancellation window closed — tickets can only be cancelled at least 3 days before the event.</string>
     <string name="refund_unavailable_status">This ticket is not eligible for a refund.</string>
     <string name="refund_checked_in_status">Checked-in tickets cannot be cancelled.</string>
     <string name="refund_cancel_confirm_message">Cancel this ticket? The amount paid will be returned to your in-app credit balance.</string>
@@ -298,6 +298,12 @@
     <string name="event_date_hint">Event Date</string>
     <string name="event_time">Event Time</string>
     <string name="event_time_hint">Event Time</string>
+    <string name="event_end_time_label">Event End</string>
+    <string name="event_end_date_hint">End Date</string>
+    <string name="default_end_time_hint">Default: 10:00 PM</string>
+    <string name="pick_end_date">Pick End Date</string>
+    <string name="pick_end_time">Pick End Time</string>
+    <string name="event_end_after_start_required">Event end must be after the start time.</string>
     <string name="event_category_hint">Event Category</string>
     <string name="venue_hint">Venue</string>
     <string name="description_hint">Description</string>
@@ -446,11 +452,11 @@
     <string name="admin_tools_subtitle">Create, manage, approve, scan, and monitor campus-wide event activity.</string>
     <string name="show_pending_approvals">Pending Approvals</string>
     <string name="show_rejected_events">Rejected Events</string>
-    <string name="delete_event">Delete Event</string>
-    <string name="delete_event_confirm_title">Delete event?</string>
-    <string name="delete_event_confirm_message">This removes the event from active listings, cancels attendee RSVPs, and returns eligible ticket value as in-app credit. This cannot be undone from the app.</string>
-    <string name="event_deleted">Event deleted.</string>
-    <string name="event_delete_failed">Failed to delete event.</string>
+    <string name="delete_event">Cancel Event</string>
+    <string name="delete_event_confirm_title">Cancel event?</string>
+    <string name="delete_event_confirm_message">This cancels the event, removes it from active listings, cancels attendee RSVPs, and refunds paid tickets as in-app credit. Organizers can only cancel at least 5 days before the event. This cannot be undone from the app.</string>
+    <string name="event_deleted">Event cancelled.</string>
+    <string name="event_delete_failed">Failed to cancel event.</string>
     <string name="blacklisted_attendees">Blacklisted People</string>
     <string name="participant_blacklisted_at">Blacklisted at %1$s</string>
     <string name="no_blacklisted_attendees">No blacklisted attendees for this event.</string>
@@ -540,6 +546,10 @@
     <string name="dismiss">Dismiss</string>
     <string name="sos_alert_sent_title">SOS Alert Sent</string>
     <string name="sos_alert_sent_message">Help is on the way. Security has been notified.</string>
+    <string name="sos_event_button">SOS</string>
+    <string name="sos_check_in_required">SOS becomes available after you check in to this event.</string>
+    <string name="sos_window_expired">SOS is available until one hour after the event ends.</string>
+    <string name="sos_not_available">SOS is not available for this event right now.</string>
     <string name="close">Close</string>
 
     <string name="scan_qr_code">Scan QR Code</string>
@@ -640,6 +650,7 @@
     <string name="preferences_section">Preferences</string>
     <string name="in_app_credits_label">In-App Credits</string>
     <string name="credit_balance_format">PKR %1$.2f</string>
+    <string name="credit_balance_zero">PKR 0.00</string>
     <string name="insufficient_credits_toast">Insufficient credits to complete this purchase</string>
 
 

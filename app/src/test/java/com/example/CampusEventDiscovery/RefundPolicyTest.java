@@ -34,10 +34,17 @@ public class RefundPolicyTest {
     }
 
     @Test
-    public void organizerCancellation_isAlwaysRefundEligible() {
-        Timestamp eventDate = new Timestamp(new Date(System.currentTimeMillis() + 1L * 24L * 60L * 60L * 1000L));
+    public void organizerCancellationAtLeastFiveDaysAway_isAllowed() {
+        Timestamp eventDate = new Timestamp(new Date(System.currentTimeMillis() + 6L * 24L * 60L * 60L * 1000L));
 
         assertTrue(EventRepository.isRefundEligible(eventDate, Timestamp.now(), true));
+    }
+
+    @Test
+    public void organizerCancellationWithinFiveDays_isNotAllowed() {
+        Timestamp eventDate = new Timestamp(new Date(System.currentTimeMillis() + 4L * 24L * 60L * 60L * 1000L));
+
+        assertFalse(EventRepository.isRefundEligible(eventDate, Timestamp.now(), true));
     }
 
     @Test

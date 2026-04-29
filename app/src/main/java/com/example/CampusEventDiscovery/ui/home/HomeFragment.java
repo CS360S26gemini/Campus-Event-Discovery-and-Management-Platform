@@ -441,17 +441,10 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupSosButton() {
+        btnSos.setEnabled(false);
+        btnSos.setAlpha(0.6f);
         btnSos.setOnClickListener(v -> {
-            if (currentUserId == null) {
-                return;
-            }
-
-            new AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.send_sos_title))
-                    .setMessage(getString(R.string.send_sos_message))
-                    .setPositiveButton(R.string.send, (dialog, which) -> requestLocationAndSendSos())
-                    .setNegativeButton(R.string.cancel, null)
-                    .show();
+            Toast.makeText(requireContext(), getString(R.string.sos_check_in_required), Toast.LENGTH_SHORT).show();
         });
     }
 
