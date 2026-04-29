@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -442,10 +443,17 @@ public class HomeFragment extends Fragment {
 
     private void setupSosButton() {
         btnSos.setEnabled(false);
-        btnSos.setAlpha(0.6f);
+        applyInactiveSosButtonColors();
         btnSos.setOnClickListener(v -> {
             Toast.makeText(requireContext(), getString(R.string.sos_check_in_required), Toast.LENGTH_SHORT).show();
         });
+    }
+
+    private void applyInactiveSosButtonColors() {
+        btnSos.setBackgroundTintList(ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), R.color.colorOutlineVariant)));
+        btnSos.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorOnSurfaceVariant));
+        btnSos.setAlpha(1f);
     }
 
     private void requestLocationAndSendSos() {

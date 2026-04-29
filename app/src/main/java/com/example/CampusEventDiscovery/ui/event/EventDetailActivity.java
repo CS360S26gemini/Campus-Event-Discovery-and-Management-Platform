@@ -1,6 +1,7 @@
 package com.example.CampusEventDiscovery.ui.event;
 
 import android.content.ActivityNotFoundException;
+import android.content.res.ColorStateList;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -410,7 +411,7 @@ public class EventDetailActivity extends AppCompatActivity {
 
         btnEventSos.setVisibility(View.VISIBLE);
         btnEventSos.setEnabled(allowed);
-        btnEventSos.setAlpha(allowed ? 1f : 0.6f);
+        applySosButtonColors(allowed);
         if (!checkedIn) {
             btnEventSos.setText(R.string.sos_check_in_required);
         } else if (!allowed) {
@@ -438,6 +439,20 @@ public class EventDetailActivity extends AppCompatActivity {
         intent.putExtra("eventName", safeText(currentEvent.getTitle(), getString(R.string.app_name)));
         intent.putExtra("organizerId", currentEvent.getOrganizerId());
         startActivity(intent);
+    }
+
+    private void applySosButtonColors(boolean active) {
+        int backgroundColor = ContextCompat.getColor(
+                this,
+                active ? R.color.colorSOS : R.color.colorOutlineVariant
+        );
+        int textColor = ContextCompat.getColor(
+                this,
+                active ? R.color.white : R.color.colorOnSurfaceVariant
+        );
+        btnEventSos.setBackgroundTintList(ColorStateList.valueOf(backgroundColor));
+        btnEventSos.setTextColor(textColor);
+        btnEventSos.setAlpha(1f);
     }
 
     private void loadTicketTiers() {
