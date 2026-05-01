@@ -35,6 +35,7 @@ public class MemoryAdapter extends ListAdapter<Memory, MemoryAdapter.MemoryViewH
     public interface OnMemoryActionListener {
         void onOpenAlbum(Memory memory);
         void onAddPhotos(Memory memory);
+        void onDeleteMemory(Memory memory);
     }
 
     public MemoryAdapter(List<Memory> memories, OnMemoryActionListener listener) {
@@ -100,6 +101,11 @@ public class MemoryAdapter extends ListAdapter<Memory, MemoryAdapter.MemoryViewH
                 listener.onOpenAlbum(memory);
             }
         });
+        holder.btnDeleteMemory.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onDeleteMemory(memory);
+            }
+        });
     }
 
     @Override
@@ -153,6 +159,7 @@ public class MemoryAdapter extends ListAdapter<Memory, MemoryAdapter.MemoryViewH
         final TextView tvPhotoCount;
         final MaterialButton btnViewPhotos;
         final MaterialButton btnAddPhotos;
+        final MaterialButton btnDeleteMemory;
 
         MemoryViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -164,6 +171,7 @@ public class MemoryAdapter extends ListAdapter<Memory, MemoryAdapter.MemoryViewH
             tvPhotoCount = itemView.findViewById(R.id.tvMemoryPhotoCount);
             btnViewPhotos = itemView.findViewById(R.id.btnViewMemoryPhotos);
             btnAddPhotos = itemView.findViewById(R.id.btnAddMemoryPhotos);
+            btnDeleteMemory = itemView.findViewById(R.id.btnDeleteMemory);
         }
     }
 }

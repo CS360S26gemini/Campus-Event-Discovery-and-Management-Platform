@@ -2388,6 +2388,51 @@ public class EventRepository {
 
     // ─── IN-APP CREDIT RSVP (Yahya) ──────────────────────────────────────────
 
+    public void removeMemoryPhoto(String userId,
+                                  String eventId,
+                                  String photoUrl,
+                                  ActionCallback cb) {
+        if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(eventId) || TextUtils.isEmpty(photoUrl)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Invalid memory photo removal data"));
+            return;
+        }
+
+        Map<String, Object> memory = new HashMap<>();
+        memory.put("photoUrls", FieldValue.arrayRemove(photoUrl));
+        memory.put("updatedAt", Timestamp.now());
+
+        db.collection(COLLECTION_USERS).document(userId)
+                .collection(SUBCOLLECTION_MEMORIES)
+                .document(eventId)
+                .set(memory, SetOptions.merge())
+                .addOnSuccessListener(unused -> {
+                    if (cb != null) cb.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
+    public void deleteMemory(String userId,
+                             String eventId,
+                             ActionCallback cb) {
+        if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(eventId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Invalid memory delete data"));
+            return;
+        }
+
+        db.collection(COLLECTION_USERS).document(userId)
+                .collection(SUBCOLLECTION_MEMORIES)
+                .document(eventId)
+                .delete()
+                .addOnSuccessListener(unused -> {
+                    if (cb != null) cb.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
     public void rsvpEventWithCredit(String userId, Event event, String fullName, double amount, ActionCallback cb) {
         rsvpEventWithCredit(userId, event, fullName, amount, null, null, null, cb);
     }

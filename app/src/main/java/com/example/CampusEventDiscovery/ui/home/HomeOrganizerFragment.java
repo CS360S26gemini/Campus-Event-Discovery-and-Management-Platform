@@ -71,6 +71,7 @@ public class HomeOrganizerFragment extends Fragment {
     private ImageView ivBannerShare;
     private TextView tvBannerTitle;
     private TextView tvBannerDate;
+    private TextView tvBannerOrganizer;
     private TextView tvBannerVenue;
 
     private EventRepository repository;
@@ -126,6 +127,7 @@ public class HomeOrganizerFragment extends Fragment {
         ivBannerShare = featuredCardContainer.findViewById(R.id.ivBannerShare);
         tvBannerTitle = featuredCardContainer.findViewById(R.id.tvBannerTitle);
         tvBannerDate = featuredCardContainer.findViewById(R.id.tvBannerDate);
+        tvBannerOrganizer = featuredCardContainer.findViewById(R.id.tvBannerOrganizer);
         tvBannerVenue = featuredCardContainer.findViewById(R.id.tvBannerVenue);
 
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -333,6 +335,7 @@ public class HomeOrganizerFragment extends Fragment {
 
         tvBannerTitle.setText(safeText(event.getTitle(), getString(R.string.app_name)));
         tvBannerDate.setText(formatDateTime(event.getDate()));
+        bindOrganizerText(tvBannerOrganizer, event);
         tvBannerVenue.setText(safeText(event.getLocation(), getString(R.string.placeholder_venue)));
 
         ivBannerHeart.setVisibility(View.GONE);
@@ -422,10 +425,12 @@ public class HomeOrganizerFragment extends Fragment {
         ImageView placeholder = card.findViewById(R.id.ivCarouselPlaceholderIcon);
         TextView title = card.findViewById(R.id.tvCarouselTitle);
         TextView date = card.findViewById(R.id.tvCarouselDate);
+        TextView organizer = card.findViewById(R.id.tvCarouselOrganizer);
         TextView attendees = card.findViewById(R.id.tvCarouselAttendees);
 
         title.setText(safeText(event.getTitle(), getString(R.string.app_name)));
         date.setText(formatDateTime(event.getDate()));
+        bindOrganizerText(organizer, event);
         attendees.setText(event.getRsvpCount() + " registered");
 
         if (!TextUtils.isEmpty(event.getThumbnailUrl())) {
@@ -489,5 +494,20 @@ public class HomeOrganizerFragment extends Fragment {
 
     private String safeText(String text, String fallback) {
         return TextUtils.isEmpty(text) ? fallback : text;
+    }
+
+    private void bindOrganizerText(TextView target, Event event) {
+        if (target == null) {
+            return;
+        }
+
+        String organizerName = event == null ? null : event.getOrganizerName();
+        if (TextUtils.isEmpty(organizerName)) {
+            target.setVisibility(View.GONE);
+            return;
+        }
+
+        target.setText(getString(R.string.event_organizer_format, organizerName));
+        target.setVisibility(View.VISIBLE);
     }
 }

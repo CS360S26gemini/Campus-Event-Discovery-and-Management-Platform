@@ -238,6 +238,8 @@
     <string name="total_label">Total: PKR %1$d</string>
     <string name="event_summary_date">%1$s</string>
     <string name="event_summary_venue">%1$s</string>
+    <string name="event_organizer_format">By %1$s</string>
+    <string name="event_organizer_placeholder">By organizer</string>
 
     <string name="favourites_header">Favourites</string>
     <string name="favourites_badge_count">%1$d</string>
@@ -448,6 +450,16 @@
     <string name="select_memory_photos">Select photos</string>
     <string name="memory_album_empty">No photos in this event folder yet.</string>
     <string name="memory_uploading_photos">Uploading photos...</string>
+    <string name="delete_memory_folder">Delete folder</string>
+    <string name="delete_memory_folder_title">Delete memory folder?</string>
+    <string name="delete_memory_folder_message">This will remove the entire memory folder and all its saved photos from the app.</string>
+    <string name="memory_folder_deleted">Memory folder deleted</string>
+    <string name="memory_folder_delete_failed">Could not delete memory folder</string>
+    <string name="delete_memory_photo_title">Remove photo?</string>
+    <string name="delete_memory_photo_message">This will remove the selected photo from this memory folder.</string>
+    <string name="memory_photo_deleted">Photo removed from memory folder</string>
+    <string name="memory_photo_delete_failed">Could not remove photo</string>
+    <string name="delete">Delete</string>
 
     <!-- Admin Screens -->
     <string name="admin_header">Admin Dashboard</string>

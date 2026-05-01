@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -112,6 +113,11 @@ public class MemoriesActivity extends AppCompatActivity {
             @Override
             public void onAddPhotos(Memory memory) {
                 selectPhotosForMemory(memory);
+            }
+
+            @Override
+            public void onDeleteMemory(Memory memory) {
+                confirmDeleteMemory(memory);
             }
         });
         rvMemories.setLayoutManager(new LinearLayoutManager(this));
@@ -313,9 +319,45 @@ public class MemoriesActivity extends AppCompatActivity {
         }
 
         Intent intent = new Intent(this, MemoryAlbumActivity.class);
+        intent.putExtra(MemoryAlbumActivity.EXTRA_EVENT_ID, memory.getEventId());
         intent.putExtra(MemoryAlbumActivity.EXTRA_EVENT_TITLE, memory.getEventTitle());
         intent.putStringArrayListExtra(MemoryAlbumActivity.EXTRA_PHOTO_URLS, photoUrls);
         startActivity(intent);
+    }
+
+    private void confirmDeleteMemory(Memory memory) {
+        if (memory == null || TextUtils.isEmpty(memory.getEventId())) {
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.delete_memory_folder_title)
+                .setMessage(R.string.delete_memory_folder_message)
+                .setPositiveButton(R.string.delete, (dialog, which) -> deleteMemory(memory))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void deleteMemory(Memory memory) {
+        if (memory == null || TextUtils.isEmpty(currentUserId) || TextUtils.isEmpty(memory.getEventId())) {
+            Toast.makeText(this, R.string.memory_folder_delete_failed, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        setLoading(true);
+        repository.deleteMemory(currentUserId, memory.getEventId(), new EventRepository.ActionCallback() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(MemoriesActivity.this, R.string.memory_folder_deleted, Toast.LENGTH_SHORT).show();
+                loadMemories();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                setLoading(false);
+                Toast.makeText(MemoriesActivity.this, R.string.memory_folder_delete_failed, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void setLoading(boolean isLoading) {

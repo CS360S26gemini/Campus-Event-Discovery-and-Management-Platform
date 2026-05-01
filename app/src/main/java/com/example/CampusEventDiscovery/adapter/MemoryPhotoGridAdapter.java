@@ -16,10 +16,20 @@ import java.util.List;
 
 public class MemoryPhotoGridAdapter extends RecyclerView.Adapter<MemoryPhotoGridAdapter.PhotoViewHolder> {
 
+    public interface OnPhotoActionListener {
+        void onDeletePhoto(String photoUrl);
+    }
+
     private final List<String> photoUrls;
+    private final OnPhotoActionListener listener;
 
     public MemoryPhotoGridAdapter(List<String> photoUrls) {
+        this(photoUrls, null);
+    }
+
+    public MemoryPhotoGridAdapter(List<String> photoUrls, OnPhotoActionListener listener) {
         this.photoUrls = photoUrls;
+        this.listener = listener;
     }
 
     @NonNull
@@ -48,6 +58,14 @@ public class MemoryPhotoGridAdapter extends RecyclerView.Adapter<MemoryPhotoGrid
                 .placeholder(R.drawable.bg_placeholder_image)
                 .centerCrop()
                 .into(holder.ivPhoto);
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (listener != null) {
+                listener.onDeletePhoto(url);
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override

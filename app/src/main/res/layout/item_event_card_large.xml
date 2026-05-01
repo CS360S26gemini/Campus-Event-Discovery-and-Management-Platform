@@ -70,6 +70,18 @@
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
             <TextView
+                android:id="@+id/tvBannerOrganizer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_xs"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/event_organizer_placeholder"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:visibility="gone" />
+
+            <TextView
                 android:id="@+id/tvBannerVenue"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

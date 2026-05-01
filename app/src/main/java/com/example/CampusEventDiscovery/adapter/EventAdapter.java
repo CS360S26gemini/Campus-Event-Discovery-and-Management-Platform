@@ -100,6 +100,7 @@ public class EventAdapter extends ListAdapter<Event, EventAdapter.EventViewHolde
         Event event = getItem(position);
 
         holder.tvTitle.setText(safeText(event.getTitle(), holder.itemView.getContext().getString(R.string.app_name)));
+        bindOrganizerText(holder.tvOrganizer, event, holder.itemView.getContext());
         holder.tvDateTime.setText(formatDateTime(event.getDate(), holder.itemView.getContext()));
         holder.tvVenue.setText(safeText(event.getLocation(),
                 holder.itemView.getContext().getString(R.string.placeholder_venue)));
@@ -274,6 +275,21 @@ public class EventAdapter extends ListAdapter<Event, EventAdapter.EventViewHolde
         return TextUtils.isEmpty(text) ? fallback : text;
     }
 
+    private void bindOrganizerText(TextView target, Event event, Context context) {
+        if (target == null) {
+            return;
+        }
+
+        String organizerName = event == null ? null : event.getOrganizerName();
+        if (TextUtils.isEmpty(organizerName)) {
+            target.setVisibility(View.GONE);
+            return;
+        }
+
+        target.setText(context.getString(R.string.event_organizer_format, organizerName));
+        target.setVisibility(View.VISIBLE);
+    }
+
     private String buildShareText(Event event, Context context) {
         String title = safeText(event.getTitle(), "Campus Event");
         String location = safeText(event.getLocation(), "Venue TBD");
@@ -291,6 +307,7 @@ public class EventAdapter extends ListAdapter<Event, EventAdapter.EventViewHolde
         ImageView ivHeart;
         ImageView ivShare;
         TextView tvTitle;
+        TextView tvOrganizer;
         TextView tvDateTime;
         TextView tvVenue;
         TextView tvSpots;
@@ -308,6 +325,7 @@ public class EventAdapter extends ListAdapter<Event, EventAdapter.EventViewHolde
             ivHeart = itemView.findViewById(R.id.ivHeart);
             ivShare = itemView.findViewById(R.id.ivShare);
             tvTitle = itemView.findViewById(R.id.tvTitle);
+            tvOrganizer = itemView.findViewById(R.id.tvOrganizer);
             tvDateTime = itemView.findViewById(R.id.tvDateTime);
             tvVenue = itemView.findViewById(R.id.tvVenue);
             tvSpots = itemView.findViewById(R.id.tvSpots);
