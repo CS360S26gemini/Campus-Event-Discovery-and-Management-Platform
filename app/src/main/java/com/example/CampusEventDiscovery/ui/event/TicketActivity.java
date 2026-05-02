@@ -26,12 +26,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-/**
- * Activity for displaying the generated QR code ticket to the attendee.
- *
- * Refund policy: tickets can be cancelled at least 3 days before the event.
- * Paid tickets are refunded as in-app credit.
- */
 public class TicketActivity extends AppCompatActivity {
 
     private String rsvpId;
@@ -53,7 +47,6 @@ public class TicketActivity extends AppCompatActivity {
     private EventRepository repository;
     private Rsvp currentRsvp;
     private boolean refundEligible;
-    private boolean cancellationAllowedByEventDate;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -132,13 +125,29 @@ public class TicketActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     currentRsvp = documentSnapshot.toObject(Rsvp.class);
+                    if (currentRsvp == null) return;
 
-                    Timestamp eventTimestamp = documentSnapshot.getTimestamp("date");
-                    cancellationAllowedByEventDate = EventRepository.isAttendeeCancellationAllowed(
-                            eventTimestamp,
-                            Timestamp.now());
+                    // NEW POLICY: Refund window based on purchase date (3 days window)
+                    boolean isPaid = currentRsvp.getAmount() > 0.0;
+                    boolean purchasedWithin3Days;
+                    Timestamp rsvpAt = documentSnapshot.getTimestamp("rsvpAt");
 
-                    updateRefundUi();
+                    if (rsvpAt != null) {
+                        long elapsed = System.currentTimeMillis() - rsvpAt.toDate().getTime();
+                        long REFUND_WINDOW_MILLIS = 3L * 24 * 60 * 60 * 1000;
+                        purchasedWithin3Days = elapsed >= 0 && elapsed <= REFUND_WINDOW_MILLIS;
+                    } else {
+                        purchasedWithin3Days = true; // Fallback for legacy data
+                    }
+
+                    boolean checkedIn = currentRsvp.isCheckedIn();
+                    boolean cancelled = "cancelled".equalsIgnoreCase(currentRsvp.getStatus());
+
+                    // Logic: Must not be checked in, must not be already cancelled,
+                    // and if it's paid, it must be within the 3-day purchase window.
+                    refundEligible = !checkedIn && !cancelled && (!isPaid || purchasedWithin3Days);
+
+                    updateRefundUi(checkedIn, cancelled, isPaid);
                 })
                 .addOnFailureListener(e -> {
                     btnCancelRefund.setEnabled(false);
@@ -147,26 +156,12 @@ public class TicketActivity extends AppCompatActivity {
                 });
     }
 
-    private void updateRefundUi() {
-        if (currentRsvp == null) {
-            btnCancelRefund.setEnabled(false);
-            btnCancelRefund.setAlpha(0.6f);
-            tvRefundStatus.setText(getString(R.string.refund_unavailable_status));
-            return;
-        }
-
-        boolean checkedIn = currentRsvp.isCheckedIn();
-        boolean cancelled = "cancelled".equalsIgnoreCase(currentRsvp.getStatus());
-        double  amount    = currentRsvp.getAmount();
-        boolean isPaid    = amount > 0;
-
-        refundEligible = !checkedIn && !cancelled && cancellationAllowedByEventDate;
-
+    private void updateRefundUi(boolean checkedIn, boolean cancelled, boolean isPaid) {
         if (checkedIn) {
             tvRefundStatus.setText(getString(R.string.refund_checked_in_status));
         } else if (cancelled) {
             tvRefundStatus.setText(getString(R.string.rsvp_cancelled));
-        } else if (!cancellationAllowedByEventDate) {
+        } else if (!refundEligible && isPaid) {
             tvRefundStatus.setText(getString(R.string.refund_window_expired_status));
         } else if (!isPaid) {
             tvRefundStatus.setText(getString(R.string.free_ticket_cancel_status));
@@ -186,7 +181,6 @@ public class TicketActivity extends AppCompatActivity {
         double amount  = currentRsvp.getAmount();
         boolean isPaid = amount > 0;
 
-        // Show different dialog messages for paid vs free tickets
         int messageRes = isPaid
                 ? R.string.refund_cancel_confirm_message
                 : R.string.free_ticket_cancel_confirm_message;

@@ -91,7 +91,7 @@
     <string name="my_events_count">My Events %1$d</string>
     <string name="recently_viewed_events">Recently Viewed Events</string>
     <string name="cancel_rsvp">Cancel RSVP?</string>
-    <string name="cancel_rsvp_message">Are you sure you want to cancel your RSVP? Tickets can only be cancelled at least 3 days before the event. Paid tickets will return to your in-app credit balance.</string>
+    <string name="cancel_rsvp_message">Are you sure you want to cancel your RSVP? Tickets can only be cancelled within 3 days of purchase. Paid tickets will return to your in-app credit balance.</string>
 
     <string name="event_calendar">Event Calendar</string>
     <string name="upcoming_events">Upcoming Events</string>
@@ -198,7 +198,7 @@
 
     <string name="event_not_found">Event not found.</string>
     <string name="failed_to_load_event">Failed to load event.</string>
-    <string name="refund_policy_body">Refunds are issued as in-app credit only. Attendees can cancel at least 3 days before the event for 100%% credit. Organizers can cancel an event at least 5 days before it starts; paid tickets are refunded in full. No cash, bank, or Stripe refunds are issued.</string>
+    <string name="refund_policy_body">Refunds are issued as in-app credit only. Attendees can cancel within 3 days of purchase for 100%% credit. Organizers can cancel an event at least 5 days before it starts; paid tickets are refunded in full. No cash, bank, or Stripe refunds are issued.</string>
     <string name="open_map_failed">No map app found.</string>
     <string name="calendar_add_failed">No calendar app found.</string>
     <string name="buy_tickets_coming_next">Buy Ticket screen placeholder - Phase 13 will replace this.</string>
@@ -255,8 +255,8 @@
     <string name="confirm">Confirm</string>
     <string name="rsvp_cancelled">RSVP cancelled</string>
     <string name="cancel_ticket_refund">Cancel Ticket</string>
-    <string name="refund_available_status">Refund available — cancel at least 3 days before the event for a full credit refund.</string>
-    <string name="refund_window_expired_status">Cancellation window closed — tickets can only be cancelled at least 3 days before the event.</string>
+    <string name="refund_available_status">Refund available — cancel within 3 days of purchase for a full credit refund.</string>
+    <string name="refund_window_expired_status">Refund window closed — tickets can only be refunded within 3 days of purchase.</string>
     <string name="refund_unavailable_status">This ticket is not eligible for a refund.</string>
     <string name="refund_checked_in_status">Checked-in tickets cannot be cancelled.</string>
     <string name="refund_cancel_confirm_message">Cancel this ticket? The amount paid will be returned to your in-app credit balance.</string>

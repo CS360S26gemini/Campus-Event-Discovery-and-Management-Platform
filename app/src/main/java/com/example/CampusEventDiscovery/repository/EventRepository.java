@@ -586,7 +586,9 @@ public class EventRepository {
                         shouldRefund = hadActiveRsvp
                                 && !wasCheckedIn
                                 && refundAmount > 0.0
-                                && isRefundEligible(eventDate, cancelledAt, false);
+                                && isPurchasedWithin3Days(
+                                userRsvpSnap.getTimestamp("rsvpAt"),
+                                cancelledAt);
 
                         Map<String, Object> cancelledRsvpData = new HashMap<>();
                         cancelledRsvpData.put("status", "cancelled");

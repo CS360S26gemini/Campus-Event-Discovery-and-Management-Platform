@@ -23,7 +23,7 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.repository.PaymentRepository;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
-import com.example.CampusEventDiscovery.util.MockPaymentService;
+import com.example.CampusEventDiscovery.util.StripePaymentService;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -322,33 +322,53 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     /**
-     * Processes the demo payment via MockPaymentService, saves the Payment
-     * record, then delegates RSVP creation to EventRepository.rsvpEvent()
-     * which runs an atomic Firestore transaction covering capacity check,
-     * duplicate prevention, attendees subcollection write, and rsvpCount
-     * increment. Payment fields are merged onto the RSVP document afterwards.
+     * Processes the payment via StripePaymentService, saves the Payment
+     * record, then delegates RSVP creation to EventRepository.rsvpEvent().
      */
     private void processPayment() {
-        Payment demoPayment = MockPaymentService.processPayment(effectiveUserId, eventId, totalPrice);
-        demoPayment.setPaymentMethod(resolveSelectedPaymentMethod());
-        demoPayment.setProofUrl("");
-        demoPayment.setTierId(tierId);
-        demoPayment.setTierName(tierName);
+        String selectedMethod = resolveSelectedPaymentMethod();
 
-        paymentRepository.savePayment(demoPayment, new FirestoreCallback() {
-            @Override
-            public void onSuccess(Object result) {
-                runRsvpTransaction((Payment) result);
-            }
+        StripePaymentService.processPayment(
+                effectiveUserId,
+                eventId,
+                totalPrice,
+                new StripePaymentService.PaymentCallback() {
+                    @Override
+                    public void onSuccess(Payment stripePayment) {
+                        stripePayment.setPaymentMethod(selectedMethod);
+                        stripePayment.setProofUrl("");
+                        stripePayment.setTierId(tierId);
+                        stripePayment.setTierName(tierName);
 
-            @Override
-            public void onFailure(Exception e) {
-                showLoading(false);
-                Toast.makeText(CheckoutActivity.this,
-                        getString(R.string.payment_failed_message, e.getMessage()),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
+                        paymentRepository.savePayment(stripePayment, new FirestoreCallback() {
+                            @Override
+                            public void onSuccess(Object result) {
+                                runOnUiThread(() -> runRsvpTransaction((Payment) result));
+                            }
+
+                            @Override
+                            public void onFailure(Exception e) {
+                                runOnUiThread(() -> {
+                                    showLoading(false);
+                                    Toast.makeText(CheckoutActivity.this,
+                                            getString(R.string.payment_failed_message, e.getMessage()),
+                                            Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        runOnUiThread(() -> {
+                            showLoading(false);
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.payment_failed_message, e.getMessage()),
+                                    Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }
+        );
     }
 
     private void processCreditPayment() {
