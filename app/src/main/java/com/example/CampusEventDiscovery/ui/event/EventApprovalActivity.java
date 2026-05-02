@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,6 +34,7 @@ public class EventApprovalActivity extends AppCompatActivity {
     private MaterialToolbar toolbarEventApproval;
     private TextView tvTitle, tvDateTime, tvVenue, tvDescription, tvPriceInfo;
     private com.google.android.material.button.MaterialButton btnApprove, btnReject;
+    private ProgressBar progressBarEventApproval;
 
     private String proposalId;
     private EventProposal currentProposal;
@@ -70,6 +72,7 @@ public class EventApprovalActivity extends AppCompatActivity {
         tvPriceInfo = findViewById(R.id.tvPriceInfo);
         btnApprove = findViewById(R.id.btnApprove);
         btnReject = findViewById(R.id.btnReject);
+        progressBarEventApproval = findViewById(R.id.progressBarEventApproval);
     }
 
     private void setupListeners() {
@@ -120,6 +123,7 @@ public class EventApprovalActivity extends AppCompatActivity {
     private void setActionLoading(boolean isLoading) {
         btnApprove.setEnabled(!isLoading);
         btnReject.setEnabled(!isLoading);
+        progressBarEventApproval.setVisibility(isLoading ? ProgressBar.VISIBLE : ProgressBar.GONE);
     }
 
     private void loadProposalDetails() {

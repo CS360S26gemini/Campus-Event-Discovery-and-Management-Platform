@@ -66,7 +66,7 @@ public class MemoryAdapter extends ListAdapter<Memory, MemoryAdapter.MemoryViewH
         holder.tvPhotoCount.setText(holder.itemView.getContext().getString(R.string.memory_photo_count, photoCount));
         holder.btnAddPhotos.setText(photoCount > 0
                 ? holder.itemView.getContext().getString(R.string.add_more_photos)
-                : holder.itemView.getContext().getString(R.string.create_memory_album));
+                : holder.itemView.getContext().getString(R.string.add_album_photos));
 
         String coverUrl = photoCount > 0 ? memory.getPhotoUrls().get(0) : null;
         if (!TextUtils.isEmpty(coverUrl)) {

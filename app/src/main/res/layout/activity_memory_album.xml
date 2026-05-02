@@ -16,6 +16,53 @@
         app:navigationIcon="@drawable/ic_back"
         app:title="@string/memory_album_title" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAddAlbumPhotos"
+        style="@style/AppButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_md"
+        android:layout_marginTop="@dimen/spacing_md"
+        android:layout_marginEnd="@dimen/spacing_sm"
+        android:text="@string/add_album_photos"
+        android:textAllCaps="false"
+        app:icon="@drawable/ic_add"
+        app:iconGravity="textStart"
+        app:layout_constraintEnd_toStartOf="@id/btnSelectAlbumPhotos"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbarMemoryAlbum" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSelectAlbumPhotos"
+        style="@style/AppOutlinedButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_sm"
+        android:layout_marginTop="@dimen/spacing_md"
+        android:layout_marginEnd="@dimen/spacing_md"
+        android:text="@string/select_memory_photos"
+        android:textAllCaps="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btnAddAlbumPhotos"
+        app:layout_constraintTop_toBottomOf="@id/toolbarMemoryAlbum" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRemoveSelectedPhotos"
+        style="@style/AppDangerButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_md"
+        android:layout_marginTop="@dimen/spacing_sm"
+        android:layout_marginEnd="@dimen/spacing_md"
+        android:text="@string/remove_selected_photos"
+        android:textAllCaps="false"
+        android:visibility="gone"
+        app:icon="@drawable/ic_delete"
+        app:iconGravity="textStart"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnAddAlbumPhotos" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMemoryAlbumPhotos"
         android:layout_width="0dp"
@@ -25,7 +72,17 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbarMemoryAlbum" />
+        app:layout_constraintTop_toBottomOf="@id/btnRemoveSelectedPhotos" />
+
+    <ProgressBar
+        android:id="@+id/progressBarMemoryAlbum"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnRemoveSelectedPhotos" />
 
     <TextView
         android:id="@+id/tvEmptyMemoryAlbum"
@@ -41,5 +98,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbarMemoryAlbum" />
+        app:layout_constraintTop_toBottomOf="@id/btnRemoveSelectedPhotos" />
 </androidx.constraintlayout.widget.ConstraintLayout>

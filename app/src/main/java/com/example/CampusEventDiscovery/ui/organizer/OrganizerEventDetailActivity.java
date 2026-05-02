@@ -44,7 +44,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
     private MaterialToolbar toolbarOrganizerEventDetail;
     private ImageButton btnShare;
     private TextView tvTitle, tvDateTime, tvVenue, tvRegCount;
-    private ProgressBar pbRegistrations;
+    private ProgressBar pbRegistrations, progressBarDeleteEvent;
     private MaterialButton btnWhoIsComing, btnAnnouncement, btnPayments, btnBlacklisted, btnDeleteEvent;
 
     private EventRepository repository;
@@ -103,6 +103,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
         tvVenue = findViewById(R.id.tvVenue);
         tvRegCount = findViewById(R.id.tvRegCount);
         pbRegistrations = findViewById(R.id.pbRegistrations);
+        progressBarDeleteEvent = findViewById(R.id.progressBarDeleteEvent);
         btnWhoIsComing = findViewById(R.id.btnWhoIsComing);
         btnAnnouncement = findViewById(R.id.btnAnnouncement);
         btnPayments = findViewById(R.id.btnPayments);
@@ -201,7 +202,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
             return;
         }
 
-        btnDeleteEvent.setEnabled(false);
+        setDeleteLoading(true);
         repository.deleteEvent(eventId, currentUserId, new EventRepository.ActionCallback() {
             @Override
             public void onSuccess() {
@@ -211,10 +212,18 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
 
             @Override
             public void onError(Exception e) {
-                btnDeleteEvent.setEnabled(true);
-                Toast.makeText(OrganizerEventDetailActivity.this, R.string.event_delete_failed, Toast.LENGTH_SHORT).show();
+                setDeleteLoading(false);
+                String message = e != null && !TextUtils.isEmpty(e.getMessage())
+                        ? e.getMessage()
+                        : getString(R.string.event_delete_failed);
+                Toast.makeText(OrganizerEventDetailActivity.this, message, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void setDeleteLoading(boolean isLoading) {
+        btnDeleteEvent.setEnabled(!isLoading);
+        progressBarDeleteEvent.setVisibility(isLoading ? ProgressBar.VISIBLE : ProgressBar.GONE);
     }
 
     private void loadEventDetails() {

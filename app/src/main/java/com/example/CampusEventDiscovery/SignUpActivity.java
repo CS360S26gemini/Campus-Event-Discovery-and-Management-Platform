@@ -6,6 +6,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,6 +44,8 @@ public class SignUpActivity extends AppCompatActivity {
     private MaterialButtonToggleGroup toggleUserType;
     private CheckBox cbTerms;
     private MaterialButton btnSignUp;
+    private MaterialButton btnDevBypass;
+    private ProgressBar progressBarSignUp;
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -66,9 +69,10 @@ public class SignUpActivity extends AppCompatActivity {
         toggleUserType = findViewById(R.id.toggleUserType);
         cbTerms = findViewById(R.id.cbTerms);
         btnSignUp = findViewById(R.id.btnSignUp);
+        progressBarSignUp = findViewById(R.id.progressBarSignUp);
         TextView tvTermsLink = findViewById(R.id.tvTermsLink);
         TextView tvPrivacyLink = findViewById(R.id.tvPrivacyLink);
-        MaterialButton btnDevBypass = findViewById(R.id.btnDevBypass);
+        btnDevBypass = findViewById(R.id.btnDevBypass);
 
         setupDropdowns();
 
@@ -130,13 +134,13 @@ public class SignUpActivity extends AppCompatActivity {
             return;
         }
 
-        btnSignUp.setEnabled(false);
+        setLoading(true);
 
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
                     FirebaseUser firebaseUser = authResult.getUser();
                     if (firebaseUser == null) {
-                        btnSignUp.setEnabled(true);
+                        setLoading(false);
                         Toast.makeText(SignUpActivity.this, "Auth error: User is null", Toast.LENGTH_SHORT).show();
                         return;
                     }
@@ -174,7 +178,7 @@ public class SignUpActivity extends AppCompatActivity {
                                         });
                             })
                             .addOnFailureListener(e -> {
-                                btnSignUp.setEnabled(true);
+                                setLoading(false);
                                 Toast.makeText(
                                         SignUpActivity.this,
                                         "Database error: " + e.getMessage(),
@@ -183,7 +187,7 @@ public class SignUpActivity extends AppCompatActivity {
                             });
                 })
                 .addOnFailureListener(e -> {
-                    btnSignUp.setEnabled(true);
+                    setLoading(false);
                     Toast.makeText(SignUpActivity.this, buildAuthErrorMessage(e), Toast.LENGTH_LONG).show();
                 });
     }
@@ -258,5 +262,14 @@ public class SignUpActivity extends AppCompatActivity {
         }
 
         return "Auth error: " + message;
+    }
+
+    private void setLoading(boolean isLoading) {
+        btnSignUp.setEnabled(!isLoading);
+        btnDevBypass.setEnabled(!isLoading);
+        cbTerms.setEnabled(!isLoading);
+        toggleUserType.setEnabled(!isLoading);
+        actvCampus.setEnabled(!isLoading);
+        progressBarSignUp.setVisibility(isLoading ? ProgressBar.VISIBLE : ProgressBar.GONE);
     }
 }

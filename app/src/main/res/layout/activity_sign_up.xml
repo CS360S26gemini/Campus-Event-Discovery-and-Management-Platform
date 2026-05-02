@@ -117,7 +117,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="none"
-                    android:textColor="@color/colorOnSurface" />
+                    android:textColor="?attr/colorOnSurface" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
@@ -253,7 +253,7 @@
                 android:layout_marginTop="@dimen/spacing_lg"
                 android:buttonTint="?attr/colorPrimary"
                 android:text="@string/terms_consent"
-                android:textColor="@color/colorOnSurface"
+                android:textColor="?attr/colorOnSurface"
                 android:textAppearance="?attr/textAppearanceBodyMedium" />
 
             <LinearLayout
@@ -294,6 +294,13 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_lg"
                 android:text="@string/sign_up" />
+
+            <ProgressBar
+                android:id="@+id/progressBarSignUp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDevBypass"

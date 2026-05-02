@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,6 +48,7 @@ public class TicketActivity extends AppCompatActivity {
     private TextView tvEventDate;
     private TextView tvTxnId;
     private TextView tvRefundStatus;
+    private ProgressBar progressBarTicket;
     private MaterialButton btnCancelRefund;
     private MaterialButton btnDone;
 
@@ -88,6 +90,7 @@ public class TicketActivity extends AppCompatActivity {
         tvEventDate    = findViewById(R.id.tvTicketEventDate);
         tvTxnId        = findViewById(R.id.tvTicketTxnId);
         tvRefundStatus = findViewById(R.id.tvTicketRefundStatus);
+        progressBarTicket = findViewById(R.id.progressBarTicket);
         btnCancelRefund = findViewById(R.id.btnTicketCancelRefund);
         btnDone        = findViewById(R.id.btnTicketDone);
     }
@@ -117,10 +120,10 @@ public class TicketActivity extends AppCompatActivity {
     }
 
     private void loadRefundState() {
+        setLoading(true);
         if (TextUtils.isEmpty(currentUserId) || TextUtils.isEmpty(rsvpId)) {
             tvRefundStatus.setText(getString(R.string.refund_not_signed_in_status));
-            btnCancelRefund.setEnabled(false);
-            btnCancelRefund.setAlpha(0.6f);
+            setLoading(false);
             return;
         }
 
@@ -139,19 +142,21 @@ public class TicketActivity extends AppCompatActivity {
                             Timestamp.now());
 
                     updateRefundUi();
+                    setLoading(false);
                 })
                 .addOnFailureListener(e -> {
-                    btnCancelRefund.setEnabled(false);
-                    btnCancelRefund.setAlpha(0.6f);
                     tvRefundStatus.setText(getString(R.string.refund_unavailable_status));
+                    refundEligible = false;
+                    updateActionState(false);
+                    setLoading(false);
                 });
     }
 
     private void updateRefundUi() {
         if (currentRsvp == null) {
-            btnCancelRefund.setEnabled(false);
-            btnCancelRefund.setAlpha(0.6f);
             tvRefundStatus.setText(getString(R.string.refund_unavailable_status));
+            refundEligible = false;
+            updateActionState(false);
             return;
         }
 
@@ -174,8 +179,7 @@ public class TicketActivity extends AppCompatActivity {
             tvRefundStatus.setText(getString(R.string.refund_available_status));
         }
 
-        btnCancelRefund.setEnabled(refundEligible);
-        btnCancelRefund.setAlpha(refundEligible ? 1f : 0.6f);
+        updateActionState(false);
     }
 
     private void showCancelDialog() {
@@ -195,6 +199,7 @@ public class TicketActivity extends AppCompatActivity {
                 .setTitle(R.string.cancel_rsvp)
                 .setMessage(messageRes)
                 .setPositiveButton(R.string.confirm, (dialog, which) -> {
+                    setLoading(true);
                     repository.cancelRsvp(currentUserId, rsvpId, new EventRepository.ActionCallback() {
                         @Override
                         public void onSuccess() {
@@ -210,6 +215,7 @@ public class TicketActivity extends AppCompatActivity {
 
                         @Override
                         public void onError(Exception e) {
+                            setLoading(false);
                             Toast.makeText(TicketActivity.this,
                                     getString(R.string.refund_cancel_failed),
                                     Toast.LENGTH_SHORT).show();
@@ -218,5 +224,17 @@ public class TicketActivity extends AppCompatActivity {
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
+    }
+
+    private void setLoading(boolean isLoading) {
+        progressBarTicket.setVisibility(isLoading ? ProgressBar.VISIBLE : ProgressBar.GONE);
+        btnDone.setEnabled(!isLoading);
+        updateActionState(isLoading);
+    }
+
+    private void updateActionState(boolean isLoading) {
+        boolean cancelEnabled = !isLoading && refundEligible;
+        btnCancelRefund.setEnabled(cancelEnabled);
+        btnCancelRefund.setAlpha(cancelEnabled ? 1f : 0.6f);
     }
 }

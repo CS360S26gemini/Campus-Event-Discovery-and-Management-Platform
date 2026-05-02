@@ -238,7 +238,7 @@ public class HomeOrganizerFragment extends Fragment {
 
                 loadFeaturedEvent();
 
-                repository.getUpcomingEvents(new EventRepository.EventListCallback() {
+                repository.getRecentEvents(new EventRepository.EventListCallback() {
                     @Override
                     public void onSuccess(List<Event> events) {
                         if (!isAdded()) return;
@@ -266,7 +266,7 @@ public class HomeOrganizerFragment extends Fragment {
                 }
                 loadFeaturedEvent();
 
-                repository.getUpcomingEvents(new EventRepository.EventListCallback() {
+                repository.getRecentEvents(new EventRepository.EventListCallback() {
                     @Override
                     public void onSuccess(List<Event> events) {
                         if (!isAdded()) return;

@@ -2,7 +2,9 @@ package com.example.CampusEventDiscovery.ui.profile;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -74,6 +76,11 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
     private static final String TAG = "ProfileFragment";
     private static final long TAP_FEEDBACK_DELAY_MS = 140L;
     private static final String STATE_SCROLL_Y = "profileScrollY";
+    private static final String SCROLL_PREFS_NAME = "profile_scroll_state";
+    private static final String KEY_RESTORE_SCROLL = "restoreProfileScroll";
+    private static final String KEY_RESTORE_SCROLL_Y = "restoreProfileScrollY";
+    private static final int SCROLL_RESTORE_MAX_ATTEMPTS = 8;
+    private static final long SCROLL_RESTORE_RETRY_MS = 80L;
     private static final int PROFILE_AVATAR_SIZE_DP = 96;
     private static final int DIALOG_AVATAR_SIZE_DP = 112;
     private static final int[] SKIN_SWATCHES = {
@@ -204,6 +211,7 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
         currentUserId = currentUser != null ? currentUser.getUid() : DevSessionManager.getEffectiveUserId(requireContext());
 
         bindViews(view);
+        loadPendingScrollRestoreRequest();
         setupStaticActions();
         
         // Apply existing state if we have it (e.g. during recreation)
@@ -232,6 +240,7 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
             sosListener.remove();
             sosListener = null;
         }
+        profileScrollView = null;
     }
 
     private void bindViews(View view) {
@@ -879,7 +888,7 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
                 bindDarkModeListener();
                 return;
             }
-            preserveScrollPosition();
+            preserveScrollPositionForAppearanceChange();
             ThemeManager.applyThemePreference(requireContext(), isChecked);
             if (FirebaseAuth.getInstance().getCurrentUser() != null) {
                 repository.updateDarkMode(currentUserId, isChecked);
@@ -922,7 +931,7 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.accent_color)
                 .setSingleChoiceItems(labels, ThemeManager.getAccentPreference(requireContext()), (dialog, which) -> {
-                    preserveScrollPosition();
+                    preserveScrollPositionForAppearanceChange();
                     ThemeManager.setAccentPreference(requireContext(), which);
                     bindAccentPreference();
                     dialog.dismiss();
@@ -943,11 +952,64 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
     }
 
     private void preserveScrollPosition() {
-        if (profileScrollView == null) {
+        if (profileScrollView != null) {
+            pendingScrollY = profileScrollView.getScrollY();
+        }
+        lastKnownScrollY = pendingScrollY;
+    }
+
+    private void preserveScrollPositionForAppearanceChange() {
+        preserveScrollPosition();
+        persistScrollRestoreRequest(pendingScrollY);
+    }
+
+    private void loadPendingScrollRestoreRequest() {
+        SharedPreferences prefs = getScrollPrefs();
+        if (prefs == null) {
             return;
         }
-        pendingScrollY = profileScrollView.getScrollY();
+        if (!prefs.getBoolean(KEY_RESTORE_SCROLL, false)) {
+            return;
+        }
+
+        pendingScrollY = Math.max(pendingScrollY, prefs.getInt(KEY_RESTORE_SCROLL_Y, pendingScrollY));
         lastKnownScrollY = pendingScrollY;
+    }
+
+    private void persistScrollRestoreRequest(int scrollY) {
+        SharedPreferences prefs = getScrollPrefs();
+        if (prefs == null) {
+            return;
+        }
+
+        prefs.edit()
+                .putBoolean(KEY_RESTORE_SCROLL, scrollY > 0)
+                .putInt(KEY_RESTORE_SCROLL_Y, Math.max(0, scrollY))
+                .apply();
+    }
+
+    private void clearScrollRestoreRequest() {
+        SharedPreferences prefs = getScrollPrefs();
+        if (prefs == null) {
+            return;
+        }
+
+        prefs.edit()
+                .remove(KEY_RESTORE_SCROLL)
+                .remove(KEY_RESTORE_SCROLL_Y)
+                .apply();
+    }
+
+    @Nullable
+    private SharedPreferences getScrollPrefs() {
+        Context context = getContext();
+        if (context == null) {
+            return null;
+        }
+
+        return context
+                .getApplicationContext()
+                .getSharedPreferences(SCROLL_PREFS_NAME, Context.MODE_PRIVATE);
     }
 
     private void restoreScrollPositionSoon() {
@@ -955,22 +1017,35 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
             return;
         }
 
-        profileScrollView.post(() -> {
-            if (profileScrollView != null) {
-                profileScrollView.scrollTo(0, pendingScrollY);
-            }
-        });
-        profileScrollView.postDelayed(() -> {
-            if (profileScrollView != null) {
-                profileScrollView.scrollTo(0, pendingScrollY);
-            }
-        }, 120L);
+        int targetScrollY = pendingScrollY;
+        profileScrollView.post(() -> restoreScrollPositionWhenReady(targetScrollY, 0));
+    }
+
+    private void restoreScrollPositionWhenReady(int targetScrollY, int attempt) {
+        if (profileScrollView == null) {
+            return;
+        }
+
+        View content = profileScrollView.getChildCount() > 0 ? profileScrollView.getChildAt(0) : null;
+        int maxScrollY = content == null ? 0 : Math.max(0, content.getHeight() - profileScrollView.getHeight());
+        profileScrollView.scrollTo(0, Math.min(targetScrollY, maxScrollY));
+
+        if (maxScrollY >= targetScrollY || attempt >= SCROLL_RESTORE_MAX_ATTEMPTS) {
+            clearScrollRestoreRequest();
+            return;
+        }
+
+        profileScrollView.postDelayed(
+                () -> restoreScrollPositionWhenReady(targetScrollY, attempt + 1),
+                SCROLL_RESTORE_RETRY_MS
+        );
     }
 
     @Override
     public void resetScrollToTop() {
         pendingScrollY = 0;
         lastKnownScrollY = 0;
+        clearScrollRestoreRequest();
         if (profileScrollView != null) {
             profileScrollView.post(() -> profileScrollView.scrollTo(0, 0));
         }

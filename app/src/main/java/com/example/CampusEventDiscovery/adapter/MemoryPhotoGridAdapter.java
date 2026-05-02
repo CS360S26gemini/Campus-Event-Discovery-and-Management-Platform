@@ -12,24 +12,40 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MemoryPhotoGridAdapter extends RecyclerView.Adapter<MemoryPhotoGridAdapter.PhotoViewHolder> {
 
-    public interface OnPhotoActionListener {
-        void onDeletePhoto(String photoUrl);
+    public interface OnPhotoSelectionChangedListener {
+        void onSelectionChanged(int selectedCount);
     }
 
-    private final List<String> photoUrls;
-    private final OnPhotoActionListener listener;
+    public interface OnPhotoOpenListener {
+        void onOpenPhoto(int position);
+    }
+
+    private List<String> photoUrls;
+    private final OnPhotoOpenListener openListener;
+    private final OnPhotoSelectionChangedListener selectionChangedListener;
+    private final Set<String> selectedPhotoUrls = new LinkedHashSet<>();
+    private boolean selectionMode;
 
     public MemoryPhotoGridAdapter(List<String> photoUrls) {
-        this(photoUrls, null);
+        this(photoUrls, null, null);
     }
 
-    public MemoryPhotoGridAdapter(List<String> photoUrls, OnPhotoActionListener listener) {
+    public MemoryPhotoGridAdapter(List<String> photoUrls, OnPhotoSelectionChangedListener selectionChangedListener) {
+        this(photoUrls, null, selectionChangedListener);
+    }
+
+    public MemoryPhotoGridAdapter(List<String> photoUrls,
+                                  OnPhotoOpenListener openListener,
+                                  OnPhotoSelectionChangedListener selectionChangedListener) {
         this.photoUrls = photoUrls;
-        this.listener = listener;
+        this.openListener = openListener;
+        this.selectionChangedListener = selectionChangedListener;
     }
 
     @NonNull
@@ -41,30 +57,48 @@ public class MemoryPhotoGridAdapter extends RecyclerView.Adapter<MemoryPhotoGrid
 
     @Override
     public void onBindViewHolder(@NonNull PhotoViewHolder holder, int position) {
-        holder.itemView.post(() -> {
-            ViewGroup.LayoutParams params = holder.itemView.getLayoutParams();
-            params.height = holder.itemView.getWidth();
-            holder.itemView.setLayoutParams(params);
-        });
-
         String url = photoUrls.get(position);
         if (TextUtils.isEmpty(url)) {
             holder.ivPhoto.setImageResource(R.drawable.bg_placeholder_image);
-            return;
+        } else {
+            Glide.with(holder.itemView.getContext())
+                    .load(url)
+                    .placeholder(R.drawable.bg_placeholder_image)
+                    .error(R.drawable.bg_placeholder_image)
+                    .centerCrop()
+                    .into(holder.ivPhoto);
         }
 
-        Glide.with(holder.itemView.getContext())
-                .load(url)
-                .placeholder(R.drawable.bg_placeholder_image)
-                .centerCrop()
-                .into(holder.ivPhoto);
+        boolean isSelected = selectedPhotoUrls.contains(url);
+        holder.viewSelectionOverlay.setVisibility(isSelected ? View.VISIBLE : View.GONE);
+        holder.ivSelectionCheck.setVisibility(isSelected ? View.VISIBLE : View.GONE);
+        holder.itemView.setActivated(isSelected);
 
-        holder.itemView.setOnLongClickListener(v -> {
-            if (listener != null) {
-                listener.onDeletePhoto(url);
-                return true;
+        holder.itemView.setOnClickListener(v -> {
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (adapterPosition == RecyclerView.NO_POSITION) {
+                return;
             }
-            return false;
+
+            if (selectionMode) {
+                toggleSelection(photoUrls.get(adapterPosition));
+                return;
+            }
+
+            if (openListener != null) {
+                openListener.onOpenPhoto(adapterPosition);
+            }
+        });
+        holder.itemView.setOnLongClickListener(v -> {
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (adapterPosition == RecyclerView.NO_POSITION) {
+                return false;
+            }
+            if (!selectionMode) {
+                selectionMode = true;
+            }
+            toggleSelection(photoUrls.get(adapterPosition));
+            return true;
         });
     }
 
@@ -73,12 +107,65 @@ public class MemoryPhotoGridAdapter extends RecyclerView.Adapter<MemoryPhotoGrid
         return photoUrls == null ? 0 : photoUrls.size();
     }
 
+    public void updateData(List<String> newPhotoUrls) {
+        photoUrls = newPhotoUrls;
+        selectedPhotoUrls.retainAll(newPhotoUrls);
+        dispatchSelectionChanged();
+        notifyDataSetChanged();
+    }
+
+    public void setSelectionMode(boolean enabled) {
+        selectionMode = enabled;
+        if (!enabled) {
+            selectedPhotoUrls.clear();
+            dispatchSelectionChanged();
+        }
+        notifyDataSetChanged();
+    }
+
+    public boolean isSelectionMode() {
+        return selectionMode;
+    }
+
+    public List<String> getSelectedPhotoUrls() {
+        return new java.util.ArrayList<>(selectedPhotoUrls);
+    }
+
+    private void toggleSelection(String photoUrl) {
+        if (TextUtils.isEmpty(photoUrl)) {
+            return;
+        }
+
+        if (selectedPhotoUrls.contains(photoUrl)) {
+            selectedPhotoUrls.remove(photoUrl);
+        } else {
+            selectedPhotoUrls.add(photoUrl);
+        }
+
+        if (selectedPhotoUrls.isEmpty()) {
+            selectionMode = false;
+        }
+
+        dispatchSelectionChanged();
+        notifyDataSetChanged();
+    }
+
+    private void dispatchSelectionChanged() {
+        if (selectionChangedListener != null) {
+            selectionChangedListener.onSelectionChanged(selectedPhotoUrls.size());
+        }
+    }
+
     static class PhotoViewHolder extends RecyclerView.ViewHolder {
         final ImageView ivPhoto;
+        final View viewSelectionOverlay;
+        final ImageView ivSelectionCheck;
 
         PhotoViewHolder(@NonNull View itemView) {
             super(itemView);
             ivPhoto = itemView.findViewById(R.id.ivMemoryAlbumPhoto);
+            viewSelectionOverlay = itemView.findViewById(R.id.viewMemoryPhotoSelectionOverlay);
+            ivSelectionCheck = itemView.findViewById(R.id.ivMemoryPhotoSelectionCheck);
         }
     }
 }

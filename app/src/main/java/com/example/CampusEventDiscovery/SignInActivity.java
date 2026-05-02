@@ -6,7 +6,7 @@ import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.Switch;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,8 +36,9 @@ public class SignInActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword;
     private TextView tvForgotPassword, tvCreateAccountLink;
-    private Switch switchRememberMe;
+    private com.google.android.material.materialswitch.MaterialSwitch switchRememberMe;
     private MaterialButton btnSignIn, btnDevBypass;
+    private ProgressBar progressBarSignIn;
 
     private FirebaseAuth auth;
     private EventRepository repository;
@@ -59,6 +60,7 @@ public class SignInActivity extends AppCompatActivity {
         switchRememberMe = findViewById(R.id.switchRememberMe);
         btnSignIn = findViewById(R.id.btnSignIn);
         btnDevBypass = findViewById(R.id.btnDevBypass);
+        progressBarSignIn = findViewById(R.id.progressBarSignIn);
 
         loadRememberedLogin();
 
@@ -207,13 +209,13 @@ public class SignInActivity extends AppCompatActivity {
             return;
         }
 
-        btnSignIn.setEnabled(false);
+        setLoading(true);
 
         auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
                     FirebaseUser signedInUser = authResult.getUser();
                     if (signedInUser == null) {
-                        btnSignIn.setEnabled(true);
+                        setLoading(false);
                         Toast.makeText(this, "Sign in failed: user is null", Toast.LENGTH_SHORT).show();
                         return;
                     }
@@ -222,7 +224,7 @@ public class SignInActivity extends AppCompatActivity {
                             .addOnSuccessListener(unused -> {
                                 FirebaseUser refreshedUser = auth.getCurrentUser();
                                 if (refreshedUser == null) {
-                                    btnSignIn.setEnabled(true);
+                                    setLoading(false);
                                     Toast.makeText(
                                             SignInActivity.this,
                                             "Sign in failed: account state could not be refreshed.",
@@ -253,7 +255,7 @@ public class SignInActivity extends AppCompatActivity {
                             })
                             .addOnFailureListener(e -> {
                                 auth.signOut();
-                                btnSignIn.setEnabled(true);
+                                setLoading(false);
                                 Toast.makeText(
                                         SignInActivity.this,
                                         "Could not refresh account status: " + e.getMessage(),
@@ -262,7 +264,7 @@ public class SignInActivity extends AppCompatActivity {
                             });
                 })
                 .addOnFailureListener(e -> {
-                    btnSignIn.setEnabled(true);
+                    setLoading(false);
                     Toast.makeText(this, buildSignInErrorMessage(e), Toast.LENGTH_LONG).show();
                 });
     }
@@ -277,7 +279,7 @@ public class SignInActivity extends AppCompatActivity {
                     user.sendEmailVerification()
                             .addOnSuccessListener(unused -> {
                                 auth.signOut();
-                                btnSignIn.setEnabled(true);
+                                setLoading(false);
                                 Toast.makeText(
                                         SignInActivity.this,
                                         "Verification email sent again. Check your inbox and spam folder.",
@@ -286,7 +288,7 @@ public class SignInActivity extends AppCompatActivity {
                             })
                             .addOnFailureListener(e -> {
                                 auth.signOut();
-                                btnSignIn.setEnabled(true);
+                                setLoading(false);
                                 Toast.makeText(
                                         SignInActivity.this,
                                         "Could not resend verification email: " + e.getMessage(),
@@ -296,10 +298,19 @@ public class SignInActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> {
                     auth.signOut();
-                    btnSignIn.setEnabled(true);
+                    setLoading(false);
                 })
                 .setCancelable(false)
                 .show();
+    }
+
+    private void setLoading(boolean isLoading) {
+        btnSignIn.setEnabled(!isLoading);
+        btnDevBypass.setEnabled(!isLoading);
+        switchRememberMe.setEnabled(!isLoading);
+        tvForgotPassword.setEnabled(!isLoading);
+        tvCreateAccountLink.setEnabled(!isLoading);
+        progressBarSignIn.setVisibility(isLoading ? ProgressBar.VISIBLE : ProgressBar.GONE);
     }
 
     private void openMain() {

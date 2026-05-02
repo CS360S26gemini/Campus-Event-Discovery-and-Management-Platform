@@ -69,6 +69,9 @@
             android:name="com.example.CampusEventDiscovery.ui.profile.MemoryAlbumActivity"
             android:exported="false" />
         <activity
+            android:name="com.example.CampusEventDiscovery.ui.profile.MemoryPhotoViewerActivity"
+            android:exported="false" />
+        <activity
             android:name="com.example.CampusEventDiscovery.ui.organizer.WhoIsComingActivity"
             android:exported="false" />
         <activity

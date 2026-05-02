@@ -6,6 +6,8 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -19,6 +21,7 @@ import com.example.CampusEventDiscovery.adapter.EventAdapter;
 import com.example.CampusEventDiscovery.adapter.OrganizerPendingAdapter;
 import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.EventProposal;
+import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.OrganizerProposalDetailActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
@@ -30,40 +33,41 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Organizer-focused event management screen showing approved, pending,
- * and rejected items in one place.
- */
 public class ManageEventsActivity extends AppCompatActivity {
 
+    private enum ManageFilter {
+        ALL,
+        APPROVED,
+        PENDING,
+        REJECTED,
+        PAST
+    }
+
     private MaterialToolbar toolbarManageEvents;
-    private ProgressBar progressBarSection1;
-    private ProgressBar progressBarSection2;
-    private ProgressBar progressBarSection3;
-    private TextView tvEmptySection1;
-    private TextView tvEmptySection2;
-    private TextView tvEmptySection3;
     private TextInputEditText etManageEventsSearch;
-    private RecyclerView rvSection1;
-    private RecyclerView rvSection2;
-    private RecyclerView rvSection3;
+    private AutoCompleteTextView actManageEventsFilter;
+    private TextView tvManageEventsSubtitle;
+    private TextView tvEmptyManageEvents;
+    private ProgressBar progressBarManageEvents;
+    private RecyclerView rvManageEventCards;
 
     private EventRepository repository;
     private String currentUserId;
     private String currentRole = UserRoles.ORGANIZER;
+    private boolean walkthroughMode;
+    private String searchQuery = "";
+    private ManageFilter selectedFilter = ManageFilter.APPROVED;
 
-    private EventAdapter approvedAdapter;
-    private OrganizerPendingAdapter pendingAdapter;
-    private OrganizerPendingAdapter rejectedAdapter;
+    private EventAdapter eventAdapter;
 
     private final List<Event> approvedEvents = new ArrayList<>();
+    private final List<Event> pastEvents = new ArrayList<>();
     private final List<Event> pendingEvents = new ArrayList<>();
     private final List<Event> rejectedEvents = new ArrayList<>();
-    private String searchQuery = "";
-    private boolean walkthroughMode;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -85,11 +89,11 @@ public class ManageEventsActivity extends AppCompatActivity {
         bindViews();
         setupToolbar();
         setupSearch();
-        setupRecyclerViews();
+        setupRecyclerView();
+        setupFilterSelector();
+
         if (walkthroughMode) {
-            toolbarManageEvents.setTitle(R.string.manage_events);
-            bindApprovedEvents(WalkthroughManager.getDemoEvents());
-            bindProposalSections(new ArrayList<>());
+            bindWalkthroughData();
             WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "manage_events");
         } else {
             loadRoleAndData();
@@ -101,23 +105,19 @@ public class ManageEventsActivity extends AppCompatActivity {
         super.onResume();
         if (walkthroughMode) {
             WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "manage_events");
-        } else {
-            loadRoleAndData();
+            return;
         }
+        loadRoleAndData();
     }
 
     private void bindViews() {
         toolbarManageEvents = findViewById(R.id.toolbarManageEvents);
-        progressBarSection1 = findViewById(R.id.progressBarSection1);
-        progressBarSection2 = findViewById(R.id.progressBarSection2);
-        progressBarSection3 = findViewById(R.id.progressBarSection3);
-        tvEmptySection1 = findViewById(R.id.tvEmptySection1);
-        tvEmptySection2 = findViewById(R.id.tvEmptySection2);
-        tvEmptySection3 = findViewById(R.id.tvEmptySection3);
         etManageEventsSearch = findViewById(R.id.etManageEventsSearch);
-        rvSection1 = findViewById(R.id.rvSection1);
-        rvSection2 = findViewById(R.id.rvSection2);
-        rvSection3 = findViewById(R.id.rvSection3);
+        actManageEventsFilter = findViewById(R.id.actManageEventsFilter);
+        tvManageEventsSubtitle = findViewById(R.id.tvManageEventsSubtitle);
+        tvEmptyManageEvents = findViewById(R.id.tvEmptyManageEvents);
+        progressBarManageEvents = findViewById(R.id.progressBarManageEvents);
+        rvManageEventCards = findViewById(R.id.rvManageEventCards);
     }
 
     private void setupToolbar() {
@@ -126,20 +126,25 @@ public class ManageEventsActivity extends AppCompatActivity {
 
     private void setupSearch() {
         etManageEventsSearch.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void afterTextChanged(Editable s) {}
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 searchQuery = s == null ? "" : s.toString().trim();
-                applyFilters();
+                renderSelectedFilter();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
             }
         });
     }
 
-    private void setupRecyclerViews() {
-        approvedAdapter = new EventAdapter(
-                approvedEvents,
+    private void setupRecyclerView() {
+        eventAdapter = new EventAdapter(
+                new ArrayList<>(),
                 Collections.emptySet(),
                 null,
                 new EventAdapter.OnEventClickListener() {
@@ -149,132 +154,198 @@ public class ManageEventsActivity extends AppCompatActivity {
                             return;
                         }
 
-                        Intent intent = new Intent(ManageEventsActivity.this, OrganizerEventDetailActivity.class);
-                        intent.putExtra("eventId", event.getEventId());
-                        startActivity(intent);
+                        String status = event.getStatus();
+                        if ("pending".equalsIgnoreCase(status) || "rejected".equalsIgnoreCase(status)) {
+                            openProposalDetail(event);
+                        } else {
+                            Intent intent = new Intent(ManageEventsActivity.this, OrganizerEventDetailActivity.class);
+                            intent.putExtra("eventId", event.getEventId());
+                            startActivity(intent);
+                        }
                     }
 
                     @Override
                     public void onHeartClick(Event event, boolean isCurrentlySaved) {
-                        // no-op for organizer management
                     }
 
                     @Override
                     public void onItemLongClick(Event event) {
-                        // no-op for organizer management
                     }
                 }
         );
 
-        pendingAdapter = new OrganizerPendingAdapter(pendingEvents, this::openProposalDetail);
-        rejectedAdapter = new OrganizerPendingAdapter(rejectedEvents, this::openProposalDetail);
+        rvManageEventCards.setLayoutManager(new LinearLayoutManager(this));
+        rvManageEventCards.setAdapter(eventAdapter);
+    }
 
-        rvSection1.setLayoutManager(new LinearLayoutManager(this));
-        rvSection1.setNestedScrollingEnabled(false);
-        rvSection1.setAdapter(approvedAdapter);
+    private void setupFilterSelector() {
+        String[] items = new String[] {
+                getString(R.string.manage_events_tab_all),
+                getString(R.string.manage_events_tab_approved),
+                getString(R.string.manage_events_tab_pending),
+                getString(R.string.manage_events_tab_rejected),
+                getString(R.string.manage_events_tab_past)
+        };
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_dropdown_item_1line,
+                items
+        );
+        actManageEventsFilter.setAdapter(adapter);
+        actManageEventsFilter.setText(getString(R.string.manage_events_tab_approved), false);
+        actManageEventsFilter.setOnItemClickListener((parent, view, position, id) -> {
+            switch (position) {
+                case 0:
+                    selectFilter(ManageFilter.ALL);
+                    break;
+                case 1:
+                    selectFilter(ManageFilter.APPROVED);
+                    break;
+                case 2:
+                    selectFilter(ManageFilter.PENDING);
+                    break;
+                case 3:
+                    selectFilter(ManageFilter.REJECTED);
+                    break;
+                default:
+                    selectFilter(ManageFilter.PAST);
+                    break;
+            }
+        });
+    }
 
-        rvSection2.setLayoutManager(new LinearLayoutManager(this));
-        rvSection2.setNestedScrollingEnabled(false);
-        rvSection2.setAdapter(pendingAdapter);
-
-        rvSection3.setLayoutManager(new LinearLayoutManager(this));
-        rvSection3.setNestedScrollingEnabled(false);
-        rvSection3.setAdapter(rejectedAdapter);
+    private void bindWalkthroughData() {
+        approvedEvents.clear();
+        approvedEvents.addAll(WalkthroughManager.getDemoEvents());
+        pendingEvents.clear();
+        rejectedEvents.clear();
+        pastEvents.clear();
+        showLoading(false);
+        renderSelectedFilter();
     }
 
     private void loadRoleAndData() {
         if (DevSessionManager.shouldUseBypass(this)) {
             currentRole = DevSessionManager.getBypassRole(this);
-            loadData();
+            loadAllData();
             return;
         }
 
         if (TextUtils.isEmpty(currentUserId)) {
-            loadData();
+            loadAllData();
             return;
         }
 
         repository.getUserData(currentUserId, new EventRepository.UserCallback() {
             @Override
-            public void onSuccess(com.example.CampusEventDiscovery.model.User user) {
+            public void onSuccess(User user) {
                 currentRole = user == null ? UserRoles.ORGANIZER : UserRoles.sanitize(user.getRole());
                 if (TextUtils.isEmpty(currentRole)) {
                     currentRole = UserRoles.ORGANIZER;
                 }
-                loadData();
+                loadAllData();
             }
 
             @Override
             public void onError(Exception e) {
-                loadData();
+                loadAllData();
             }
         });
     }
 
-    private void loadData() {
-        if (UserRoles.isAdmin(currentRole)) {
-            toolbarManageEvents.setTitle(R.string.admin_all_active_events);
-        } else {
-            toolbarManageEvents.setTitle(R.string.manage_events);
-        }
-        loadApprovedEvents();
-        loadProposals();
+    private void loadAllData() {
+        toolbarManageEvents.setTitle(UserRoles.isAdmin(currentRole)
+                ? getString(R.string.admin_all_events)
+                : getString(R.string.manage_events));
+        showLoading(true);
+
+        loadApprovedEvents(new Runnable() {
+            @Override
+            public void run() {
+                loadPastEvents(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadProposals(new Runnable() {
+                            @Override
+                            public void run() {
+                                showLoading(false);
+                                renderSelectedFilter();
+                            }
+                        });
+                    }
+                });
+            }
+        });
     }
 
-    private void loadApprovedEvents() {
-        setLoading(progressBarSection1, true);
-
-        if (!UserRoles.isAdmin(currentRole) && TextUtils.isEmpty(currentUserId)) {
-            bindApprovedEvents(new ArrayList<>());
-            return;
-        }
-
+    private void loadApprovedEvents(Runnable next) {
         EventRepository.EventListCallback callback = new EventRepository.EventListCallback() {
             @Override
             public void onSuccess(List<Event> events) {
-                bindApprovedEvents(events);
+                approvedEvents.clear();
+                if (events != null) {
+                    approvedEvents.addAll(events);
+                }
+                next.run();
             }
 
             @Override
             public void onError(Exception e) {
-                bindApprovedEvents(new ArrayList<>());
+                approvedEvents.clear();
+                next.run();
             }
         };
 
         if (UserRoles.isAdmin(currentRole)) {
             repository.getAllActiveEvents(callback);
+        } else if (TextUtils.isEmpty(currentUserId)) {
+            approvedEvents.clear();
+            next.run();
         } else {
             repository.getOrganizerEvents(currentUserId, callback);
         }
     }
 
-    private void bindApprovedEvents(List<Event> events) {
-        approvedEvents.clear();
-        if (events != null) {
-            approvedEvents.addAll(events);
+    private void loadPastEvents(Runnable next) {
+        EventRepository.EventListCallback callback = new EventRepository.EventListCallback() {
+            @Override
+            public void onSuccess(List<Event> events) {
+                pastEvents.clear();
+                if (events != null) {
+                    pastEvents.addAll(events);
+                }
+                next.run();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                pastEvents.clear();
+                next.run();
+            }
+        };
+
+        if (UserRoles.isAdmin(currentRole)) {
+            repository.getAllPastEvents(callback);
+        } else if (TextUtils.isEmpty(currentUserId)) {
+            pastEvents.clear();
+            next.run();
+        } else {
+            repository.getOrganizerPastEvents(currentUserId, callback);
         }
-        applyFilters();
-        setLoading(progressBarSection1, false);
     }
 
-    private void loadProposals() {
-        setLoading(progressBarSection2, true);
-        setLoading(progressBarSection3, true);
-
-        if (!UserRoles.isAdmin(currentRole) && TextUtils.isEmpty(currentUserId)) {
-            bindProposalSections(new ArrayList<>());
-            return;
-        }
-
+    private void loadProposals(Runnable next) {
         EventRepository.ProposalListCallback callback = new EventRepository.ProposalListCallback() {
             @Override
             public void onSuccess(List<EventProposal> proposals) {
                 bindProposalSections(proposals);
+                next.run();
             }
 
             @Override
             public void onError(Exception e) {
                 bindProposalSections(new ArrayList<>());
+                next.run();
             }
         };
 
@@ -303,6 +374,9 @@ public class ManageEventsActivity extends AppCompatActivity {
                     callback.onError(e);
                 }
             });
+        } else if (TextUtils.isEmpty(currentUserId)) {
+            bindProposalSections(new ArrayList<>());
+            next.run();
         } else {
             repository.getOrganizerProposals(currentUserId, callback);
         }
@@ -323,10 +397,12 @@ public class ManageEventsActivity extends AppCompatActivity {
             }
         }
 
-        applyFilters();
-
-        setLoading(progressBarSection2, false);
-        setLoading(progressBarSection3, false);
+        Comparator<Event> newestFirst = Comparator.comparing(
+                Event::getCreatedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())
+        );
+        pendingEvents.sort(newestFirst);
+        rejectedEvents.sort(newestFirst);
     }
 
     private Event proposalToEvent(EventProposal proposal) {
@@ -335,9 +411,12 @@ public class ManageEventsActivity extends AppCompatActivity {
         event.setTitle(proposal.getTitle());
         event.setDescription(proposal.getDescription());
         event.setDate(proposal.getDate());
+        event.setEndTime(proposal.getEndTime());
         event.setLocation(proposal.getLocation());
         event.setCapacity(proposal.getCapacity());
         event.setStatus(proposal.getStatus());
+        event.setThumbnailUrl(proposal.getThumbnailUrl());
+        event.setCreatedAt(proposal.getSubmittedAt());
         return event;
     }
 
@@ -351,21 +430,25 @@ public class ManageEventsActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void applyFilters() {
-        List<Event> filteredApproved = filterEvents(approvedEvents);
-        List<Event> filteredPending = filterEvents(pendingEvents);
-        List<Event> filteredRejected = filterEvents(rejectedEvents);
+    private void selectFilter(ManageFilter filter) {
+        if (selectedFilter == filter) {
+            return;
+        }
+        selectedFilter = filter;
+        updateSubtitle();
+        renderSelectedFilter();
+    }
 
-        approvedAdapter.updateData(filteredApproved);
-        pendingAdapter.updateData(filteredPending);
-        rejectedAdapter.updateData(filteredRejected);
+    private void updateSubtitle() {
+        tvManageEventsSubtitle.setText(getFilterTitleRes(selectedFilter));
+    }
 
-        tvEmptySection1.setVisibility(filteredApproved.isEmpty() ? View.VISIBLE : View.GONE);
-        rvSection1.setVisibility(filteredApproved.isEmpty() ? View.GONE : View.VISIBLE);
-        tvEmptySection2.setVisibility(filteredPending.isEmpty() ? View.VISIBLE : View.GONE);
-        rvSection2.setVisibility(filteredPending.isEmpty() ? View.GONE : View.VISIBLE);
-        tvEmptySection3.setVisibility(filteredRejected.isEmpty() ? View.VISIBLE : View.GONE);
-        rvSection3.setVisibility(filteredRejected.isEmpty() ? View.GONE : View.VISIBLE);
+    private void renderSelectedFilter() {
+        List<Event> filtered = filterEvents(getSourceForFilter(selectedFilter));
+        eventAdapter.updateData(filtered);
+        rvManageEventCards.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
+        tvEmptyManageEvents.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+        tvEmptyManageEvents.setText(getEmptyTextRes(selectedFilter));
     }
 
     private List<Event> filterEvents(List<Event> source) {
@@ -391,11 +474,72 @@ public class ManageEventsActivity extends AppCompatActivity {
         return filtered;
     }
 
+    private List<Event> getSourceForFilter(ManageFilter filter) {
+        if (filter == ManageFilter.ALL) {
+            List<Event> combined = new ArrayList<>();
+            combined.addAll(approvedEvents);
+            combined.addAll(pendingEvents);
+            combined.addAll(rejectedEvents);
+            combined.addAll(pastEvents);
+            combined.sort(Comparator.comparing(
+                    Event::getCreatedAt,
+                    Comparator.nullsLast(Comparator.reverseOrder())
+            ));
+            return combined;
+        }
+        if (filter == ManageFilter.PENDING) {
+            return new ArrayList<>(pendingEvents);
+        }
+        if (filter == ManageFilter.REJECTED) {
+            return new ArrayList<>(rejectedEvents);
+        }
+        if (filter == ManageFilter.PAST) {
+            return new ArrayList<>(pastEvents);
+        }
+        return new ArrayList<>(approvedEvents);
+    }
+
     private String safeText(String value) {
         return value == null ? "" : value;
     }
 
-    private void setLoading(ProgressBar progressBar, boolean isLoading) {
-        progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+    private int getFilterTitleRes(ManageFilter filter) {
+        switch (filter) {
+            case ALL:
+                return R.string.manage_events_tab_all;
+            case PENDING:
+                return R.string.manage_events_tab_pending;
+            case REJECTED:
+                return R.string.manage_events_tab_rejected;
+            case PAST:
+                return R.string.manage_events_tab_past;
+            default:
+                return R.string.manage_events_tab_approved;
+        }
+    }
+
+    private int getEmptyTextRes(ManageFilter filter) {
+        switch (filter) {
+            case ALL:
+                return R.string.no_events_found;
+            case PENDING:
+                return R.string.no_pending_events;
+            case REJECTED:
+                return R.string.no_rejected_proposals;
+            case PAST:
+                return R.string.no_past_events;
+            default:
+                return UserRoles.isAdmin(currentRole)
+                        ? R.string.no_active_events
+                        : R.string.no_managed_events_help;
+        }
+    }
+
+    private void showLoading(boolean isLoading) {
+        progressBarManageEvents.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        if (isLoading) {
+            rvManageEventCards.setVisibility(View.GONE);
+            tvEmptyManageEvents.setVisibility(View.GONE);
+        }
     }
 }

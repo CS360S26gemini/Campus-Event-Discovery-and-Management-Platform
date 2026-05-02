@@ -130,6 +130,7 @@
     <string name="accent_teal">Teal</string>
     <string name="accent_updated">Accent updated.</string>
     <string name="manage_events">Manage Events</string>
+    <string name="admin_all_events">All Events</string>
     <string name="view_event_calendar">View Event Calendar</string>
     <string name="account_settings">Account Settings</string>
     <string name="account_name_label">Account Name</string>
@@ -280,9 +281,18 @@
     <string name="approved_events_label">Approved Events</string>
     <string name="pending_events_label">Pending Events</string>
     <string name="rejected_proposals_label">Rejected Proposals</string>
+    <string name="manage_events_tab_approved">Approved</string>
+    <string name="manage_events_tab_all">All</string>
+    <string name="manage_events_tab_pending">Pending</string>
+    <string name="manage_events_tab_rejected">Rejected</string>
+    <string name="manage_events_tab_past">Past</string>
     <string name="no_approved_events">No approved events yet</string>
     <string name="no_pending_events">No pending proposals yet</string>
     <string name="no_rejected_proposals">No rejected proposals</string>
+    <string name="no_past_events">No past events yet</string>
+    <string name="no_active_events">No active events right now</string>
+    <string name="show_label">Show</string>
+    <string name="manage_events_filter_hint">Select view</string>
     <string name="pending_badge">PENDING</string>
     <string name="approved_badge">APPROVED</string>
     <string name="rejected_badge">REJECTED</string>
@@ -429,16 +439,28 @@
     <string name="unread_notification">Unread</string>
     <string name="memories_title">Memory Folders</string>
     <string name="memories_row">My Memories</string>
-    <string name="no_memories">No attended events yet</string>
+    <string name="no_memories">No memory albums yet</string>
     <string name="memory_rating">Rating: %1$d/5</string>
     <string name="memory_photo_count">%1$d photo(s)</string>
+    <string name="create_memory">Create memory</string>
+    <string name="choose_memory_event_title">Choose registered event</string>
+    <string name="memory_album_created">Memory album created</string>
+    <string name="memory_album_create_failed">Could not create memory album</string>
+    <string name="no_registered_events_for_memories">Register for an event before creating memories</string>
+    <string name="all_registered_events_have_memories">All registered events already have memory albums</string>
     <string name="create_memory_album">Create album</string>
     <string name="add_more_photos">Add photos</string>
+    <string name="add_album_photos">Add photos</string>
     <string name="view_memories">View memories</string>
     <string name="memory_album_title">Event Memories</string>
     <string name="memory_photos_saved">Photos added to memories</string>
     <string name="memory_photos_failed">Could not add photos</string>
     <string name="select_memory_photos">Select photos</string>
+    <string name="memory_selected_photos">Selected photos</string>
+    <string name="remove_selected_photos">Remove selected</string>
+    <string name="remove_selected_photos_count">Remove selected (%1$d)</string>
+    <string name="delete_selected_memory_photos_message">This will remove %1$d selected photo(s) from this memory folder.</string>
+    <string name="memory_registered_event">Registered event</string>
     <string name="memory_album_empty">No photos in this event folder yet.</string>
     <string name="memory_uploading_photos">Uploading photos...</string>
     <string name="delete_memory_folder">Delete folder</string>
@@ -450,6 +472,8 @@
     <string name="delete_memory_photo_message">This will remove the selected photo from this memory folder.</string>
     <string name="memory_photo_deleted">Photo removed from memory folder</string>
     <string name="memory_photo_delete_failed">Could not remove photo</string>
+    <string name="memory_photo_position">%1$d of %2$d</string>
+    <string name="memory_viewer_empty">No photos to view</string>
     <string name="delete">Delete</string>
 
     <!-- Admin Screens -->

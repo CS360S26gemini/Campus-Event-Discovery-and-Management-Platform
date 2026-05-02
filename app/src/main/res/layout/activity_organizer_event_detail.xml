@@ -228,6 +228,14 @@
                     android:layout_marginTop="@dimen/spacing_md"
                     android:text="@string/delete_event" />
 
+                <ProgressBar
+                    android:id="@+id/progressBarDeleteEvent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="@dimen/spacing_sm"
+                    android:visibility="gone" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

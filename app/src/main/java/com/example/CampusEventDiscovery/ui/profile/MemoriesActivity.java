@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -19,6 +20,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.adapter.MemoryAdapter;
+import com.example.CampusEventDiscovery.adapter.MemoryEventPickerAdapter;
+import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.model.Memory;
 import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.repository.EventRepository;
@@ -26,13 +29,19 @@ import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Displays the current user's event-based memory albums.
@@ -40,6 +49,7 @@ import java.util.Map;
 public class MemoriesActivity extends AppCompatActivity {
 
     private MaterialToolbar toolbarMemories;
+    private MaterialButton btnCreateMemory;
     private RecyclerView rvMemories;
     private ProgressBar progressBarMemories;
     private TextView tvEmptyMemories;
@@ -48,8 +58,17 @@ public class MemoriesActivity extends AppCompatActivity {
     private MemoryAdapter adapter;
     private String currentUserId;
     private final List<Memory> memories = new ArrayList<>();
+    private final List<Rsvp> registeredRsvps = new ArrayList<>();
     private final List<Uri> selectedImageUris = new ArrayList<>();
     private Memory selectedMemory;
+    private boolean walkthroughMode;
+
+    private final ActivityResultLauncher<Intent> albumLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (!walkthroughMode && result.getResultCode() == RESULT_OK) {
+                    loadMemories();
+                }
+            });
 
     private final ActivityResultLauncher<String[]> photoPickerLauncher =
             registerForActivityResult(new ActivityResultContracts.OpenMultipleDocuments(), uris -> {
@@ -74,11 +93,20 @@ public class MemoriesActivity extends AppCompatActivity {
         currentUserId = currentUser != null
                 ? currentUser.getUid()
                 : DevSessionManager.getEffectiveUserId(this);
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
 
         bindViews();
         setupToolbar();
         setupRecyclerView();
-        if (WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive()) {
+        setupActions();
+        if (walkthroughMode) {
+            Rsvp demoRsvp = new Rsvp();
+            demoRsvp.setEventId(WalkthroughManager.getDemoEvent().getEventId());
+            demoRsvp.setTitle(WalkthroughManager.getDemoEvent().getTitle());
+            demoRsvp.setDate(WalkthroughManager.getDemoEvent().getDate());
+            demoRsvp.setStatus("confirmed");
+            registeredRsvps.clear();
+            registeredRsvps.add(demoRsvp);
             bindMemories(java.util.Collections.singletonList(new Memory(
                     WalkthroughManager.getDemoEvent().getEventId(),
                     WalkthroughManager.getDemoEvent().getTitle(),
@@ -94,6 +122,7 @@ public class MemoriesActivity extends AppCompatActivity {
 
     private void bindViews() {
         toolbarMemories = findViewById(R.id.toolbarMemories);
+        btnCreateMemory = findViewById(R.id.btnCreateMemory);
         rvMemories = findViewById(R.id.rvMemories);
         progressBarMemories = findViewById(R.id.progressBarMemories);
         tvEmptyMemories = findViewById(R.id.tvEmptyMemories);
@@ -101,6 +130,10 @@ public class MemoriesActivity extends AppCompatActivity {
 
     private void setupToolbar() {
         toolbarMemories.setNavigationOnClickListener(v -> finish());
+    }
+
+    private void setupActions() {
+        btnCreateMemory.setOnClickListener(v -> showCreateMemoryPicker());
     }
 
     private void setupRecyclerView() {
@@ -132,10 +165,29 @@ public class MemoriesActivity extends AppCompatActivity {
             return;
         }
 
-        repository.getAttendedRsvpsForMemories(currentUserId, new EventRepository.RsvpListCallback() {
+        repository.getRegisteredRsvpsForMemories(currentUserId, new EventRepository.RsvpListCallback() {
             @Override
             public void onSuccess(List<Rsvp> rsvps) {
-                loadMemoryAlbums(rsvps);
+                registeredRsvps.clear();
+                if (rsvps != null) {
+                    registeredRsvps.addAll(rsvps);
+                }
+                loadMemoryAlbums();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                registeredRsvps.clear();
+                bindMemories(new ArrayList<>());
+            }
+        });
+    }
+
+    private void loadMemoryAlbums() {
+        repository.getMemories(currentUserId, new EventRepository.MemoryListCallback() {
+            @Override
+            public void onSuccess(List<Memory> storedMemories) {
+                bindMemories(buildMemoryAlbums(storedMemories));
             }
 
             @Override
@@ -145,37 +197,15 @@ public class MemoriesActivity extends AppCompatActivity {
         });
     }
 
-    private void loadMemoryAlbums(List<Rsvp> rsvps) {
-        repository.getMemories(currentUserId, new EventRepository.MemoryListCallback() {
-            @Override
-            public void onSuccess(List<Memory> storedMemories) {
-                bindMemories(mergeRsvpsWithMemories(rsvps, storedMemories));
-            }
-
-            @Override
-            public void onError(Exception e) {
-                bindMemories(mergeRsvpsWithMemories(rsvps, new ArrayList<>()));
-            }
-        });
-    }
-
-    private List<Memory> mergeRsvpsWithMemories(List<Rsvp> rsvps, List<Memory> storedMemories) {
-        Map<String, Memory> albumsByEvent = new LinkedHashMap<>();
-
-        if (rsvps != null) {
-            for (Rsvp rsvp : rsvps) {
-                if (rsvp == null || TextUtils.isEmpty(rsvp.getEventId())) {
-                    continue;
-                }
-                albumsByEvent.put(rsvp.getEventId(), new Memory(
-                        rsvp.getEventId(),
-                        rsvp.getTitle(),
-                        new ArrayList<>(),
-                        rsvp.getDate(),
-                        0
-                ));
+    private List<Memory> buildMemoryAlbums(List<Memory> storedMemories) {
+        Map<String, Rsvp> rsvpsByEvent = new LinkedHashMap<>();
+        for (Rsvp rsvp : registeredRsvps) {
+            if (rsvp != null && !TextUtils.isEmpty(rsvp.getEventId())) {
+                rsvpsByEvent.put(rsvp.getEventId(), rsvp);
             }
         }
+
+        Map<String, Memory> albumsByEvent = new LinkedHashMap<>();
 
         if (storedMemories != null) {
             for (Memory stored : storedMemories) {
@@ -185,14 +215,26 @@ public class MemoriesActivity extends AppCompatActivity {
 
                 Memory album = albumsByEvent.get(stored.getEventId());
                 if (album == null) {
-                    continue;
+                    album = new Memory(
+                            stored.getEventId(),
+                            stored.getEventTitle(),
+                            new ArrayList<>(),
+                            stored.getAttendedAt(),
+                            stored.getRating()
+                    );
+                    albumsByEvent.put(stored.getEventId(), album);
                 }
 
+                Rsvp rsvp = rsvpsByEvent.get(stored.getEventId());
                 if (TextUtils.isEmpty(album.getEventTitle())) {
-                    album.setEventTitle(stored.getEventTitle());
+                    album.setEventTitle(rsvp != null && !TextUtils.isEmpty(rsvp.getTitle())
+                            ? rsvp.getTitle()
+                            : stored.getEventTitle());
                 }
                 if (album.getAttendedAt() == null) {
-                    album.setAttendedAt(stored.getAttendedAt());
+                    album.setAttendedAt(rsvp != null && rsvp.getDate() != null
+                            ? rsvp.getDate()
+                            : stored.getAttendedAt());
                 }
                 if (album.getRating() <= 0) {
                     album.setRating(stored.getRating());
@@ -214,6 +256,102 @@ public class MemoriesActivity extends AppCompatActivity {
         }
 
         return new ArrayList<>(albumsByEvent.values());
+    }
+
+    private void showCreateMemoryPicker() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: memory album was not created.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (TextUtils.isEmpty(currentUserId)) {
+            Toast.makeText(this, R.string.login_required_for_checkout, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (registeredRsvps.isEmpty()) {
+            Toast.makeText(this, R.string.no_registered_events_for_memories, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        List<Rsvp> available = getRsvpsWithoutAlbums();
+        if (available.isEmpty()) {
+            Toast.makeText(this, R.string.all_registered_events_have_memories, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        setLoading(true);
+        repository.getEventsByIds(extractEventIds(available), new EventRepository.EventListCallback() {
+            @Override
+            public void onSuccess(List<Event> events) {
+                setLoading(false);
+                showCreateMemoryEventDialog(available, events);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                setLoading(false);
+                showCreateMemoryEventDialog(available, new ArrayList<>());
+            }
+        });
+    }
+
+    private List<Rsvp> getRsvpsWithoutAlbums() {
+        Set<String> existingAlbumIds = new HashSet<>();
+        for (Memory memory : memories) {
+            if (memory != null && !TextUtils.isEmpty(memory.getEventId())) {
+                existingAlbumIds.add(memory.getEventId());
+            }
+        }
+
+        List<Rsvp> available = new ArrayList<>();
+        for (Rsvp rsvp : registeredRsvps) {
+            if (rsvp != null
+                    && !TextUtils.isEmpty(rsvp.getEventId())
+                    && !existingAlbumIds.contains(rsvp.getEventId())) {
+                available.add(rsvp);
+            }
+        }
+        return available;
+    }
+
+    private void createMemoryAlbum(Rsvp rsvp) {
+        if (rsvp == null || TextUtils.isEmpty(rsvp.getEventId())) {
+            return;
+        }
+
+        String eventTitle = TextUtils.isEmpty(rsvp.getTitle())
+                ? getString(R.string.memory_album_title)
+                : rsvp.getTitle();
+        Timestamp attendedAt = rsvp.getDate();
+
+        setLoading(true);
+        repository.createMemoryAlbum(currentUserId, rsvp.getEventId(), eventTitle, attendedAt,
+                new EventRepository.ActionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        setLoading(false);
+                        Toast.makeText(MemoriesActivity.this, R.string.memory_album_created, Toast.LENGTH_SHORT).show();
+                        Memory createdMemory = new Memory(
+                                rsvp.getEventId(),
+                                eventTitle,
+                                new ArrayList<>(),
+                                attendedAt,
+                                0
+                        );
+                        memories.add(0, createdMemory);
+                        adapter.updateData(new ArrayList<>(memories));
+                        tvEmptyMemories.setVisibility(View.GONE);
+                        rvMemories.setVisibility(View.VISIBLE);
+                        openMemoryAlbum(createdMemory);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        setLoading(false);
+                        Toast.makeText(MemoriesActivity.this, R.string.memory_album_create_failed, Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void bindMemories(List<Memory> items) {
@@ -326,8 +464,9 @@ public class MemoriesActivity extends AppCompatActivity {
         Intent intent = new Intent(this, MemoryAlbumActivity.class);
         intent.putExtra(MemoryAlbumActivity.EXTRA_EVENT_ID, memory.getEventId());
         intent.putExtra(MemoryAlbumActivity.EXTRA_EVENT_TITLE, memory.getEventTitle());
+        intent.putExtra(MemoryAlbumActivity.EXTRA_ATTENDED_AT_MILLIS, timestampMillis(memory.getAttendedAt()));
         intent.putStringArrayListExtra(MemoryAlbumActivity.EXTRA_PHOTO_URLS, photoUrls);
-        startActivity(intent);
+        albumLauncher.launch(intent);
     }
 
     private void confirmDeleteMemory(Memory memory) {
@@ -372,5 +511,94 @@ public class MemoriesActivity extends AppCompatActivity {
 
     private void setLoading(boolean isLoading) {
         progressBarMemories.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        btnCreateMemory.setEnabled(!isLoading);
+    }
+
+    private String formatRsvpLabel(Rsvp rsvp) {
+        String title = rsvp == null || TextUtils.isEmpty(rsvp.getTitle())
+                ? getString(R.string.memory_album_title)
+                : rsvp.getTitle();
+        if (rsvp == null || rsvp.getDate() == null) {
+            return title;
+        }
+        String date = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(rsvp.getDate().toDate());
+        return title + "\n" + date;
+    }
+
+    private long timestampMillis(Timestamp timestamp) {
+        return timestamp == null ? -1L : timestamp.toDate().getTime();
+    }
+
+    private List<String> extractEventIds(List<Rsvp> rsvps) {
+        List<String> eventIds = new ArrayList<>();
+        if (rsvps == null) {
+            return eventIds;
+        }
+        for (Rsvp rsvp : rsvps) {
+            if (rsvp != null && !TextUtils.isEmpty(rsvp.getEventId())) {
+                eventIds.add(rsvp.getEventId());
+            }
+        }
+        return eventIds;
+    }
+
+    private void showCreateMemoryEventDialog(List<Rsvp> availableRsvps, List<Event> fetchedEvents) {
+        Map<String, Rsvp> rsvpByEventId = new LinkedHashMap<>();
+        if (availableRsvps != null) {
+            for (Rsvp rsvp : availableRsvps) {
+                if (rsvp != null && !TextUtils.isEmpty(rsvp.getEventId())) {
+                    rsvpByEventId.put(rsvp.getEventId(), rsvp);
+                }
+            }
+        }
+
+        Map<String, Event> fetchedById = new LinkedHashMap<>();
+        if (fetchedEvents != null) {
+            for (Event event : fetchedEvents) {
+                if (event != null && !TextUtils.isEmpty(event.getEventId())) {
+                    fetchedById.put(event.getEventId(), event);
+                }
+            }
+        }
+
+        List<Event> displayEvents = new ArrayList<>();
+        for (Rsvp rsvp : availableRsvps) {
+            if (rsvp == null || TextUtils.isEmpty(rsvp.getEventId())) {
+                continue;
+            }
+
+            Event baseEvent = fetchedById.get(rsvp.getEventId());
+            Event displayEvent = baseEvent != null ? baseEvent : new Event();
+            displayEvent.setEventId(rsvp.getEventId());
+            if (TextUtils.isEmpty(displayEvent.getTitle())) {
+                displayEvent.setTitle(rsvp.getTitle());
+            }
+            if (displayEvent.getDate() == null) {
+                displayEvent.setDate(rsvp.getDate());
+            }
+            displayEvents.add(displayEvent);
+        }
+
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_memory_event_picker, null, false);
+        RecyclerView rvPicker = dialogView.findViewById(R.id.rvMemoryEventPicker);
+        TextView tvEmpty = dialogView.findViewById(R.id.tvMemoryEventPickerEmpty);
+
+        rvPicker.setLayoutManager(new LinearLayoutManager(this));
+        tvEmpty.setVisibility(displayEvents.isEmpty() ? View.VISIBLE : View.GONE);
+        rvPicker.setVisibility(displayEvents.isEmpty() ? View.GONE : View.VISIBLE);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.choose_memory_event_title)
+                .setView(dialogView)
+                .setNegativeButton(R.string.cancel, null)
+                .create();
+
+        rvPicker.setAdapter(new MemoryEventPickerAdapter(displayEvents, event -> {
+            dialog.dismiss();
+            Rsvp selectedRsvp = event == null ? null : rsvpByEventId.get(event.getEventId());
+            createMemoryAlbum(selectedRsvp);
+        }));
+
+        dialog.show();
     }
 }

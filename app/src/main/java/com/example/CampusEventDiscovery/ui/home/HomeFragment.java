@@ -268,7 +268,7 @@ public class HomeFragment extends Fragment {
                 loadFeaturedEvent();
                 loadRecommendations(user == null ? null : user.getInterests());
 
-                repository.getUpcomingEvents(new EventRepository.EventListCallback() {
+                repository.getRecentEvents(new EventRepository.EventListCallback() {
                     @Override
                     public void onSuccess(List<Event> events) {
                         if (!isAdded()) return;
@@ -297,7 +297,7 @@ public class HomeFragment extends Fragment {
                 loadFeaturedEvent();
                 hideRecommendations();
 
-                repository.getUpcomingEvents(new EventRepository.EventListCallback() {
+                repository.getRecentEvents(new EventRepository.EventListCallback() {
                     @Override
                     public void onSuccess(List<Event> events) {
                         if (!isAdded()) return;

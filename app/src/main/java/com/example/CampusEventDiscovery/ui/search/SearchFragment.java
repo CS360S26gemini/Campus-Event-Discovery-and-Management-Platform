@@ -356,6 +356,13 @@ public class SearchFragment extends Fragment {
         List<Event> sortedEvents = events == null ? new ArrayList<>() : new ArrayList<>(events);
 
         if (selectedSortMode == SortMode.RELEVANCE) {
+            if (query == null || query.trim().isEmpty()) {
+                sortedEvents.sort(Comparator.comparing(
+                        Event::getCreatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                ));
+                return sortedEvents;
+            }
             sortedEvents.sort(Comparator.comparingInt((Event event) -> relevanceScore(event, query)).reversed());
             return sortedEvents;
         }

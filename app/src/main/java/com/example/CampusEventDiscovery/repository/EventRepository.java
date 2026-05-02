@@ -14,6 +14,7 @@ import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.model.VendorProposal;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.EventTimeUtils;
+import com.example.CampusEventDiscovery.util.UserRoles;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
@@ -199,11 +200,31 @@ public class EventRepository {
                     for (DocumentSnapshot doc : snapshots.getDocuments()) {
                         events.add(documentToEvent(doc));
                     }
-                    sortEventsByDateAscending(events);
+                    events = filterVisibleLiveEvents(events);
+                    sortEventsByCreatedAtDescending(events);
                     cb.onSuccess(events);
                 })
                 .addOnFailureListener(error -> {
                     Log.e(TAG, "getUpcomingEvents failed", error);
+                    cb.onError(error);
+                });
+    }
+
+    public void getRecentEvents(EventListCallback cb) {
+        db.collection(COLLECTION_EVENTS)
+                .whereEqualTo("status", "active")
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    List<Event> events = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        events.add(documentToEvent(doc));
+                    }
+                    events = filterVisibleLiveEvents(events);
+                    sortEventsByCreatedAtDescending(events);
+                    cb.onSuccess(events);
+                })
+                .addOnFailureListener(error -> {
+                    Log.e(TAG, "getRecentEvents failed", error);
                     cb.onError(error);
                 });
     }
@@ -214,6 +235,17 @@ public class EventRepository {
             return;
         }
         fetchEventsByIdsPreserveOrder(ids, null, cb);
+    }
+
+    public void getEventsByIds(List<String> ids, EventListCallback cb) {
+        if (cb == null) {
+            return;
+        }
+        if (ids == null || ids.isEmpty()) {
+            cb.onSuccess(new ArrayList<>());
+            return;
+        }
+        fetchEventsByIdsPreserveOrder(new ArrayList<>(new LinkedHashSet<>(ids)), null, cb);
     }
 
     public void getFeaturedEventIds(FeaturedEventIdsCallback cb) {
@@ -256,7 +288,8 @@ public class EventRepository {
                     for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
                         events.add(documentToEvent(doc));
                     }
-                    sortEventsByDateAscending(events);
+                    events = filterVisibleLiveEvents(events);
+                    sortEventsByCreatedAtDescending(events);
                     cb.onSuccess(events);
                 })
                 .addOnFailureListener(e -> {
@@ -354,7 +387,8 @@ public class EventRepository {
                             filtered.add(event);
                         }
                     }
-                    sortEventsByDateAscending(filtered);
+                    filtered = filterVisibleLiveEvents(filtered);
+                    sortEventsByCreatedAtDescending(filtered);
                     cb.onSuccess(filtered);
                 })
                 .addOnFailureListener(e -> {
@@ -411,7 +445,19 @@ public class EventRepository {
                             fallbackMap.put(id, savedDocumentToFallbackEvent(doc));
                         }
                     }
-                    fetchEventsByIdsPreserveOrder(orderedIds, fallbackMap, cb);
+                    fetchEventsByIdsPreserveOrder(orderedIds, fallbackMap, new EventListCallback() {
+                        @Override
+                        public void onSuccess(List<Event> events) {
+                            events = filterVisibleLiveEvents(events);
+                            sortEventsByCreatedAtDescending(events);
+                            cb.onSuccess(events);
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            cb.onError(e);
+                        }
+                    });
                 })
                 .addOnFailureListener(cb::onError);
     }
@@ -673,7 +719,19 @@ public class EventRepository {
                             orderedIds.add(doc.getString("eventId"));
                         }
                     }
-                    fetchEventsByIdsPreserveOrder(orderedIds, null, cb);
+                    fetchEventsByIdsPreserveOrder(orderedIds, null, new EventListCallback() {
+                        @Override
+                        public void onSuccess(List<Event> events) {
+                            events = filterVisibleLiveEvents(events);
+                            sortEventsByCreatedAtDescending(events);
+                            cb.onSuccess(events);
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            cb.onError(e);
+                        }
+                    });
                 })
                 .addOnFailureListener(cb::onError);
     }
@@ -690,16 +748,25 @@ public class EventRepository {
                           List<String> photoUrls,
                           int rating,
                           ActionCallback cb) {
+        if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(eventId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Invalid memory data"));
+            return;
+        }
+
         Map<String, Object> memory = new HashMap<>();
         memory.put("eventId", eventId);
         memory.put("eventTitle", eventTitle);
-        memory.put("photoUrls", photoUrls);
+        if (photoUrls != null && !photoUrls.isEmpty()) {
+            memory.put("photoUrls", FieldValue.arrayUnion(photoUrls.toArray()));
+        }
         memory.put("attendedAt", Timestamp.now());
+        memory.put("updatedAt", Timestamp.now());
         memory.put("rating", rating);
 
         db.collection(COLLECTION_USERS).document(userId)
                 .collection(SUBCOLLECTION_MEMORIES)
-                .add(memory)
+                .document(eventId)
+                .set(memory, SetOptions.merge())
                 .addOnSuccessListener(unused -> {
                     if (cb != null) cb.onSuccess();
                 })
@@ -857,7 +924,29 @@ public class EventRepository {
                     for (DocumentSnapshot doc : snaps.getDocuments()) {
                         events.add(documentToEvent(doc));
                     }
-                    sortEventsByDateAscending(events);
+                    events = filterVisibleLiveEvents(events);
+                    sortEventsByCreatedAtDescending(events);
+                    cb.onSuccess(events);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    public void getOrganizerPastEvents(String organizerId, EventListCallback cb) {
+        if (TextUtils.isEmpty(organizerId)) {
+            cb.onSuccess(new ArrayList<>());
+            return;
+        }
+        db.collection(COLLECTION_EVENTS)
+                .whereEqualTo("organizerId", organizerId)
+                .whereEqualTo("status", "active")
+                .get()
+                .addOnSuccessListener(snaps -> {
+                    List<Event> events = new ArrayList<>();
+                    for (DocumentSnapshot doc : snaps.getDocuments()) {
+                        events.add(documentToEvent(doc));
+                    }
+                    events = filterPastEvents(events);
+                    sortEventsByCreatedAtDescending(events);
                     cb.onSuccess(events);
                 })
                 .addOnFailureListener(cb::onError);
@@ -872,7 +961,24 @@ public class EventRepository {
                     for (DocumentSnapshot doc : snaps.getDocuments()) {
                         events.add(documentToEvent(doc));
                     }
-                    sortEventsByDateAscending(events);
+                    events = filterVisibleLiveEvents(events);
+                    sortEventsByCreatedAtDescending(events);
+                    cb.onSuccess(events);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    public void getAllPastEvents(EventListCallback cb) {
+        db.collection(COLLECTION_EVENTS)
+                .whereEqualTo("status", "active")
+                .get()
+                .addOnSuccessListener(snaps -> {
+                    List<Event> events = new ArrayList<>();
+                    for (DocumentSnapshot doc : snaps.getDocuments()) {
+                        events.add(documentToEvent(doc));
+                    }
+                    events = filterPastEvents(events);
+                    sortEventsByCreatedAtDescending(events);
                     cb.onSuccess(events);
                 })
                 .addOnFailureListener(cb::onError);
@@ -1095,24 +1201,26 @@ public class EventRepository {
                         FirebaseFirestoreException.Code.FAILED_PRECONDITION);
             }
 
-            Timestamp eventDate = eventSnap.getTimestamp("date");
-            if (!isOrganizerCancellationAllowed(eventDate, cancelledAt)) {
-                throw new FirebaseFirestoreException(
-                        "Events can only be cancelled at least 5 days before the event.",
-                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
-            }
-
             String organizerId = eventSnap.getString("organizerId");
+            boolean actorIsAdmin = false;
             if (!TextUtils.isEmpty(organizerId)
                     && !TextUtils.isEmpty(deletedByUserId)
                     && !TextUtils.equals(organizerId, deletedByUserId)) {
                 DocumentSnapshot actorSnap = transaction.get(db.collection(COLLECTION_USERS).document(deletedByUserId));
                 String role = actorSnap.exists() ? actorSnap.getString("role") : "";
-                if (!"admin".equalsIgnoreCase(role)) {
+                actorIsAdmin = UserRoles.isAdmin(role) || isDeveloperBypassAdminUserId(deletedByUserId);
+                if (!actorIsAdmin) {
                     throw new FirebaseFirestoreException(
                             "Only the event organizer or an admin can cancel this event.",
                             FirebaseFirestoreException.Code.PERMISSION_DENIED);
                 }
+            }
+
+            Timestamp eventDate = eventSnap.getTimestamp("date");
+            if (!actorIsAdmin && !isOrganizerCancellationAllowed(eventDate, cancelledAt)) {
+                throw new FirebaseFirestoreException(
+                        "Events can only be cancelled at least 5 days before the event.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
             }
 
             List<OrganizerCancellationRecord> records = new ArrayList<>();
@@ -1930,6 +2038,60 @@ public class EventRepository {
         ));
     }
 
+    private void sortEventsByCreatedAtDescending(List<Event> events) {
+        Collections.sort(events, Comparator.comparing(
+                Event::getCreatedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())
+        ));
+    }
+
+    private List<Event> filterVisibleLiveEvents(List<Event> source) {
+        List<Event> filtered = new ArrayList<>();
+        if (source == null) {
+            return filtered;
+        }
+        for (Event event : source) {
+            if (event == null) {
+                continue;
+            }
+            if (isPastEvent(event)) {
+                continue;
+            }
+            String status = event.getStatus();
+            if ("cancelled".equalsIgnoreCase(status) || "deleted".equalsIgnoreCase(status)) {
+                continue;
+            }
+            filtered.add(event);
+        }
+        return filtered;
+    }
+
+    private List<Event> filterPastEvents(List<Event> source) {
+        List<Event> filtered = new ArrayList<>();
+        if (source == null) {
+            return filtered;
+        }
+        for (Event event : source) {
+            if (event != null && isPastEvent(event)) {
+                filtered.add(event);
+            }
+        }
+        return filtered;
+    }
+
+    private boolean isPastEvent(Event event) {
+        if (event == null || event.getDate() == null) {
+            return false;
+        }
+        Timestamp resolvedEndTime = EventTimeUtils.resolveEndTime(event.getDate(), event.getEndTime());
+        Timestamp cutoff = resolvedEndTime != null ? resolvedEndTime : event.getDate();
+        return cutoff != null && cutoff.toDate().before(new Date());
+    }
+
+    private boolean isDeveloperBypassAdminUserId(String userId) {
+        return "demo-admin-user".equals(userId);
+    }
+
     private void sortProposalsBySubmittedAtDescending(List<EventProposal> proposals) {
         Collections.sort(proposals, Comparator.comparing(
                 EventProposal::getSubmittedAt,
@@ -2355,6 +2517,76 @@ public class EventRepository {
 
     // ─── MEMORY PHOTOS (ui-update) ───────────────────────────────────────────
 
+    public void getRegisteredRsvpsForMemories(String userId, RsvpListCallback cb) {
+        if (TextUtils.isEmpty(userId)) {
+            cb.onSuccess(new ArrayList<>());
+            return;
+        }
+
+        db.collection(COLLECTION_USERS)
+                .document(userId)
+                .collection(SUBCOLLECTION_RSVPS)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Rsvp> rsvps = new ArrayList<>();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        Rsvp rsvp = doc.toObject(Rsvp.class);
+                        if (rsvp == null) {
+                            continue;
+                        }
+
+                        rsvp.setRsvpId(doc.getId());
+                        String eventId = TextUtils.isEmpty(rsvp.getEventId())
+                                ? doc.getId()
+                                : rsvp.getEventId();
+                        rsvp.setEventId(eventId);
+
+                        String status = rsvp.getStatus();
+                        if (TextUtils.isEmpty(eventId) || "cancelled".equalsIgnoreCase(status)) {
+                            continue;
+                        }
+
+                        rsvps.add(rsvp);
+                    }
+
+                    Collections.sort(rsvps, (a, b) -> {
+                        Date aDate = a.getDate() != null ? a.getDate().toDate() : new Date(0L);
+                        Date bDate = b.getDate() != null ? b.getDate().toDate() : new Date(0L);
+                        return bDate.compareTo(aDate);
+                    });
+                    cb.onSuccess(rsvps);
+                })
+                .addOnFailureListener(cb::onError);
+    }
+
+    public void createMemoryAlbum(String userId,
+                                  String eventId,
+                                  String eventTitle,
+                                  Timestamp attendedAt,
+                                  ActionCallback cb) {
+        if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(eventId)) {
+            if (cb != null) cb.onError(new IllegalArgumentException("Invalid memory album data"));
+            return;
+        }
+
+        Map<String, Object> memory = new HashMap<>();
+        memory.put("eventId", eventId);
+        memory.put("eventTitle", eventTitle);
+        memory.put("attendedAt", attendedAt != null ? attendedAt : Timestamp.now());
+        memory.put("updatedAt", Timestamp.now());
+
+        db.collection(COLLECTION_USERS).document(userId)
+                .collection(SUBCOLLECTION_MEMORIES)
+                .document(eventId)
+                .set(memory, SetOptions.merge())
+                .addOnSuccessListener(unused -> {
+                    if (cb != null) cb.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (cb != null) cb.onError(e);
+                });
+    }
+
     public void addMemoryPhotos(String userId,
                                 String eventId,
                                 String eventTitle,
@@ -2370,7 +2602,9 @@ public class EventRepository {
         Map<String, Object> memory = new HashMap<>();
         memory.put("eventId", eventId);
         memory.put("eventTitle", eventTitle);
-        memory.put("attendedAt", attendedAt != null ? attendedAt : Timestamp.now());
+        if (attendedAt != null) {
+            memory.put("attendedAt", attendedAt);
+        }
         memory.put("updatedAt", Timestamp.now());
         memory.put("photoUrls", FieldValue.arrayUnion(photoUrls.toArray()));
 
@@ -2403,10 +2637,34 @@ public class EventRepository {
 
         db.collection(COLLECTION_USERS).document(userId)
                 .collection(SUBCOLLECTION_MEMORIES)
-                .document(eventId)
-                .set(memory, SetOptions.merge())
-                .addOnSuccessListener(unused -> {
-                    if (cb != null) cb.onSuccess();
+                .whereEqualTo("eventId", eventId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots == null || queryDocumentSnapshots.isEmpty()) {
+                        db.collection(COLLECTION_USERS).document(userId)
+                                .collection(SUBCOLLECTION_MEMORIES)
+                                .document(eventId)
+                                .set(memory, SetOptions.merge())
+                                .addOnSuccessListener(unused -> {
+                                    if (cb != null) cb.onSuccess();
+                                })
+                                .addOnFailureListener(e -> {
+                                    if (cb != null) cb.onError(e);
+                                });
+                        return;
+                    }
+
+                    WriteBatch batch = db.batch();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        batch.set(doc.getReference(), memory, SetOptions.merge());
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(unused -> {
+                                if (cb != null) cb.onSuccess();
+                            })
+                            .addOnFailureListener(e -> {
+                                if (cb != null) cb.onError(e);
+                            });
                 })
                 .addOnFailureListener(e -> {
                     if (cb != null) cb.onError(e);
@@ -2423,10 +2681,28 @@ public class EventRepository {
 
         db.collection(COLLECTION_USERS).document(userId)
                 .collection(SUBCOLLECTION_MEMORIES)
-                .document(eventId)
-                .delete()
-                .addOnSuccessListener(unused -> {
-                    if (cb != null) cb.onSuccess();
+                .whereEqualTo("eventId", eventId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    WriteBatch batch = db.batch();
+                    DocumentReference canonicalRef = db.collection(COLLECTION_USERS).document(userId)
+                            .collection(SUBCOLLECTION_MEMORIES)
+                            .document(eventId);
+                    batch.delete(canonicalRef);
+                    if (queryDocumentSnapshots != null) {
+                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                            if (!doc.getReference().getPath().equals(canonicalRef.getPath())) {
+                                batch.delete(doc.getReference());
+                            }
+                        }
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(unused -> {
+                                if (cb != null) cb.onSuccess();
+                            })
+                            .addOnFailureListener(e -> {
+                                if (cb != null) cb.onError(e);
+                            });
                 })
                 .addOnFailureListener(e -> {
                     if (cb != null) cb.onError(e);

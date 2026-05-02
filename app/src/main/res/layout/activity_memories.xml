@@ -14,6 +14,22 @@
         app:navigationIcon="@drawable/ic_back"
         app:title="@string/memories_title" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCreateMemory"
+        style="@style/AppButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_md"
+        android:layout_marginTop="@dimen/spacing_md"
+        android:layout_marginEnd="@dimen/spacing_md"
+        android:text="@string/create_memory"
+        android:textAllCaps="false"
+        app:icon="@drawable/ic_add"
+        app:iconGravity="textStart"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbarMemories" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMemories"
         android:layout_width="0dp"
@@ -23,7 +39,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbarMemories" />
+        app:layout_constraintTop_toBottomOf="@id/btnCreateMemory" />
 
     <ProgressBar
         android:id="@+id/progressBarMemories"
@@ -33,7 +49,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbarMemories" />
+        app:layout_constraintTop_toBottomOf="@id/btnCreateMemory" />
 
     <TextView
         android:id="@+id/tvEmptyMemories"
@@ -46,6 +62,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbarMemories" />
+        app:layout_constraintTop_toBottomOf="@id/btnCreateMemory" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
