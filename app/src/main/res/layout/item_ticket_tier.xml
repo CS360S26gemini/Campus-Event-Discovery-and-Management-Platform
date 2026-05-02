@@ -22,9 +22,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/ticket_tier_general"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textColor="?attr/colorOnSurface"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
 
         <TextView
             android:id="@+id/tvTierDescription"
@@ -32,8 +31,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="@string/ticket_desc_general"
-            android:textColor="@color/colorSecondary"
-            android:textSize="13sp" />
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="?attr/textAppearanceBodySmall" />
 
         <TextView
             android:id="@+id/tvTierDateRange"
@@ -41,8 +40,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="@string/ticket_date_range"
-            android:textColor="@color/colorSecondary"
-            android:textSize="12sp" />
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="?attr/textAppearanceLabelSmall" />
 
         <TextView
             android:id="@+id/tvPricePerUnit"
@@ -51,8 +50,7 @@
             android:layout_marginTop="8dp"
             android:text="PKR 0"
             android:textColor="?attr/colorPrimary"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textAppearance="?attr/textAppearanceLabelLarge" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -74,9 +72,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:text="@string/quantity_zero"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPlus"
@@ -89,12 +86,12 @@
                 android:id="@+id/tvSubtotal"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
+                android:layout_marginStart="@dimen/spacing_md"
                 android:layout_weight="1"
                 android:gravity="end"
                 android:text="PKR 0"
-                android:textColor="@color/colorSecondary"
-                android:textSize="13sp" />
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceBodySmall" />
         </LinearLayout>
     </LinearLayout>
 

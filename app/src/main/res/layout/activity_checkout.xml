@@ -35,8 +35,7 @@
                 android:id="@+id/tvCheckoutEventTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:textStyle="bold"
+                android:textAppearance="?attr/textAppearanceTitleLarge"
                 android:textColor="?attr/colorOnSurface"
                 android:layout_marginBottom="4dp" />
 
@@ -44,9 +43,9 @@
                 android:id="@+id/tvCheckoutSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                android:layout_marginBottom="24dp" />
+                android:layout_marginBottom="@dimen/spacing_lg" />
 
             <TextView
                 android:id="@+id/tvCreditBalance"
@@ -54,8 +53,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:textColor="?attr/colorPrimary"
-                android:textSize="14sp"
-                android:textStyle="bold"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
                 android:visibility="gone" />
 
             <!-- Divider -->
@@ -63,14 +61,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="?attr/colorOutlineVariant"
-                android:layout_marginBottom="24dp" />
+                android:layout_marginBottom="@dimen/spacing_lg" />
 
             <!-- Personal details section -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/checkout_section_personal"
-                android:textSize="13sp"
+                android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textAllCaps="true"
                 android:letterSpacing="0.1"
                 android:textColor="?attr/colorOnSurfaceVariant"
@@ -81,30 +79,14 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/checkout_hint_full_name"
                 style="@style/AppTextInputBoxStyle"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="@dimen/spacing_lg">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etFirstName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName"
-                    android:imeOptions="actionNext" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/checkout_hint_last_name"
-                style="@style/AppTextInputBoxStyle"
-                android:layout_marginBottom="24dp">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etLastName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="textPersonName"
-                    android:imeOptions="actionNext" />
+                    android:imeOptions="actionDone" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -119,7 +101,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/checkout_section_payment"
-                android:textSize="13sp"
+                android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textAllCaps="true"
                 android:letterSpacing="0.1"
                 android:textColor="?attr/colorOnSurfaceVariant"
@@ -144,7 +126,7 @@
                         android:layout_height="48dp"
                         android:text="@string/payment_method_jazzcash"
                         android:paddingStart="12dp"
-                        android:textSize="15sp"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:button="@null"
                         android:drawableEnd="@null"
                         android:background="?attr/selectableItemBackground" />
@@ -161,7 +143,7 @@
                         android:layout_height="48dp"
                         android:text="@string/payment_method_credit_card"
                         android:paddingStart="12dp"
-                        android:textSize="15sp"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:button="@null"
                         android:drawableEnd="@null"
                         android:background="?attr/selectableItemBackground" />
@@ -178,7 +160,7 @@
                         android:layout_height="48dp"
                         android:text="@string/payment_method_debit_card"
                         android:paddingStart="12dp"
-                        android:textSize="15sp"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:button="@null"
                         android:drawableEnd="@null"
                         android:background="?attr/selectableItemBackground" />
@@ -195,7 +177,7 @@
                         android:layout_height="48dp"
                         android:text="@string/payment_method_apple_pay"
                         android:paddingStart="12dp"
-                        android:textSize="15sp"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:button="@null"
                         android:drawableEnd="@null"
                         android:background="?attr/selectableItemBackground" />
@@ -212,7 +194,7 @@
                         android:layout_height="48dp"
                         android:text="@string/payment_method_in_app_credit"
                         android:paddingStart="12dp"
-                        android:textSize="15sp"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:button="@null"
                         android:drawableEnd="@null"
                         android:background="?attr/selectableItemBackground" />
@@ -225,10 +207,10 @@
                 android:id="@+id/tvCreditBalanceHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="@dimen/spacing_lg"
                 android:text="@string/payment_method_in_app_credit_desc"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="13sp" />
+                android:textAppearance="?attr/textAppearanceBodySmall" />
 
             <!-- Card number — shown only for Credit/Debit -->
             <com.google.android.material.textfield.TextInputLayout
@@ -237,7 +219,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/checkout_hint_card_number"
                 style="@style/AppTextInputBoxStyle"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="@dimen/spacing_lg"
                 android:visibility="gone">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -270,15 +252,14 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/checkout_order_total_label"
-                    android:textSize="16sp"
+                    android:textAppearance="?attr/textAppearanceBodyLarge"
                     android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/tvCheckoutTotal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
                     android:textColor="?attr/colorPrimary" />
 
             </LinearLayout>
@@ -298,7 +279,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="@string/pay_now"
-                android:textSize="16sp"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="16dp" />
 

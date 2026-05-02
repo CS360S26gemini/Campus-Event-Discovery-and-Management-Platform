@@ -34,15 +34,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="@string/your_ticket"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="24sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall" />
 
             <com.google.android.material.card.MaterialCardView
                 style="@style/AppMaterialCardView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="@dimen/spacing_lg"
                 app:cardBackgroundColor="@android:color/white">
 
                 <ImageView
@@ -58,12 +57,11 @@
                 android:id="@+id/tvTicketEventName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="@dimen/spacing_lg"
                 android:gravity="center"
                 android:text="Event Name"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleLarge" />
 
             <TextView
                 android:id="@+id/tvTicketEventDate"
@@ -71,8 +69,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="Date &amp; Time"
-                android:textColor="@color/colorSecondary"
-                android:textSize="15sp" />
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceBodyMedium" />
 
             <TextView
                 android:id="@+id/tvTicketTxnId"
@@ -80,8 +78,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="Txn ID: ..."
-                android:textColor="@color/colorSecondary"
-                android:textSize="11sp" />
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceLabelSmall" />
 
             <TextView
                 android:id="@+id/tvTicketRefundStatus"
@@ -89,8 +87,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:textColor="@color/colorSecondary"
-                android:textSize="13sp" />
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceBodySmall" />
 
         </LinearLayout>
     </ScrollView>

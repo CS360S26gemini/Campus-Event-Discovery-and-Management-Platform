@@ -21,11 +21,10 @@
         android:id="@+id/tvSosTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="@dimen/spacing_lg"
         android:text="@string/sos_alert_title"
         android:textColor="@android:color/white"
-        android:textSize="28sp"
-        android:textStyle="bold"
+        android:textAppearance="?attr/textAppearanceHeadlineMedium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/ivSosIcon" />
@@ -34,10 +33,10 @@
         android:id="@+id/tvSosReporter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="@dimen/spacing_md"
         android:text="@string/sos_alert_reporter_loading"
         android:textColor="@android:color/white"
-        android:textSize="18sp"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvSosTitle" />
@@ -50,7 +49,7 @@
         android:gravity="center"
         android:text="@string/sos_alert_description_empty"
         android:textColor="@android:color/white"
-        android:textSize="16sp"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvSosReporter" />
@@ -64,8 +63,7 @@
         android:backgroundTint="@color/colorOnError"
         android:text="@string/dismiss"
         android:textColor="@color/colorError"
-        android:textSize="18sp"
-        android:textStyle="bold"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
         app:strokeColor="@color/colorOnError"
         app:layout_constraintBottom_toBottomOf="parent" />
 

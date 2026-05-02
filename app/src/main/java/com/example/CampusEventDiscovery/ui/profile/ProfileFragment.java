@@ -46,6 +46,7 @@ import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.ScrollResettable;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.chip.Chip;
@@ -215,6 +216,7 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
         loadProfile();
         setupSosBadgeListener();
         restoreScrollPositionSoon();
+        WalkthroughManager.maybeShow(requireActivity(), view, "profile");
     }
 
     @Override
@@ -264,10 +266,28 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
     }
 
     private void setupStaticActions() {
-        tvEditPhoto.setOnClickListener(v -> runAfterTouchFeedback(v, this::showProfileImageOptions));
+        tvEditPhoto.setOnClickListener(v -> runAfterTouchFeedback(v, () -> {
+            if (WalkthroughManager.isActive()) {
+                Toast.makeText(requireContext(), "Walkthrough mode: profile image tools were not opened.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            showProfileImageOptions();
+        }));
 
-        cardDarkMode.setOnClickListener(v -> switchDarkMode.toggle());
-        cardAccentColor.setOnClickListener(v -> runAfterTouchFeedback(v, this::showAccentColorDialog));
+        cardDarkMode.setOnClickListener(v -> {
+            if (WalkthroughManager.isActive()) {
+                Toast.makeText(requireContext(), "Walkthrough mode: theme mode was not changed.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            switchDarkMode.toggle();
+        });
+        cardAccentColor.setOnClickListener(v -> runAfterTouchFeedback(v, () -> {
+            if (WalkthroughManager.isActive()) {
+                Toast.makeText(requireContext(), "Walkthrough mode: accent color was not changed.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            showAccentColorDialog();
+        }));
         bindAccentPreference();
 
         bindDarkModeListener();
@@ -852,6 +872,13 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
     private void bindDarkModeListener() {
         switchDarkMode.setOnCheckedChangeListener(null);
         switchDarkMode.setOnCheckedChangeListener((CompoundButton buttonView, boolean isChecked) -> {
+            if (WalkthroughManager.isActive()) {
+                Toast.makeText(requireContext(), "Walkthrough mode: theme mode was not changed.", Toast.LENGTH_SHORT).show();
+                switchDarkMode.setOnCheckedChangeListener(null);
+                switchDarkMode.setChecked(!isChecked);
+                bindDarkModeListener();
+                return;
+            }
             preserveScrollPosition();
             ThemeManager.applyThemePreference(requireContext(), isChecked);
             if (FirebaseAuth.getInstance().getCurrentUser() != null) {

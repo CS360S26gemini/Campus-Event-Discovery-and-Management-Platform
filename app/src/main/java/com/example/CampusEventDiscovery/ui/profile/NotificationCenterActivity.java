@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,6 +19,7 @@ import com.example.CampusEventDiscovery.model.Notification;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -57,6 +59,7 @@ public class NotificationCenterActivity extends AppCompatActivity {
         setupToolbar();
         setupRecyclerView();
         loadNotifications();
+        WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "notifications");
     }
 
     private void bindViews() {
@@ -72,6 +75,10 @@ public class NotificationCenterActivity extends AppCompatActivity {
 
     private void setupRecyclerView() {
         adapter = new NotificationAdapter(notifications, notification -> {
+            if (WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive()) {
+                Toast.makeText(this, "Walkthrough mode: notification was not opened.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             repository.markNotificationRead(currentUserId, notification.getNotificationId());
             notification.setRead(true);
             adapter.updateData(new ArrayList<>(notifications));
@@ -88,6 +95,11 @@ public class NotificationCenterActivity extends AppCompatActivity {
     }
 
     private void loadNotifications() {
+        if (WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive()) {
+            bindNotifications(WalkthroughManager.getDemoNotifications());
+            return;
+        }
+
         setLoading(true);
 
         if (TextUtils.isEmpty(currentUserId)) {

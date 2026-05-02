@@ -19,33 +19,32 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="@dimen/spacing_xl"
         android:text="@string/scanner_result"
-        android:textColor="@color/colorOnBackground"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+        android:textColor="?attr/colorOnSurface"
+        android:textAppearance="?attr/textAppearanceTitleLarge" />
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardScannerResult"
         style="@style/AppMaterialCardView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="@dimen/spacing_lg"
         android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="@dimen/spacing_md">
 
             <TextView
                 android:id="@+id/tvScannerAttendeeName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/scanner_attendee_placeholder"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceBodyLarge" />
 
             <TextView
                 android:id="@+id/tvScannerEventName"
@@ -53,8 +52,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="@string/scanner_event_placeholder"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceBodyLarge" />
 
             <TextView
                 android:id="@+id/tvScannerPaymentStatus"
@@ -62,8 +61,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="@string/scanner_payment_placeholder"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceBodyLarge" />
 
             <TextView
                 android:id="@+id/tvScannerCheckInStatus"
@@ -71,15 +70,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="@string/scanner_status_placeholder"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceBodyLarge" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnMarkAsAttended"
                 style="@style/AppButtonStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="@dimen/spacing_md"
                 android:text="@string/mark_as_attended" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -88,10 +87,10 @@
         android:id="@+id/tvScannerError"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="@dimen/spacing_xl"
         android:text="@string/scan_ticket_prompt"
-        android:textColor="@color/colorSecondary"
-        android:textSize="16sp"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
         android:gravity="center" />
 
     <View

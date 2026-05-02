@@ -73,7 +73,6 @@
     <string name="secure_your_spot">Secure Your Spot</string>
     <string name="contact_info">Contact Info</string>
     <string name="first_name">First Name</string>
-    <string name="last_name">Last Name</string>
     <string name="payment_methods">Payment Methods</string>
     <string name="credit_card">Credit Card</string>
     <string name="mastercard">MasterCard</string>
@@ -158,7 +157,6 @@
     <string name="unknown_error">Unknown error</string>
     <string name="logout">Logout</string>
     <string name="help_support">Help &amp; Support</string>
-    <string name="help_support_placeholder">We\'re building this section. Full help documentation, FAQs, and support contact will be available here soon.</string>
     <string name="got_it">Got it</string>
     <string name="help_walkthrough_intro">Choose a safe walkthrough. The guide uses the app\'s real screens with local demo data and does not change backend records.</string>
     <string name="start_walkthrough">Start walkthrough</string>
@@ -201,8 +199,6 @@
     <string name="refund_policy_body">Refunds are issued as in-app credit only. Attendees can cancel at least 3 days before the event for 100%% credit. Organizers can cancel an event at least 5 days before it starts; paid tickets are refunded in full. No cash, bank, or Stripe refunds are issued.</string>
     <string name="open_map_failed">No map app found.</string>
     <string name="calendar_add_failed">No calendar app found.</string>
-    <string name="buy_tickets_coming_next">Buy Ticket screen placeholder - Phase 13 will replace this.</string>
-    <string name="event_detail_placeholder_title">Buy Ticket Placeholder</string>
     <string name="view_on_map_inline">View on map</string>
     <string name="add_to_calendar_inline">Add to calendar</string>
     <string name="tickets_button">Tickets</string>
@@ -230,8 +226,6 @@
     <string name="attendee_only_registration_message">Only attendee accounts can register for events.</string>
     <string name="proposal_pending_message">This proposal is still pending admin review.</string>
     <string name="proposal_rejected_message">This proposal was rejected by admin.</string>
-    <string name="placeholder_first_name">First Name</string>
-    <string name="placeholder_last_name">Last Name</string>
     <string name="checkout_success_title">You\'re in! 🎉</string>
     <string name="checkout_success_message">Your spot is confirmed. See you there!</string>
     <string name="payment_failed">Payment failed.</string>
@@ -293,7 +287,6 @@
     <string name="approved_badge">APPROVED</string>
     <string name="rejected_badge">REJECTED</string>
     <string name="create_event_title">Create Event</string>
-    <string name="create_event_placeholder">Create Event placeholder - Phase 18 will replace this.</string>
 
     <string name="create_event_header">Create Event</string>
     <string name="event_title_hint">Event Title</string>
@@ -357,8 +350,6 @@
     <string name="avatar_save_failed">Failed to save avatar</string>
     <string name="profile_image_updated">Profile image updated</string>
     <string name="profile_image_update_failed">Failed to update profile image</string>
-    <string name="manage_events_placeholder">Manage Events placeholder</string>
-    <string name="account_settings_placeholder">Account Settings placeholder</string>
     <string name="logout_confirm_title">Log out?</string>
     <string name="logout_confirm_message">You will be returned to the login flow.</string>
     <string name="yes">Yes</string>
@@ -516,7 +507,6 @@
     <string name="send">Send</string>
     <string name="no_participants_yet">No attendees yet</string>
     <string name="error_loading_participants">Failed to load attendees.</string>
-    <string name="blacklist_unavailable">Blacklist flow is not implemented yet.</string>
     <string name="blacklist_confirm_title">Blacklist attendees?</string>
     <string name="blacklist_confirm_message">This will remove %1$d attendee(s) and block them from registering again for this event.</string>
     <string name="blacklist_success">Selected attendees blacklisted.</string>
@@ -626,7 +616,6 @@
     <string name="checkout_section_credit">In-app credit</string>
     <string name="checkout_credit_balance">Available credit: PKR %1$.2f</string>
     <string name="checkout_hint_full_name">Full name</string>
-    <string name="checkout_hint_last_name">Last name</string>
     <string name="checkout_hint_card_number">Card / account number (16 digits)</string>
     <string name="checkout_order_total_label">Order total</string>
     <string name="checkout_total_free">Free</string>
@@ -710,6 +699,11 @@
     <string name="ticket_tiers_helper">Organizers can define multiple pricing options before the event goes live. Tier settings cannot be edited after approval.</string>
     <string name="add_ticket_tier">Add Ticket Tier</string>
     <string name="ticket_tier_number">Tier %1$d</string>
+    <string name="ticket_tier_number_placeholder">Tier 1</string>
+    <string name="ticket_tier_name_hint">Tier Name (e.g., Early Bird)</string>
+    <string name="ticket_tier_price_hint">Price</string>
+    <string name="ticket_tier_capacity_hint">Capacity</string>
+    <string name="ticket_tier_description_hint">Optional Description</string>
     <string name="tier_capacity_exceeds_event_capacity">Total tier capacity cannot exceed event capacity.</string>
     <string name="choose_ticket_tier">Choose a Ticket Tier</string>
     <string name="tier_select_before_checkout">Select a tier to continue</string>

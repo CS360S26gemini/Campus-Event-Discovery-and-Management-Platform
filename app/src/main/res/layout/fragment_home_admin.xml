@@ -24,9 +24,8 @@
                 android:paddingHorizontal="@dimen/spacing_md"
                 android:paddingTop="20dp"
                 android:text="@string/admin_header"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="24sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall" />
 
             <com.google.android.material.card.MaterialCardView
                 style="@style/AppMaterialCardView"
@@ -53,7 +52,7 @@
                         android:layout_marginTop="@dimen/spacing_xs"
                         android:text="@string/admin_tools_subtitle"
                         android:textColor="@color/colorOnSurfaceVariant"
-                        android:textSize="14sp" />
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCreateEvent"

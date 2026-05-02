@@ -40,26 +40,25 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:textColor="@color/colorOnBackground" />
+                    android:textColor="?attr/colorOnSurface" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
                 android:id="@+id/tvSection1Header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:paddingHorizontal="16dp"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:paddingHorizontal="@dimen/spacing_md"
                 android:text="@string/approved_events_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <ProgressBar
                 android:id="@+id/progressBarSection1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="16dp" />
+                android:layout_marginTop="@dimen/spacing_md" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvSection1"
@@ -73,13 +72,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="@dimen/spacing_md"
                 android:drawableTop="@drawable/ic_event_outline"
                 android:drawablePadding="@dimen/spacing_md"
                 android:gravity="center"
                 android:text="@string/no_managed_events_help"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:visibility="gone" />
 
             <View
@@ -87,26 +86,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="@dimen/spacing_lg"
                 android:background="@color/dividerColor" />
 
             <TextView
                 android:id="@+id/tvSection2Header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:paddingHorizontal="16dp"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:paddingHorizontal="@dimen/spacing_md"
                 android:text="@string/pending_events_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <ProgressBar
                 android:id="@+id/progressBarSection2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="16dp" />
+                android:layout_marginTop="@dimen/spacing_md" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvSection2"
@@ -120,11 +118,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="@dimen/spacing_md"
                 android:gravity="center"
                 android:text="@string/no_pending_events"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:visibility="gone" />
 
             <View
@@ -132,26 +130,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="@dimen/spacing_lg"
                 android:background="@color/dividerColor" />
 
             <TextView
                 android:id="@+id/tvSection3Header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:paddingHorizontal="16dp"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:paddingHorizontal="@dimen/spacing_md"
                 android:text="@string/rejected_proposals_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <ProgressBar
                 android:id="@+id/progressBarSection3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="16dp" />
+                android:layout_marginTop="@dimen/spacing_md" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvSection3"
@@ -165,11 +162,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="@dimen/spacing_md"
                 android:gravity="center"
                 android:text="@string/no_rejected_proposals"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:visibility="gone" />
 
         </LinearLayout>

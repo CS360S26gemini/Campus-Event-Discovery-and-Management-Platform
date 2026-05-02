@@ -67,14 +67,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Event Title"
-                    android:textColor="@color/colorOnBackground"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="?attr/textAppearanceHeadlineSmall" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="@dimen/spacing_md"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -90,8 +89,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:text="Mon, Apr 18 • 09:00 PM"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="14sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
                 </LinearLayout>
 
                 <TextView
@@ -105,12 +104,12 @@
                     android:paddingVertical="3dp"
                     android:text="@string/add_to_calendar"
                     android:textColor="?attr/colorPrimary"
-                    android:textSize="12sp" />
+                    android:textAppearance="?attr/textAppearanceLabelSmall" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="@dimen/spacing_md"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -126,8 +125,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:text="Cricket Ground"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="14sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
                 </LinearLayout>
 
                 <TextView
@@ -141,16 +140,15 @@
                     android:paddingVertical="3dp"
                     android:text="@string/view_on_map"
                     android:textColor="?attr/colorPrimary"
-                    android:textSize="12sp" />
+                    android:textAppearance="?attr/textAppearanceLabelSmall" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
+                    android:layout_marginTop="@dimen/spacing_lg"
                     android:text="@string/total_registrations"
-                    android:textColor="@color/colorOnBackground"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="?attr/textAppearanceTitleMedium" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -174,8 +172,8 @@
                         android:layout_alignParentEnd="true"
                         android:layout_marginStart="12dp"
                         android:text="100/15000"
-                        android:textColor="@color/colorSecondary"
-                        android:textSize="12sp" />
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textAppearance="?attr/textAppearanceLabelSmall" />
                 </RelativeLayout>
 
                 <LinearLayout

@@ -27,7 +27,7 @@
             android:layout_marginTop="@dimen/spacing_xs"
             android:text="@string/vendor_management_subtitle"
             android:textColor="@color/colorOnSurfaceVariant"
-            android:textSize="14sp" />
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardVendorToggle"

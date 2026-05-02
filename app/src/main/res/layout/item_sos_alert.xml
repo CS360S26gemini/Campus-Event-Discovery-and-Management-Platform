@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/spacing_md">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -23,16 +23,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textStyle="bold"
-                android:textSize="16sp"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
                 android:textColor="@color/colorError" />
 
             <TextView
                 android:id="@+id/tvItemStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textStyle="bold"
+                android:textAppearance="?attr/textAppearanceLabelSmall"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="2dp"
                 android:background="@drawable/bg_sos_status_chip"
@@ -44,14 +42,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textSize="14sp" />
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
 
         <TextView
             android:id="@+id/tvItemTimestamp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textSize="12sp"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
             android:textColor="@color/colorOnSurfaceVariant" />
 
         <TextView
@@ -59,7 +57,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:textSize="13sp"
+            android:textAppearance="?attr/textAppearanceBodySmall"
             android:textColor="?attr/colorPrimary"
             android:autoLink="web" />
 

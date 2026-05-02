@@ -36,7 +36,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/create_event_header"
                 android:textAppearance="?attr/textAppearanceHeadlineLarge"
-                android:textColor="@color/colorOnBackground" />
+                android:textColor="?attr/colorOnSurface" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/AppTextInputBoxStyle"
@@ -106,7 +106,7 @@
                 android:layout_marginTop="@dimen/spacing_md"
                 android:text="@string/event_start_time_date_label"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
-                android:textColor="@color/colorOnBackground" />
+                android:textColor="?attr/colorOnSurface" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -183,7 +183,7 @@
                 android:layout_marginTop="@dimen/spacing_md"
                 android:text="@string/event_ending_time_date_label"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
-                android:textColor="@color/colorOnBackground" />
+                android:textColor="?attr/colorOnSurface" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -367,7 +367,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/ticket_tiers_label"
                     android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="@color/colorOnBackground" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -375,7 +375,7 @@
                     android:layout_marginTop="@dimen/spacing_xs"
                     android:text="@string/ticket_tiers_helper"
                     android:textAppearance="?attr/textAppearanceBodySmall"
-                    android:textColor="@color/colorSecondary" />
+                    android:textColor="?attr/colorOnSurfaceVariant" />
 
                 <LinearLayout
                     android:id="@+id/layoutTierContainer"

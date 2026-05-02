@@ -19,11 +19,14 @@ public class ThemeStyleContractTest {
         assertTrue(themes.contains("name=\"AppButtonStyle\""));
         assertTrue(themes.contains("name=\"AppSecondaryButtonStyle\""));
         assertTrue(themes.contains("name=\"AppOutlinedButtonStyle\""));
+        assertTrue(themes.contains("name=\"AppTextButtonStyle\""));
         assertTrue(themes.contains("name=\"AppDangerButtonStyle\""));
         assertTrue(themes.contains("name=\"AppTextInputBoxStyle\""));
         assertTrue(themes.contains("name=\"AppTextInputDropdownStyle\""));
         assertTrue(themes.contains("name=\"AppToolbarStyle\""));
         assertTrue(themes.contains("name=\"AppImageButtonStyle\""));
+        assertTrue(themes.contains("name=\"colorControlHighlight\""));
+        assertTrue(themes.contains("<item name=\"rippleColor\">?attr/colorControlHighlight</item>"));
     }
 
     @Test

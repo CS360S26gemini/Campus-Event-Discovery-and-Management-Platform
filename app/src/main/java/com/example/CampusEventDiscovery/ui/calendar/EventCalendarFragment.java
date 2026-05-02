@@ -35,6 +35,7 @@ import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -174,6 +175,10 @@ public class EventCalendarFragment extends Fragment {
 
                     @Override
                     public void onItemLongClick(Event event) {
+                        if (WalkthroughManager.isActive()) {
+                            Toast.makeText(requireContext(), "Walkthrough mode: device calendar was not opened.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         if (event == null) {
                             return;
                         }
@@ -292,6 +297,17 @@ public class EventCalendarFragment extends Fragment {
     }
 
     private void loadEvents() {
+        if (WalkthroughManager.isActive()) {
+            currentUserRole = DevSessionManager.shouldUseBypass(requireContext())
+                    ? UserRoles.sanitize(DevSessionManager.getBypassRole(requireContext()))
+                    : UserRoles.ATTENDEE;
+            allEvents.clear();
+            allEvents.addAll(WalkthroughManager.getDemoEvents());
+            applyCalendarData(WalkthroughManager.getDemoEvents());
+            WalkthroughManager.maybeShow(requireActivity(), getView(), "calendar");
+            return;
+        }
+
         showLoading(true);
 
         repository.getUpcomingEvents(new EventRepository.EventListCallback() {

@@ -26,6 +26,7 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -70,6 +71,7 @@ public class VendorManagementFragment extends Fragment {
     private String selectedStatus = "approved";
     private Event selectedEvent;
     private boolean showingOrganizerEventDetail;
+    private boolean walkthroughMode;
 
     public static VendorManagementFragment newInstance(String role) {
         VendorManagementFragment fragment = new VendorManagementFragment();
@@ -89,6 +91,7 @@ public class VendorManagementFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         repository = new EventRepository();
+        walkthroughMode = WalkthroughManager.isActive();
         role = UserRoles.sanitize(getArguments() == null ? null : getArguments().getString(ARG_ROLE));
 
         tvSubtitle = view.findViewById(R.id.tvVendorSubtitle);
@@ -113,6 +116,7 @@ public class VendorManagementFragment extends Fragment {
         setupRoleUi();
         loadCurrentUserName();
         loadData();
+        WalkthroughManager.maybeShow(requireActivity(), view, "vendors");
     }
 
     @Override
@@ -238,11 +242,45 @@ public class VendorManagementFragment extends Fragment {
         if (!isAdded() || repository == null) {
             return;
         }
+        if (walkthroughMode) {
+            bindWalkthroughData();
+            return;
+        }
         if (UserRoles.isAdmin(role)) {
             loadAdminProposals();
         } else {
             loadOrganizerEvents();
         }
+    }
+
+    private void bindWalkthroughData() {
+        showLoading(false);
+        allProposals.clear();
+        allProposals.addAll(WalkthroughManager.getDemoVendorProposals());
+
+        if (UserRoles.isAdmin(role)) {
+            filterAndShowProposals();
+            WalkthroughManager.maybeShow(requireActivity(), getView(), "vendors");
+            return;
+        }
+
+        organizerEvents.clear();
+        organizerEvents.addAll(WalkthroughManager.getDemoEvents());
+        eventAdapter.updateData(new ArrayList<>(organizerEvents));
+        selectedEvent = WalkthroughManager.getDemoEvent();
+        showingOrganizerEventDetail = true;
+        eventAdapter.setSelectedEventId(selectedEvent.getEventId());
+        String title = TextUtils.isEmpty(selectedEvent.getTitle()) ? getString(R.string.vendor_management) : selectedEvent.getTitle();
+        toolbarVendorManagement.setTitle(title);
+        toolbarVendorManagement.setNavigationIcon(R.drawable.ic_back);
+        tvSubtitle.setText(TextUtils.isEmpty(selectedEvent.getLocation()) ? getString(R.string.vendor_management_subtitle) : selectedEvent.getLocation());
+        tvEventPrompt.setVisibility(View.GONE);
+        rvEvents.setVisibility(View.GONE);
+        rvProposals.setVisibility(View.VISIBLE);
+        cardVendorToggle.setVisibility(View.VISIBLE);
+        fabAddVendor.setVisibility(View.VISIBLE);
+        filterAndShowProposals();
+        WalkthroughManager.maybeShow(requireActivity(), getView(), "vendors");
     }
 
     private void loadOrganizerEvents() {
@@ -446,6 +484,12 @@ public class VendorManagementFragment extends Fragment {
     }
 
     private void submitVendor(VendorProposal proposal, androidx.appcompat.app.AlertDialog dialog) {
+        if (walkthroughMode) {
+            Toast.makeText(requireContext(), "Walkthrough mode: vendor request was not submitted.", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+            return;
+        }
+
         repository.proposeVendor(proposal, new EventRepository.ActionCallback() {
             @Override
             public void onSuccess() {
@@ -466,6 +510,11 @@ public class VendorManagementFragment extends Fragment {
     }
 
     private void reviewVendor(VendorProposal proposal, boolean approve) {
+        if (walkthroughMode) {
+            Toast.makeText(requireContext(), "Walkthrough mode: vendor request was not reviewed.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         EventRepository.ActionCallback callback = new EventRepository.ActionCallback() {
             @Override
             public void onSuccess() {

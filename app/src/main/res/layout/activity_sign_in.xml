@@ -38,7 +38,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/welcome_back_title"
                 android:textAppearance="?attr/textAppearanceHeadlineLarge"
-                android:textColor="@color/colorOnBackground" />
+                android:textColor="?attr/colorOnSurface" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/AppTextInputBoxStyle"
@@ -78,6 +78,7 @@
                 android:layout_marginTop="@dimen/spacing_sm"
                 android:clickable="true"
                 android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
                 android:gravity="end"
                 android:text="@string/forgot_password"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
@@ -135,6 +136,7 @@
                     android:layout_height="wrap_content"
                     android:clickable="true"
                     android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
                     android:minHeight="48dp"
                     android:gravity="center"
                     android:paddingStart="@dimen/spacing_xs"

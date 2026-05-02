@@ -33,5 +33,5 @@
         android:gravity="center"
         android:text="@string/scanner_camera_hint"
         android:textColor="@color/white"
-        android:textSize="15sp" />
+        android:textAppearance="?attr/textAppearanceBodyMedium" />
 </FrameLayout>

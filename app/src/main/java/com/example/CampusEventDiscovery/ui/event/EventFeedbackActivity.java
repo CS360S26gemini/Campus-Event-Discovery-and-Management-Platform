@@ -18,6 +18,7 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -44,6 +45,7 @@ public class EventFeedbackActivity extends AppCompatActivity {
     private String currentUserId;
     private String eventId;
     private String eventTitle;
+    private boolean walkthroughMode;
     private final List<Uri> selectedImageUris = new ArrayList<>();
 
     private final ActivityResultLauncher<String[]> photoPickerLauncher =
@@ -62,6 +64,7 @@ public class EventFeedbackActivity extends AppCompatActivity {
         setContentView(R.layout.activity_event_feedback);
 
         repository = new EventRepository();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         currentUserId = currentUser != null
@@ -75,6 +78,11 @@ public class EventFeedbackActivity extends AppCompatActivity {
         setupToolbar();
         bindStaticUi();
         setupActions();
+        if (walkthroughMode) {
+            ratingBarFeedback.setRating(4f);
+            etFeedbackReview.setText("Walkthrough feedback preview.");
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "event_feedback");
+        }
     }
 
     private void bindViews() {
@@ -98,11 +106,22 @@ public class EventFeedbackActivity extends AppCompatActivity {
     }
 
     private void setupActions() {
-        btnSelectPhotos.setOnClickListener(v -> photoPickerLauncher.launch(new String[]{"image/*"}));
+        btnSelectPhotos.setOnClickListener(v -> {
+            if (walkthroughMode) {
+                Toast.makeText(this, "Walkthrough mode: photo picker was not opened.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            photoPickerLauncher.launch(new String[]{"image/*"});
+        });
         btnSubmitFeedback.setOnClickListener(v -> submitFeedback());
     }
 
     private void submitFeedback() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: feedback was not submitted.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (TextUtils.isEmpty(currentUserId) || TextUtils.isEmpty(eventId)) {
             Toast.makeText(this, getString(R.string.feedback_failed), Toast.LENGTH_SHORT).show();
             return;

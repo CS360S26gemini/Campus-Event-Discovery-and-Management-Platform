@@ -20,11 +20,10 @@
         android:id="@+id/tvPaymentEventName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="@dimen/spacing_xl"
         android:text="Event Name"
-        android:textColor="@color/colorOnBackground"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+        android:textColor="?attr/colorOnSurface"
+        android:textAppearance="?attr/textAppearanceTitleLarge" />
 
     <TextView
         android:id="@+id/tvPaymentPrice"
@@ -32,36 +31,35 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="Price: $0.00"
-        android:textColor="@color/colorSecondary"
-        android:textSize="18sp" />
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textAppearance="?attr/textAppearanceTitleMedium" />
 
     <com.google.android.material.card.MaterialCardView
         style="@style/AppMaterialCardView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp">
+        android:layout_marginTop="@dimen/spacing_xl">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="@dimen/spacing_md">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Payment Method (Demo)"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="This is a demo payment simulation. No real money will be charged."
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceBodyMedium" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

@@ -6,12 +6,12 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,15 +20,24 @@ import androidx.annotation.Nullable;
 import com.example.CampusEventDiscovery.MainActivity;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.Event;
+import com.example.CampusEventDiscovery.model.EventAttendee;
 import com.example.CampusEventDiscovery.model.EventProposal;
+import com.example.CampusEventDiscovery.model.Notification;
+import com.example.CampusEventDiscovery.model.VendorProposal;
 import com.example.CampusEventDiscovery.ui.event.CheckoutActivity;
+import com.example.CampusEventDiscovery.ui.event.EventFeedbackActivity;
 import com.example.CampusEventDiscovery.ui.event.EventApprovalActivity;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
 import com.example.CampusEventDiscovery.ui.event.TicketActivity;
 import com.example.CampusEventDiscovery.ui.organizer.CreateEventActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ManageEventsActivity;
+import com.example.CampusEventDiscovery.ui.organizer.OrganizerEventDetailActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
+import com.example.CampusEventDiscovery.ui.organizer.WhoIsComingActivity;
+import com.example.CampusEventDiscovery.ui.profile.AccountSettingsActivity;
+import com.example.CampusEventDiscovery.ui.profile.MemoryAlbumActivity;
 import com.example.CampusEventDiscovery.ui.profile.MemoriesActivity;
+import com.example.CampusEventDiscovery.ui.profile.NotificationCenterActivity;
 import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -102,6 +111,78 @@ public final class WalkthroughManager {
         return events;
     }
 
+    public static List<EventAttendee> getDemoAttendees() {
+        List<EventAttendee> attendees = new ArrayList<>();
+        EventAttendee checkedIn = new EventAttendee();
+        checkedIn.setUserId("walkthrough_attendee_checked_in");
+        checkedIn.setFullName("Demo Checked-In Attendee");
+        checkedIn.setQrToken("DEMO-CHECKED-IN");
+        checkedIn.setCheckedIn(true);
+        checkedIn.setCheckedInAt(Timestamp.now());
+        attendees.add(checkedIn);
+
+        EventAttendee waiting = new EventAttendee();
+        waiting.setUserId("walkthrough_attendee_waiting");
+        waiting.setFullName("Demo Waiting Attendee");
+        waiting.setQrToken("DEMO-WAITING");
+        waiting.setCheckedIn(false);
+        attendees.add(waiting);
+        return attendees;
+    }
+
+    public static List<VendorProposal> getDemoVendorProposals() {
+        List<VendorProposal> proposals = new ArrayList<>();
+        VendorProposal pending = new VendorProposal();
+        pending.setProposalId("walkthrough_vendor_pending");
+        pending.setVendorName("Demo Campus Cafe");
+        pending.setDescription("A walkthrough-only catering request for the demo event.");
+        pending.setPhone("+92 300 0000000");
+        pending.setEventId(getDemoEvent().getEventId());
+        pending.setEventTitle(getDemoEvent().getTitle());
+        pending.setOrganizerId("walkthrough_organizer");
+        pending.setOrganizerName("Demo Organizer");
+        pending.setStatus("pending");
+        pending.setCreatedAt(Timestamp.now());
+        proposals.add(pending);
+
+        VendorProposal approved = new VendorProposal();
+        approved.setProposalId("walkthrough_vendor_approved");
+        approved.setVendorName("Demo Sound Booth");
+        approved.setDescription("Approved walkthrough vendor for lighting and sound.");
+        approved.setPhone("+92 300 1111111");
+        approved.setEventId(getDemoEvent().getEventId());
+        approved.setEventTitle(getDemoEvent().getTitle());
+        approved.setOrganizerId("walkthrough_organizer");
+        approved.setOrganizerName("Demo Organizer");
+        approved.setStatus("approved");
+        approved.setCreatedAt(Timestamp.now());
+        proposals.add(approved);
+        return proposals;
+    }
+
+    public static List<Notification> getDemoNotifications() {
+        List<Notification> notifications = new ArrayList<>();
+        Notification approval = new Notification(
+                "Demo event approved",
+                "Your walkthrough event has been approved.",
+                "event",
+                getDemoEvent().getEventId()
+        );
+        approval.setNotificationId("walkthrough_notification_approval");
+        notifications.add(approval);
+
+        Notification sos = new Notification(
+                "Demo SOS update",
+                "A walkthrough SOS alert has been resolved.",
+                "sos",
+                getDemoEvent().getEventId()
+        );
+        sos.setNotificationId("walkthrough_notification_sos");
+        sos.setRead(true);
+        notifications.add(sos);
+        return notifications;
+    }
+
     public static void start(Activity activity, String id) {
         guideId = id == null ? "" : id;
         steps.clear();
@@ -137,14 +218,12 @@ public final class WalkthroughManager {
                 target = root;
             }
             final View resolvedTarget = resolveTargetView(target);
-            if (shouldAutoScrollBeforeOverlay(step.screen, step.targetId) && requestRevealTarget(resolvedTarget)) {
-                resolvedTarget.postDelayed(() -> {
-                    if (!isActive() || activity.isFinishing() || activity.isDestroyed()) return;
-                    showOverlay(activity, resolvedTarget, step);
-                }, 220L);
-                return;
-            }
-            showOverlay(activity, resolvedTarget, step);
+            long revealDelayMs = shouldAutoScrollBeforeOverlay(step.screen, step.targetId)
+                    && requestRevealTarget(resolvedTarget) ? 260L : 0L;
+            resolvedTarget.postDelayed(() -> {
+                if (!isActive() || activity.isFinishing() || activity.isDestroyed()) return;
+                showOverlay(activity, resolvedTarget, step);
+            }, revealDelayMs);
         }, 220L);
     }
 
@@ -214,10 +293,30 @@ public final class WalkthroughManager {
             intent.putExtra("qrPayload", "{\"demo\":true}");
         } else if ("memories".equals(step.screen)) {
             intent = new Intent(activity, MemoriesActivity.class);
+        } else if ("memory_album".equals(step.screen)) {
+            intent = new Intent(activity, MemoryAlbumActivity.class);
+            intent.putExtra(MemoryAlbumActivity.EXTRA_EVENT_ID, getDemoEvent().getEventId());
+            intent.putExtra(MemoryAlbumActivity.EXTRA_EVENT_TITLE, getDemoEvent().getTitle());
+            intent.putStringArrayListExtra(MemoryAlbumActivity.EXTRA_PHOTO_URLS, new ArrayList<>());
+        } else if ("notifications".equals(step.screen)) {
+            intent = new Intent(activity, NotificationCenterActivity.class);
+        } else if ("account_settings".equals(step.screen)) {
+            intent = new Intent(activity, AccountSettingsActivity.class);
+        } else if ("event_feedback".equals(step.screen)) {
+            intent = new Intent(activity, EventFeedbackActivity.class);
+            intent.putExtra("eventId", getDemoEvent().getEventId());
+            intent.putExtra("eventTitle", getDemoEvent().getTitle());
         } else if ("create_event".equals(step.screen)) {
             intent = new Intent(activity, CreateEventActivity.class);
         } else if ("manage_events".equals(step.screen)) {
             intent = new Intent(activity, ManageEventsActivity.class);
+        } else if ("organizer_event_detail".equals(step.screen)) {
+            intent = new Intent(activity, OrganizerEventDetailActivity.class);
+            intent.putExtra("eventId", getDemoEvent().getEventId());
+        } else if ("who_is_coming".equals(step.screen)) {
+            intent = new Intent(activity, WhoIsComingActivity.class);
+            intent.putExtra("eventId", getDemoEvent().getEventId());
+            intent.putExtra("eventTitle", getDemoEvent().getTitle());
         } else if ("scanner".equals(step.screen)) {
             intent = new Intent(activity, ScannerActivity.class);
         } else if ("approval".equals(step.screen)) {
@@ -237,6 +336,10 @@ public final class WalkthroughManager {
         return "home_attendee".equals(screen)
                 || "search".equals(screen)
                 || "my_events".equals(screen)
+                || "favourites".equals(screen)
+                || "profile".equals(screen)
+                || "calendar".equals(screen)
+                || "vendors".equals(screen)
                 || "home_organizer".equals(screen)
                 || "home_admin".equals(screen);
     }
@@ -272,7 +375,7 @@ public final class WalkthroughManager {
 
     private static List<Step> buildSteps(String id) {
         List<Step> list = new ArrayList<>();
-        if (TextUtils.isEmpty(id)) return list;
+        if (id == null || id.isEmpty()) return list;
         switch (id) {
             case "attendee_register":
                 list.add(new Step("search", R.id.etSearch, "Search for an event", "Use the real Search screen to find events by keyword."));
@@ -286,15 +389,53 @@ public final class WalkthroughManager {
                 list.add(new Step("search", R.id.tvSortBy, "Sort control", "Sort results by relevance, date, or price."));
                 list.add(new Step("search", R.id.rvResults, "Result cards", "Tap a result to inspect event details."));
                 break;
+            case "attendee_event_detail":
+                list.add(new Step("event_detail", R.id.tvTitle, "Event overview", "Use the detail page to confirm the title, venue, date, and organizer before registering."));
+                list.add(new Step("event_detail", R.id.tvViewOnMap, "Directions", "Open the campus map route for the selected venue."));
+                list.add(new Step("event_detail", R.id.btnShare, "Share event", "Share the event with classmates from this action."));
+                list.add(new Step("event_detail", R.id.btnTickets, "Ticket options", "Start ticket selection or free RSVP from here."));
+                break;
             case "attendee_ticket":
                 list.add(new Step("my_events", R.id.rvSection1, "Registered events", "Your RSVP events appear on the real My Events screen."));
                 list.add(new Step("ticket", R.id.ivTicketQrCode, "Ticket QR", "This QR is what attendees show at check-in."));
                 break;
+            case "attendee_favourites":
+                list.add(new Step("favourites", R.id.tvFavouritesBadge, "Saved count", "This shows how many events you have saved."));
+                list.add(new Step("favourites", R.id.rvFavourites, "Saved events", "Saved event cards appear here so you can revisit them quickly."));
+                break;
+            case "attendee_calendar":
+                list.add(new Step("calendar", R.id.tvMonthLabel, "Calendar month", "Browse campus events by date."));
+                list.add(new Step("calendar", R.id.toggleCalendarEventScope, "Event scope", "Switch between all events and your registered events."));
+                list.add(new Step("calendar", R.id.rvCalendarEvents, "Daily events", "Events for the selected date appear here. Long-press can add them to your device calendar."));
+                break;
+            case "attendee_feedback":
+                list.add(new Step("event_feedback", R.id.ratingBarFeedback, "Rate event", "Give attended events a star rating."));
+                list.add(new Step("event_feedback", R.id.etFeedbackReview, "Write review", "Add optional feedback for organizers."));
+                list.add(new Step("event_feedback", R.id.btnSelectPhotos, "Attach photos", "Add photos that become memories for the event."));
+                list.add(new Step("event_feedback", R.id.btnSubmitFeedback, "Submit feedback", "Walkthrough mode highlights this button but does not save anything."));
+                break;
             case "attendee_memories":
                 list.add(new Step("memories", R.id.rvMemories, "Memory folders", "Attended events appear here as memory folders."));
+                list.add(new Step("memory_album", R.id.tvEmptyMemoryAlbum, "Memory album", "Open a memory folder to review photos. Long-press photos can be removed in normal use."));
                 break;
             case "attendee_sos":
                 list.add(new Step("home_attendee", R.id.btnSos, "SOS button", "This is where attendees request urgent help. Walkthrough mode never sends an alert."));
+                break;
+            case "profile_tools":
+                list.add(new Step("profile", R.id.ivProfile, "Profile photo or avatar", "Update your profile visual from here."));
+                list.add(new Step("profile", R.id.cardDarkMode, "Theme mode", "Switch between light and dark mode."));
+                list.add(new Step("profile", R.id.cardAccentColor, "Accent color", "Customize the app accent color."));
+                list.add(new Step("profile", R.id.btn_help, "Help walkthroughs", "Return here any time to replay role-specific guides."));
+                break;
+            case "profile_notifications":
+                list.add(new Step("profile", R.id.rowNotifications, "Notifications", "Open event, approval, payment, and SOS updates from your profile."));
+                list.add(new Step("notifications", R.id.rvNotifications, "Notification list", "Unread and read notifications appear here."));
+                break;
+            case "profile_settings":
+                list.add(new Step("profile", R.id.rowAccountSettings, "Account settings", "Open editable account details from the profile screen."));
+                list.add(new Step("account_settings", R.id.etFullName, "Profile details", "Update display name and profile details here."));
+                list.add(new Step("account_settings", R.id.chipGroupInterests, "Interests", "Choose interests that personalize event discovery."));
+                list.add(new Step("account_settings", R.id.btnChangePassword, "Security", "Use these controls to change email or password."));
                 break;
             case "organizer_create":
                 list.add(new Step("home_organizer", R.id.btnCreateEvent, "Create event", "Organizers start proposals from this real dashboard button."));
@@ -307,9 +448,33 @@ public final class WalkthroughManager {
                 list.add(new Step("manage_events", R.id.rvSection1, "Approved events", "Approved events and attendee tools live here."));
                 list.add(new Step("manage_events", R.id.rvSection2, "Pending proposals", "Pending proposals are grouped in this section."));
                 break;
+            case "organizer_event_tools":
+                list.add(new Step("organizer_event_detail", R.id.tvRegCount, "Registration progress", "Track RSVP and check-in progress for the selected event."));
+                list.add(new Step("organizer_event_detail", R.id.btnWhoIsComing, "Attendee list", "Open attendees, search participants, and check people in."));
+                list.add(new Step("organizer_event_detail", R.id.btnAnnouncement, "Announcements", "Send event updates to registered attendees."));
+                list.add(new Step("organizer_event_detail", R.id.btnPayments, "Payments", "Review payment confirmations for this event."));
+                list.add(new Step("organizer_event_detail", R.id.btnBlacklisted, "Blacklisted attendees", "Review attendees blocked from the event."));
+                break;
+            case "organizer_attendees":
+                list.add(new Step("who_is_coming", R.id.etSearchParticipants, "Search attendees", "Find participants by name."));
+                list.add(new Step("who_is_coming", R.id.rvParticipants, "Participant list", "Registered attendees and check-in status appear here."));
+                list.add(new Step("who_is_coming", R.id.btnScanQr, "QR scan", "Use scanner check-in for attendee tickets."));
+                list.add(new Step("who_is_coming", R.id.btnCheckIn, "Manual check-in", "Enter a QR token manually if the camera is unavailable."));
+                list.add(new Step("who_is_coming", R.id.btnBlacklist, "Blacklist selected", "Select attendees, then blacklist them when needed."));
+                break;
             case "organizer_scan":
                 list.add(new Step("home_organizer", R.id.btnScanTickets, "Scan tickets", "Open scanner tools from the organizer dashboard."));
                 list.add(new Step("scanner", R.id.btnStartScanner, "Start scanner", "Use this to scan attendee QR codes."));
+                break;
+            case "organizer_vendors":
+                list.add(new Step("vendors", R.id.cardVendorToggle, "Vendor status", "Review approved, pending, and rejected vendor requests for the selected event."));
+                list.add(new Step("vendors", R.id.rvVendorProposals, "Vendor proposals", "Vendor requests for the selected event appear here."));
+                list.add(new Step("vendors", R.id.fabAddVendor, "Add vendor", "Submit a vendor request for admin approval."));
+                break;
+            case "organizer_calendar":
+                list.add(new Step("calendar", R.id.tvMonthLabel, "Organizer calendar", "See approved events by month."));
+                list.add(new Step("calendar", R.id.toggleCalendarEventScope, "Approved filter", "Switch between all events and your approved events."));
+                list.add(new Step("calendar", R.id.rvCalendarEvents, "Event list", "Events for the selected date appear here."));
                 break;
             case "organizer_sos":
                 list.add(new Step("home_organizer", R.id.btnSosDashboard, "SOS dashboard", "Organizers monitor SOS reports for their events here."));
@@ -326,6 +491,15 @@ public final class WalkthroughManager {
                 list.add(new Step("home_admin", R.id.btnRejectedEvents, "Rejected filter", "Use this real toggle for rejected proposals."));
                 list.add(new Step("home_admin", R.id.rvAdminApprovals, "Approval list", "The admin review list appears here."));
                 break;
+            case "admin_events":
+                list.add(new Step("manage_events", R.id.rvSection1, "Active event oversight", "Admins can review active events across organizers."));
+                list.add(new Step("organizer_event_detail", R.id.btnDeleteEvent, "Cancel event", "Admins can cancel events when policy or safety requires it."));
+                list.add(new Step("organizer_event_detail", R.id.btnWhoIsComing, "Attendee tools", "Admins can inspect attendee status when supporting organizers."));
+                break;
+            case "admin_vendors":
+                list.add(new Step("vendors", R.id.cardVendorToggle, "Vendor review filters", "Switch between pending, approved, and rejected vendor requests."));
+                list.add(new Step("vendors", R.id.rvVendorProposals, "Vendor requests", "Vendor proposal cards appear here for admin review."));
+                break;
             case "admin_sos":
                 list.add(new Step("home_admin", R.id.btnSosDashboard, "SOS dashboard", "Admins can open campus-wide SOS monitoring here."));
                 list.add(new Step("sos_dashboard", R.id.rvSosAlerts, "SOS list", "Active SOS alerts appear in this real dashboard list."));
@@ -340,17 +514,57 @@ public final class WalkthroughManager {
         List<String> guideIds = new ArrayList<>();
         guideIds.add("attendee_register");
         guideIds.add("attendee_search");
+        guideIds.add("attendee_event_detail");
         guideIds.add("attendee_ticket");
+        guideIds.add("attendee_favourites");
+        guideIds.add("attendee_calendar");
+        guideIds.add("attendee_feedback");
         guideIds.add("attendee_memories");
         guideIds.add("attendee_sos");
+        guideIds.add("profile_tools");
+        guideIds.add("profile_notifications");
+        guideIds.add("profile_settings");
         guideIds.add("organizer_create");
         guideIds.add("organizer_manage");
+        guideIds.add("organizer_event_tools");
+        guideIds.add("organizer_attendees");
         guideIds.add("organizer_scan");
+        guideIds.add("organizer_vendors");
+        guideIds.add("organizer_calendar");
         guideIds.add("organizer_sos");
         guideIds.add("admin_review");
         guideIds.add("admin_dashboard");
+        guideIds.add("admin_events");
+        guideIds.add("admin_vendors");
         guideIds.add("admin_sos");
         return guideIds;
+    }
+
+    static List<StepInfo> getStepInfoForGuide(String id) {
+        List<StepInfo> info = new ArrayList<>();
+        for (Step step : buildSteps(id)) {
+            info.add(new StepInfo(step.screen, step.targetId, step.title, step.body));
+        }
+        return info;
+    }
+
+    static boolean canRouteScreen(String screen) {
+        return isMainScreen(screen)
+                || "event_detail".equals(screen)
+                || "checkout".equals(screen)
+                || "ticket".equals(screen)
+                || "memories".equals(screen)
+                || "memory_album".equals(screen)
+                || "notifications".equals(screen)
+                || "account_settings".equals(screen)
+                || "event_feedback".equals(screen)
+                || "create_event".equals(screen)
+                || "manage_events".equals(screen)
+                || "organizer_event_detail".equals(screen)
+                || "who_is_coming".equals(screen)
+                || "scanner".equals(screen)
+                || "approval".equals(screen)
+                || "sos_dashboard".equals(screen);
     }
 
     static boolean shouldShowBackAction(int position) {
@@ -364,14 +578,15 @@ public final class WalkthroughManager {
     }
 
     static boolean shouldAutoScrollBeforeOverlay(String screen, int targetId) {
-        return "create_event".equals(screen) && targetId == R.id.btnSubmitEvent;
+        return targetId != 0;
     }
 
     private static boolean requestRevealTarget(View target) {
         if (target == null || target.getWidth() <= 0 || target.getHeight() <= 0) {
             return false;
         }
-        Rect rect = new Rect(0, 0, target.getWidth(), target.getHeight());
+        int verticalPadding = Math.round(96 * target.getResources().getDisplayMetrics().density);
+        Rect rect = new Rect(0, -verticalPadding, target.getWidth(), target.getHeight() + verticalPadding);
         return target.requestRectangleOnScreen(rect, true);
     }
 
@@ -382,6 +597,20 @@ public final class WalkthroughManager {
         final String body;
 
         Step(String screen, int targetId, String title, String body) {
+            this.screen = screen;
+            this.targetId = targetId;
+            this.title = title;
+            this.body = body;
+        }
+    }
+
+    static final class StepInfo {
+        final String screen;
+        final int targetId;
+        final String title;
+        final String body;
+
+        StepInfo(String screen, int targetId, String title, String body) {
             this.screen = screen;
             this.targetId = targetId;
             this.title = title;
@@ -440,7 +669,14 @@ public final class WalkthroughManager {
             content.addView(title);
             content.addView(body);
             content.addView(actions);
-            panel.addView(content);
+            ScrollView scrollView = new ScrollView(getContext());
+            scrollView.setFillViewport(false);
+            scrollView.setOverScrollMode(OVER_SCROLL_IF_CONTENT_SCROLLS);
+            scrollView.addView(content, new ScrollView.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            panel.addView(scrollView);
             LayoutParams params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
             params.setMargins(dp(16), dp(16), dp(16), dp(16));
             addView(panel, params);
@@ -470,7 +706,11 @@ public final class WalkthroughManager {
             int gap = dp(12);
             float availableAbove = targetRect.top - gap - margin;
             float availableBelow = getHeight() - targetRect.bottom - gap - margin;
-            int maxPanelHeight = Math.max(dp(120), Math.round(Math.max(availableAbove, availableBelow)));
+            int usableHeight = Math.max(dp(180), getHeight() - (margin * 2));
+            int maxPanelHeight = Math.min(
+                    usableHeight,
+                    Math.max(dp(180), Math.round(Math.max(availableAbove, availableBelow)))
+            );
             panel.measure(
                     MeasureSpec.makeMeasureSpec(Math.max(1, getWidth() - (margin * 2)), MeasureSpec.EXACTLY),
                     MeasureSpec.makeMeasureSpec(maxPanelHeight, MeasureSpec.AT_MOST)

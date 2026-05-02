@@ -67,14 +67,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Event Title"
-                    android:textColor="@color/colorOnBackground"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="?attr/textAppearanceHeadlineSmall" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="@dimen/spacing_md"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -90,8 +89,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:text="Mon, Apr 18 • 09:00 PM"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="14sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -113,18 +112,17 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:text="Cricket Ground"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="14sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
+                    android:layout_marginTop="@dimen/spacing_lg"
                     android:text="Ticket Price"
-                    android:textColor="@color/colorOnBackground"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="?attr/textAppearanceTitleMedium" />
 
                 <TextView
                     android:id="@+id/tvPriceInfo"
@@ -132,17 +130,16 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="PKR 3000 - General\nPKR 7000 - VIP"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="14sp" />
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
+                    android:layout_marginTop="@dimen/spacing_lg"
                     android:text="@string/about"
-                    android:textColor="@color/colorOnBackground"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="?attr/textAppearanceTitleMedium" />
 
                 <TextView
                     android:id="@+id/tvDescription"
@@ -151,8 +148,8 @@
                     android:layout_marginTop="8dp"
                     android:lineSpacingExtra="4dp"
                     android:text="@string/placeholder_description"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="14sp" />
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                 <LinearLayout
                     android:layout_width="match_parent"

@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:padding="@dimen/spacing_md"
         app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.appbar.MaterialToolbar
@@ -27,11 +27,10 @@
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/spacing_md"
             android:text="@string/who_is_coming"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textColor="?attr/colorOnSurface"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall" />
 
         <TextView
             android:id="@+id/tvEventContext"
@@ -39,7 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_xs"
             android:textColor="@color/colorOnSurfaceVariant"
-            android:textSize="14sp"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
             android:visibility="gone" />
 
         <com.google.android.material.textfield.TextInputLayout
@@ -47,7 +46,7 @@
             style="@style/AppTextInputBoxStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/spacing_md"
             android:hint="@string/search"
             app:endIconContentDescription="@string/clear_search"
             app:endIconMode="clear_text">
@@ -57,7 +56,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
-                android:textColor="@color/colorOnBackground" />
+                android:textColor="?attr/colorOnSurface" />
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
@@ -77,8 +76,8 @@
         android:drawablePadding="@dimen/spacing_md"
         android:gravity="center"
         android:text="@string/no_participants_yet"
-        android:textColor="@color/colorSecondary"
-        android:textSize="16sp"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/actionBar"
         app:layout_constraintEnd_toEndOf="parent"

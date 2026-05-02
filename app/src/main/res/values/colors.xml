@@ -36,11 +36,13 @@
     <color name="accent_pink_on_primary">#FFFFFF</color>
     <color name="accent_pink_container">#FFD9E2</color>
     <color name="accent_pink_on_container">#3E001D</color>
+    <color name="accent_pink_ripple">#33BC186E</color>
 
     <color name="accent_teal_primary">#006A6A</color>
     <color name="accent_teal_on_primary">#FFFFFF</color>
     <color name="accent_teal_container">#6FF7F6</color>
     <color name="accent_teal_on_container">#002020</color>
+    <color name="accent_teal_ripple">#33006A6A</color>
 
     <color name="colorSecondary">#665A70</color>
     <color name="colorOnSecondary">#FFFFFF</color>

@@ -155,6 +155,10 @@ public class EventDetailActivity extends AppCompatActivity {
         toolbarEventDetail.setNavigationOnClickListener(v -> finish());
 
         btnHeart.setOnClickListener(v -> {
+            if (walkthroughMode) {
+                Toast.makeText(this, "Walkthrough mode: event was not saved.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (currentEvent == null || currentUserId == null || currentEvent.getEventId() == null) {
                 return;
             }
@@ -542,6 +546,11 @@ public class EventDetailActivity extends AppCompatActivity {
     }
 
     private void addToCalendar() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: calendar was not opened.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (currentEvent == null) {
             return;
         }

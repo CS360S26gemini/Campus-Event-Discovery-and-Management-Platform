@@ -20,6 +20,7 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.adapter.AttendeeAdapter;
 import com.example.CampusEventDiscovery.model.EventAttendee;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -57,6 +58,7 @@ public class WhoIsComingActivity extends AppCompatActivity {
     private String eventTitle;
     private boolean showBlacklisted;
     private ListenerRegistration attendeeListener;
+    private boolean walkthroughMode;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,6 +67,7 @@ public class WhoIsComingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_who_is_coming);
 
         repository = new EventRepository();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
         eventId    = getIntent().getStringExtra("eventId");
         eventTitle = getIntent().getStringExtra("eventTitle");
         showBlacklisted = getIntent().getBooleanExtra("showBlacklisted", false);
@@ -85,11 +88,20 @@ public class WhoIsComingActivity extends AppCompatActivity {
         setupCheckInAction();
         setupBlacklistAction();
         bindMode();
+        if (walkthroughMode) {
+            adapter.updateData(WalkthroughManager.getDemoAttendees());
+            updateEmptyState();
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "who_is_coming");
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        if (walkthroughMode) {
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "who_is_coming");
+            return;
+        }
         if (showBlacklisted) {
             loadBlacklistedAttendees();
         } else {
@@ -210,6 +222,10 @@ public class WhoIsComingActivity extends AppCompatActivity {
      */
     private void setupScanQrAction() {
         btnScanQr.setOnClickListener(v -> {
+            if (walkthroughMode) {
+                Toast.makeText(this, "Walkthrough mode: scanner was not opened from attendee list.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             Intent intent = new Intent(this, ScannerActivity.class);
             intent.putExtra("eventId", eventId);
             intent.putExtra("eventTitle", eventTitle);
@@ -223,6 +239,10 @@ public class WhoIsComingActivity extends AppCompatActivity {
      */
     private void setupCheckInAction() {
         btnCheckIn.setOnClickListener(v -> {
+            if (walkthroughMode) {
+                Toast.makeText(this, "Walkthrough mode: attendee was not checked in.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             EditText input = new EditText(this);
             input.setHint(R.string.check_in_code_hint);
             input.setPadding(32, 24, 32, 24);
@@ -274,6 +294,10 @@ public class WhoIsComingActivity extends AppCompatActivity {
 
     private void setupBlacklistAction() {
         btnBlacklist.setOnClickListener(v -> {
+            if (walkthroughMode) {
+                Toast.makeText(this, "Walkthrough mode: attendees were not blacklisted.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             List<EventAttendee> selected = adapter.getSelectedAttendees();
             if (selected.isEmpty()) return;
 

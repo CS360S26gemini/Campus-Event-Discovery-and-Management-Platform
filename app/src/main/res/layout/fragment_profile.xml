@@ -18,16 +18,15 @@
             android:id="@+id/tvProfileHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="@dimen/spacing_md"
             android:text="@string/profile_header"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:textColor="?attr/colorOnSurface"
+            android:textAppearance="?attr/textAppearanceTitleLarge" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="@dimen/spacing_lg"
             android:gravity="center_horizontal"
             android:orientation="vertical">
 
@@ -57,7 +56,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="@string/edit_photo_or_avatar"
-                android:textSize="13sp"
+                android:textAppearance="?attr/textAppearanceBodySmall"
                 app:strokeColor="@color/colorOutlineVariant"
                 app:strokeWidth="1dp" />
 
@@ -67,9 +66,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:text="@string/guest_user"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleLarge" />
 
             <TextView
                 android:id="@+id/tvEmail"
@@ -77,8 +75,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="@string/unknown_email"
-                android:textColor="@color/colorSecondary"
-                android:textSize="14sp" />
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceBodyMedium" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipRole"
@@ -105,7 +103,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/in_app_credits_label"
                     android:textColor="@color/colorOnSurfaceVariant"
-                    android:textSize="13sp" />
+                    android:textAppearance="?attr/textAppearanceBodySmall" />
 
                 <TextView
                     android:id="@+id/tvCreditBalance"
@@ -114,8 +112,7 @@
                     android:layout_marginStart="@dimen/spacing_sm"
                     android:text="@string/credit_balance_zero"
                     android:textColor="?attr/colorPrimary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textAppearance="?attr/textAppearanceLabelLarge" />
             </LinearLayout>
         </LinearLayout>
 
@@ -145,7 +142,7 @@
                 app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="@dimen/event_card_radius"
                 app:cardElevation="0dp"
-                app:rippleColor="?attr/colorPrimary"
+                app:rippleColor="?attr/colorControlHighlight"
                 app:strokeColor="@color/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
@@ -154,7 +151,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:padding="@dimen/spacing_md">
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -166,8 +163,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/my_events_row"
-                            android:textColor="@color/colorOnBackground"
-                            android:textSize="16sp" />
+                            android:textColor="?attr/colorOnSurface"
+                            android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                         <TextView
                             android:layout_width="match_parent"
@@ -175,7 +172,7 @@
                             android:layout_marginTop="@dimen/spacing_xs"
                             android:text="@string/my_events_subtitle"
                             android:textColor="@color/colorOnSurfaceVariant"
-                            android:textSize="13sp" />
+                            android:textAppearance="?attr/textAppearanceBodySmall" />
                     </LinearLayout>
 
                     <ImageView
@@ -199,7 +196,7 @@
                 app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="@dimen/event_card_radius"
                 app:cardElevation="0dp"
-                app:rippleColor="?attr/colorPrimary"
+                app:rippleColor="?attr/colorControlHighlight"
                 app:strokeColor="@color/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
@@ -208,7 +205,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:padding="@dimen/spacing_md">
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -220,8 +217,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/memories_row"
-                            android:textColor="@color/colorOnBackground"
-                            android:textSize="16sp" />
+                            android:textColor="?attr/colorOnSurface"
+                            android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                         <TextView
                             android:layout_width="match_parent"
@@ -229,7 +226,7 @@
                             android:layout_marginTop="@dimen/spacing_xs"
                             android:text="@string/memories_subtitle"
                             android:textColor="@color/colorOnSurfaceVariant"
-                            android:textSize="13sp" />
+                            android:textAppearance="?attr/textAppearanceBodySmall" />
                     </LinearLayout>
 
                     <ImageView
@@ -268,7 +265,7 @@
                 app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="@dimen/event_card_radius"
                 app:cardElevation="0dp"
-                app:rippleColor="?attr/colorPrimary"
+                app:rippleColor="?attr/colorControlHighlight"
                 app:strokeColor="@color/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
@@ -277,7 +274,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:padding="@dimen/spacing_md">
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -289,8 +286,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/manage_events_row"
-                            android:textColor="@color/colorOnBackground"
-                            android:textSize="16sp" />
+                            android:textColor="?attr/colorOnSurface"
+                            android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                         <TextView
                             android:layout_width="match_parent"
@@ -298,7 +295,7 @@
                             android:layout_marginTop="@dimen/spacing_xs"
                             android:text="@string/manage_events_subtitle"
                             android:textColor="@color/colorOnSurfaceVariant"
-                            android:textSize="13sp" />
+                            android:textAppearance="?attr/textAppearanceBodySmall" />
                     </LinearLayout>
 
                     <ImageView
@@ -321,7 +318,7 @@
                 app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="@dimen/event_card_radius"
                 app:cardElevation="0dp"
-                app:rippleColor="?attr/colorPrimary"
+                app:rippleColor="?attr/colorControlHighlight"
                 app:strokeColor="@color/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
@@ -330,7 +327,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:padding="@dimen/spacing_md">
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -342,8 +339,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/create_event"
-                            android:textColor="@color/colorOnBackground"
-                            android:textSize="16sp" />
+                            android:textColor="?attr/colorOnSurface"
+                            android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                         <TextView
                             android:layout_width="match_parent"
@@ -351,7 +348,7 @@
                             android:layout_marginTop="@dimen/spacing_xs"
                             android:text="@string/create_event_subtitle"
                             android:textColor="@color/colorOnSurfaceVariant"
-                            android:textSize="13sp" />
+                            android:textAppearance="?attr/textAppearanceBodySmall" />
                     </LinearLayout>
 
                     <ImageView
@@ -374,7 +371,7 @@
                 app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="@dimen/event_card_radius"
                 app:cardElevation="0dp"
-                app:rippleColor="?attr/colorPrimary"
+                app:rippleColor="?attr/colorControlHighlight"
                 app:strokeColor="@color/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
@@ -383,7 +380,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:padding="@dimen/spacing_md">
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -395,8 +392,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/scan_tickets"
-                            android:textColor="@color/colorOnBackground"
-                            android:textSize="16sp" />
+                            android:textColor="?attr/colorOnSurface"
+                            android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                         <TextView
                             android:layout_width="match_parent"
@@ -404,7 +401,7 @@
                             android:layout_marginTop="@dimen/spacing_xs"
                             android:text="@string/scan_tickets_subtitle"
                             android:textColor="@color/colorOnSurfaceVariant"
-                            android:textSize="13sp" />
+                            android:textAppearance="?attr/textAppearanceBodySmall" />
                     </LinearLayout>
 
                     <ImageView
@@ -427,7 +424,7 @@
                 app:cardBackgroundColor="@color/colorSurface"
                 app:cardCornerRadius="@dimen/event_card_radius"
                 app:cardElevation="0dp"
-                app:rippleColor="?attr/colorPrimary"
+                app:rippleColor="?attr/colorControlHighlight"
                 app:strokeColor="@color/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
@@ -436,7 +433,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:padding="@dimen/spacing_md">
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -448,8 +445,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/open_sos_dashboard"
-                            android:textColor="@color/colorOnBackground"
-                            android:textSize="16sp" />
+                            android:textColor="?attr/colorOnSurface"
+                            android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                         <TextView
                             android:layout_width="match_parent"
@@ -457,7 +454,7 @@
                             android:layout_marginTop="@dimen/spacing_xs"
                             android:text="@string/sos_dashboard_subtitle"
                             android:textColor="@color/colorOnSurfaceVariant"
-                            android:textSize="13sp" />
+                            android:textAppearance="?attr/textAppearanceBodySmall" />
                     </LinearLayout>
 
                     <TextView
@@ -469,8 +466,7 @@
                         android:gravity="center"
                         android:text="0"
                         android:textColor="@color/white"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
+                        android:textAppearance="?attr/textAppearanceLabelSmall"
                         android:visibility="gone" />
 
                     <ImageView
@@ -503,7 +499,7 @@
             app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
-            app:rippleColor="?attr/colorPrimary"
+            app:rippleColor="?attr/colorControlHighlight"
             app:strokeColor="@color/colorOutlineVariant"
             app:strokeWidth="1dp">
 
@@ -512,7 +508,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="16dp">
+                android:padding="@dimen/spacing_md">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -524,8 +520,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/view_event_calendar_row"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="16sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -533,7 +529,7 @@
                         android:layout_marginTop="@dimen/spacing_xs"
                         android:text="@string/calendar_subtitle"
                         android:textColor="@color/colorOnSurfaceVariant"
-                        android:textSize="13sp" />
+                        android:textAppearance="?attr/textAppearanceBodySmall" />
                 </LinearLayout>
 
                 <ImageView
@@ -565,7 +561,7 @@
             app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
-            app:rippleColor="?attr/colorPrimary"
+            app:rippleColor="?attr/colorControlHighlight"
             app:strokeColor="@color/colorOutlineVariant"
             app:strokeWidth="1dp">
 
@@ -574,7 +570,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="16dp">
+                android:padding="@dimen/spacing_md">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -586,8 +582,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/dark_mode"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="16sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -595,7 +591,7 @@
                         android:layout_marginTop="@dimen/spacing_xs"
                         android:text="@string/dark_mode_subtitle"
                         android:textColor="@color/colorOnSurfaceVariant"
-                        android:textSize="13sp" />
+                        android:textAppearance="?attr/textAppearanceBodySmall" />
                 </LinearLayout>
 
                 <Switch
@@ -616,7 +612,7 @@
             app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
-            app:rippleColor="?attr/colorPrimary"
+            app:rippleColor="?attr/colorControlHighlight"
             app:strokeColor="@color/colorOutlineVariant"
             app:strokeWidth="1dp">
 
@@ -625,7 +621,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="16dp">
+                android:padding="@dimen/spacing_md">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -637,8 +633,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/accent_color"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="16sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                     <TextView
                         android:id="@+id/tvAccentColorValue"
@@ -647,7 +643,7 @@
                         android:layout_marginTop="@dimen/spacing_xs"
                         android:text="@string/accent_purple"
                         android:textColor="@color/colorOnSurfaceVariant"
-                        android:textSize="13sp" />
+                        android:textAppearance="?attr/textAppearanceBodySmall" />
                 </LinearLayout>
 
                 <View
@@ -670,7 +666,7 @@
             app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
-            app:rippleColor="?attr/colorPrimary"
+            app:rippleColor="?attr/colorControlHighlight"
             app:strokeColor="@color/colorOutlineVariant"
             app:strokeWidth="1dp">
 
@@ -679,7 +675,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="16dp">
+                android:padding="@dimen/spacing_md">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -691,8 +687,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/notifications_row"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="16sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -700,7 +696,7 @@
                         android:layout_marginTop="@dimen/spacing_xs"
                         android:text="@string/notifications_subtitle"
                         android:textColor="@color/colorOnSurfaceVariant"
-                        android:textSize="13sp" />
+                        android:textAppearance="?attr/textAppearanceBodySmall" />
                 </LinearLayout>
 
                 <ImageView
@@ -723,7 +719,7 @@
             app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
-            app:rippleColor="?attr/colorPrimary"
+            app:rippleColor="?attr/colorControlHighlight"
             app:strokeColor="@color/colorOutlineVariant"
             app:strokeWidth="1dp">
 
@@ -732,7 +728,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="16dp">
+                android:padding="@dimen/spacing_md">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -744,8 +740,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/account_settings_row"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="16sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyLarge" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -753,7 +749,7 @@
                         android:layout_marginTop="@dimen/spacing_xs"
                         android:text="@string/account_settings_subtitle"
                         android:textColor="@color/colorOnSurfaceVariant"
-                        android:textSize="13sp" />
+                        android:textAppearance="?attr/textAppearanceBodySmall" />
                 </LinearLayout>
 
                 <ImageView

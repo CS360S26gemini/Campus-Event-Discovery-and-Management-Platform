@@ -94,6 +94,39 @@ public class LayoutStyleContractTest {
     }
 
     @Test
+    public void layouts_useThemeTypographyInsteadOfRawTextSizing() throws Exception {
+        List<String> failures = new ArrayList<>();
+
+        for (File file : layoutFiles()) {
+            List<String> lines = Files.readAllLines(file.toPath());
+            for (int i = 0; i < lines.size(); i++) {
+                String line = lines.get(i);
+                if (line.contains("android:textSize=") || line.contains("android:textStyle=\"bold\"")) {
+                    failures.add(file.getName() + ":" + (i + 1) + " hardcodes typography instead of using textAppearance");
+                }
+            }
+        }
+
+        assertTrue(String.join("\n", failures), failures.isEmpty());
+    }
+
+    @Test
+    public void clickableCards_useSharedHighlightRipple() throws Exception {
+        List<String> failures = new ArrayList<>();
+
+        for (File file : layoutFiles()) {
+            List<String> lines = Files.readAllLines(file.toPath());
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).contains("app:rippleColor=\"?attr/colorPrimary\"")) {
+                    failures.add(file.getName() + ":" + (i + 1) + " uses direct primary ripple instead of colorControlHighlight");
+                }
+            }
+        }
+
+        assertTrue(String.join("\n", failures), failures.isEmpty());
+    }
+
+    @Test
     public void mainNavigation_hasBottomNavigationCreateActionSlot() throws Exception {
         Document document = parse(layoutFile("activity_main.xml"));
         Document menu = parse(menuFile("bottom_nav_menu.xml"));

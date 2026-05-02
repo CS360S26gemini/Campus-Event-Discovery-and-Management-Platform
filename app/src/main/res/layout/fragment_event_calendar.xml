@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
+            android:paddingHorizontal="@dimen/spacing_md">
 
             <ImageButton
                 style="@style/AppImageButtonStyle"
@@ -38,19 +38,18 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:text="@string/calendar_header"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="24sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall" />
         </LinearLayout>
 
         <!-- Month Navigation -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="@dimen/spacing_lg"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
+            android:paddingHorizontal="@dimen/spacing_md">
 
             <ImageButton
                 style="@style/AppImageButtonStyle"
@@ -69,9 +68,8 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:text="@string/calendar_month_placeholder"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleLarge" />
 
             <ImageButton
                 style="@style/AppImageButtonStyle"
@@ -90,7 +88,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/spacing_md"
             app:cardBackgroundColor="@color/colorSurface"
             app:cardCornerRadius="@dimen/event_card_radius"
             app:cardElevation="0dp"
@@ -125,7 +123,7 @@
             android:id="@+id/layoutCalendarLegend"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/spacing_md"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="24dp">
@@ -141,8 +139,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:text="@string/calendar_all_events_legend"
-                android:textColor="@color/colorSecondary"
-                android:textSize="13sp" />
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceBodySmall" />
 
             <LinearLayout
                 android:id="@+id/layoutLegendPersonal"
@@ -163,8 +161,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:text="@string/calendar_registered_events_legend"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="13sp" />
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="?attr/textAppearanceBodySmall" />
 
             </LinearLayout>
 
@@ -175,30 +173,29 @@
             android:id="@+id/tvDatesWithEvents"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/spacing_md"
             android:paddingHorizontal="24dp"
             android:text="@string/dates_with_events_empty"
-            android:textColor="@color/colorSecondary"
-            android:textSize="14sp" />
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
 
         <!-- Events List Section -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="@dimen/spacing_lg"
             android:background="@color/dividerColor" />
 
         <TextView
             android:id="@+id/tvSelectedDayHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="@dimen/spacing_lg"
             android:paddingHorizontal="24dp"
             android:text="@string/selected_day_events"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textColor="?attr/colorOnSurface"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggleCalendarEventScope"
@@ -231,7 +228,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="@dimen/spacing_lg" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvCalendarEvents"
@@ -246,10 +243,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="@dimen/spacing_xl"
             android:text="@string/no_events_this_day"
-            android:textColor="@color/colorSecondary"
-            android:textSize="15sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
             android:visibility="gone" />
 
     </LinearLayout>

@@ -76,21 +76,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="@dimen/spacing_md">
 
                 <TextView
                     android:id="@+id/tvTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/app_name"
-                    android:textColor="@color/colorOnBackground"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="?attr/textAppearanceTitleLarge" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="@dimen/spacing_md"
                     android:orientation="vertical">
 
                     <TextView
@@ -98,8 +97,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/placeholder_date"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="14sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                     <TextView
                         android:id="@+id/tvAddToCalendar"
@@ -111,13 +110,13 @@
                         android:paddingVertical="2dp"
                         android:text="@string/add_to_calendar_inline"
                         android:textColor="?attr/colorPrimary"
-                        android:textSize="13sp" />
+                        android:textAppearance="?attr/textAppearanceBodySmall" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="@dimen/spacing_md"
                     android:orientation="vertical">
 
                     <TextView
@@ -125,8 +124,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/placeholder_venue"
-                        android:textColor="@color/colorOnBackground"
-                        android:textSize="14sp" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                     <TextView
                         android:id="@+id/tvViewOnMap"
@@ -138,7 +137,7 @@
                         android:paddingVertical="2dp"
                         android:text="@string/view_on_map_inline"
                         android:textColor="?attr/colorPrimary"
-                        android:textSize="13sp" />
+                        android:textAppearance="?attr/textAppearanceBodySmall" />
                 </LinearLayout>
 
                 <View
@@ -152,9 +151,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="18dp"
                     android:text="@string/refund_policy"
-                    android:textColor="@color/colorOnBackground"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="?attr/textAppearanceTitleMedium" />
 
                 <TextView
                     android:id="@+id/tvRefundPolicy"
@@ -162,17 +160,16 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="@string/refund_policy_body"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="13sp" />
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="?attr/textAppearanceBodySmall" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="@dimen/spacing_lg"
                     android:text="@string/about"
-                    android:textColor="@color/colorOnBackground"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="?attr/textAppearanceTitleMedium" />
 
                 <TextView
                     android:id="@+id/tvDescription"
@@ -180,28 +177,26 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="@string/placeholder_description"
-                    android:textColor="@color/colorSecondary"
-                    android:textSize="13sp" />
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="?attr/textAppearanceBodySmall" />
 
                 <TextView
                     android:id="@+id/tvSpotsRemaining"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="@dimen/spacing_lg"
                     android:text="@string/placeholder_venue"
-                    android:textColor="@color/colorOnBackground"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="?attr/textAppearanceLabelLarge" />
 
                 <TextView
                     android:id="@+id/tvTicketTierLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="@dimen/spacing_lg"
                     android:text="@string/ticket_tiers_label"
-                    android:textColor="@color/colorOnBackground"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
                     android:visibility="gone" />
 
                 <androidx.recyclerview.widget.RecyclerView
@@ -217,7 +212,7 @@
                     style="@style/AppSosButtonStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="@dimen/spacing_lg"
                     android:text="@string/sos_event_button"
                     android:visibility="gone" />
             </LinearLayout>
@@ -229,7 +224,7 @@
             android:background="@color/colorSurface"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:padding="16dp">
+            android:padding="@dimen/spacing_md">
 
             <TextView
                 android:id="@+id/tvPrice"
@@ -237,9 +232,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/ticket_price_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTickets"
@@ -254,7 +248,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                android:text="View Ticket" />
+                android:text="@string/view_ticket" />
         </LinearLayout>
     </LinearLayout>
 

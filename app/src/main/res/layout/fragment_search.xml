@@ -49,7 +49,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/all"
-                    android:textColor="@color/colorOnBackground"
+                    android:textColor="?attr/colorOnSurface"
                     app:checkedIconVisible="false" />
 
                 <com.google.android.material.chip.Chip
@@ -58,7 +58,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/music"
-                    android:textColor="@color/colorOnBackground"
+                    android:textColor="?attr/colorOnSurface"
                     app:checkedIconVisible="false" />
 
                 <com.google.android.material.chip.Chip
@@ -67,7 +67,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/sports"
-                    android:textColor="@color/colorOnBackground"
+                    android:textColor="?attr/colorOnSurface"
                     app:checkedIconVisible="false" />
 
                 <com.google.android.material.chip.Chip
@@ -76,7 +76,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/career"
-                    android:textColor="@color/colorOnBackground"
+                    android:textColor="?attr/colorOnSurface"
                     app:checkedIconVisible="false" />
 
                 <com.google.android.material.chip.Chip
@@ -85,7 +85,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/academic"
-                    android:textColor="@color/colorOnBackground"
+                    android:textColor="?attr/colorOnSurface"
                     app:checkedIconVisible="false" />
 
                 <com.google.android.material.chip.Chip
@@ -94,7 +94,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/arts"
-                    android:textColor="@color/colorOnBackground"
+                    android:textColor="?attr/colorOnSurface"
                     app:checkedIconVisible="false" />
 
                 <com.google.android.material.chip.Chip
@@ -103,7 +103,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/business"
-                    android:textColor="@color/colorOnBackground"
+                    android:textColor="?attr/colorOnSurface"
                     app:checkedIconVisible="false" />
 
                 <com.google.android.material.chip.Chip
@@ -112,7 +112,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/food_bev"
-                    android:textColor="@color/colorOnBackground"
+                    android:textColor="?attr/colorOnSurface"
                     app:checkedIconVisible="false" />
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
@@ -123,7 +123,7 @@
             android:layout_marginTop="10dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
+            android:paddingHorizontal="@dimen/spacing_md">
 
             <TextView
                 android:id="@+id/tvEventsCount"
@@ -131,9 +131,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/events_count_label"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceLabelLarge" />
 
             <TextView
                 android:id="@+id/tvSortBy"
@@ -146,8 +145,8 @@
                 android:gravity="center"
                 android:paddingHorizontal="@dimen/spacing_sm"
                 android:text="@string/sort_by_relevance"
-                android:textColor="@color/colorSecondary"
-                android:textSize="12sp" />
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAppearance="?attr/textAppearanceLabelSmall" />
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
@@ -164,7 +163,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="@dimen/spacing_lg"
             android:text="@string/no_search_results_help"
             android:textAppearance="?attr/textAppearanceHeadlineSmall"
             android:textColor="?attr/colorOnSurface"

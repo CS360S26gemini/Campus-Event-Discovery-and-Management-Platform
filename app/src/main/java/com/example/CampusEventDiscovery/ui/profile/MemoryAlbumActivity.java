@@ -16,6 +16,7 @@ import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.adapter.MemoryPhotoGridAdapter;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -70,9 +71,15 @@ public class MemoryAlbumActivity extends AppCompatActivity {
         adapter = new MemoryPhotoGridAdapter(photoUrls, this::confirmDeletePhoto);
         rvMemoryAlbumPhotos.setAdapter(adapter);
         updateEmptyState();
+        WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "memory_album");
     }
 
     private void confirmDeletePhoto(String photoUrl) {
+        if (WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive()) {
+            Toast.makeText(this, "Walkthrough mode: memory photo was not deleted.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (TextUtils.isEmpty(photoUrl)) {
             return;
         }

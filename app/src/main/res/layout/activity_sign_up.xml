@@ -36,7 +36,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/create_account_title"
                 android:textAppearance="?attr/textAppearanceHeadlineLarge"
-                android:textColor="@color/colorOnBackground" />
+                android:textColor="?attr/colorOnSurface" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilFullName"
@@ -254,7 +254,7 @@
                 android:buttonTint="?attr/colorPrimary"
                 android:text="@string/terms_consent"
                 android:textColor="@color/colorOnSurface"
-                android:textSize="14sp" />
+                android:textAppearance="?attr/textAppearanceBodyMedium" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -268,8 +268,7 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:paddingVertical="@dimen/spacing_sm"
                     android:text="@string/terms_and_conditions"
-                    android:textColor="?attr/colorPrimary"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorPrimary" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -285,8 +284,7 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:paddingVertical="@dimen/spacing_sm"
                     android:text="@string/privacy_policy"
-                    android:textColor="?attr/colorPrimary"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorPrimary" />
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton

@@ -30,8 +30,7 @@
                 android:layout_weight="1"
                 android:text="@string/vendor_name"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
-                android:textColor="@color/colorOnSurface"
-                android:textStyle="bold" />
+                android:textColor="@color/colorOnSurface" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipVendorStatus"

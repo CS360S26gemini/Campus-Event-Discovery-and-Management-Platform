@@ -228,6 +228,11 @@ public class MemoriesActivity extends AppCompatActivity {
     }
 
     private void selectPhotosForMemory(Memory memory) {
+        if (WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive()) {
+            Toast.makeText(this, "Walkthrough mode: photo picker was not opened.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (memory == null || TextUtils.isEmpty(memory.getEventId())) {
             return;
         }
@@ -326,6 +331,11 @@ public class MemoriesActivity extends AppCompatActivity {
     }
 
     private void confirmDeleteMemory(Memory memory) {
+        if (WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive()) {
+            Toast.makeText(this, "Walkthrough mode: memory folder was not deleted.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (memory == null || TextUtils.isEmpty(memory.getEventId())) {
             return;
         }

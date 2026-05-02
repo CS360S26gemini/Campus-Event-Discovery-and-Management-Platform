@@ -22,6 +22,7 @@ import com.example.CampusEventDiscovery.ui.event.PaymentConfirmationActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.EventShareHelper;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -52,6 +53,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
     private String currentRole = "";
     private Event currentEvent;
     private ListenerRegistration eventListener;
+    private boolean walkthroughMode;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -60,6 +62,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_organizer_event_detail);
 
         repository = new EventRepository();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
         eventId = getIntent().getStringExtra("eventId");
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         currentUserId = user != null ? user.getUid() : DevSessionManager.getEffectiveUserId(this);
@@ -69,11 +72,19 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
         setupListeners();
         loadCurrentRole();
         loadEventDetails();
+        if (walkthroughMode) {
+            currentEvent = WalkthroughManager.getDemoEvent();
+            bindEvent(currentEvent);
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "organizer_event_detail");
+        }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        if (walkthroughMode) {
+            return;
+        }
         startEventListener();
     }
 
@@ -114,6 +125,10 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
         });
         btnAnnouncement.setOnClickListener(v -> showAnnouncementDialog());
         btnPayments.setOnClickListener(v -> {
+            if (walkthroughMode) {
+                Toast.makeText(this, "Walkthrough mode: payment records were not opened.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             Intent intent = new Intent(this, PaymentConfirmationActivity.class);
             intent.putExtra("eventId", eventId);
             intent.putExtra("eventTitle", currentEvent != null ? currentEvent.getTitle() : "");
@@ -130,6 +145,12 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
     }
 
     private void loadCurrentRole() {
+        if (walkthroughMode) {
+            currentRole = UserRoles.ORGANIZER;
+            bindDeleteVisibility();
+            return;
+        }
+
         if (DevSessionManager.shouldUseBypass(this)) {
             currentRole = DevSessionManager.getBypassRole(this);
             bindDeleteVisibility();
@@ -175,6 +196,11 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
     }
 
     private void deleteEvent() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: event was not deleted.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         btnDeleteEvent.setEnabled(false);
         repository.deleteEvent(eventId, currentUserId, new EventRepository.ActionCallback() {
             @Override
@@ -192,6 +218,10 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
     }
 
     private void loadEventDetails() {
+        if (walkthroughMode) {
+            return;
+        }
+
         if (TextUtils.isEmpty(eventId)) {
             finish();
         }
@@ -208,35 +238,7 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
             @Override
             public void onSuccess(Event event) {
                 currentEvent = event;
-                tvTitle.setText(event.getTitle());
-                tvDateTime.setText(formatDateTime(event.getDate()));
-                
-                // Format location as "Room, Building"
-                String displayLocation = event.getLocation();
-                if (!TextUtils.isEmpty(event.getLocationDescription()) && !TextUtils.isEmpty(event.getLocationKey())) {
-                    displayLocation = event.getLocationDescription() + ", " + event.getLocationKey();
-                } else if (!TextUtils.isEmpty(event.getLocationKey())) {
-                    displayLocation = event.getLocationKey();
-                }
-                tvVenue.setText(displayLocation);
-
-                long rsvp = event.getRsvpCount();
-                long capacity = event.getCapacity();
-                long checkedIn = event.getCheckedInCount();
-                tvRegCount.setText(checkedIn + " attended • " + rsvp + "/" + capacity);
-
-                if (capacity > 0) {
-                    pbRegistrations.setProgress((int) ((rsvp * 100) / capacity));
-                } else {
-                    pbRegistrations.setProgress(0);
-                }
-
-                if (!TextUtils.isEmpty(event.getThumbnailUrl())) {
-                    Glide.with(OrganizerEventDetailActivity.this)
-                            .load(event.getThumbnailUrl())
-                            .placeholder(R.drawable.bg_placeholder_image)
-                            .into(ivBanner);
-                }
+                bindEvent(event);
             }
 
             @Override
@@ -244,6 +246,40 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
                 Toast.makeText(OrganizerEventDetailActivity.this, "Failed to load event", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void bindEvent(Event event) {
+        if (event == null) {
+            return;
+        }
+        tvTitle.setText(event.getTitle());
+        tvDateTime.setText(formatDateTime(event.getDate()));
+
+        String displayLocation = event.getLocation();
+        if (!TextUtils.isEmpty(event.getLocationDescription()) && !TextUtils.isEmpty(event.getLocationKey())) {
+            displayLocation = event.getLocationDescription() + ", " + event.getLocationKey();
+        } else if (!TextUtils.isEmpty(event.getLocationKey())) {
+            displayLocation = event.getLocationKey();
+        }
+        tvVenue.setText(displayLocation);
+
+        long rsvp = event.getRsvpCount();
+        long capacity = event.getCapacity();
+        long checkedIn = event.getCheckedInCount();
+        tvRegCount.setText(checkedIn + " attended • " + rsvp + "/" + capacity);
+
+        if (capacity > 0) {
+            pbRegistrations.setProgress((int) ((rsvp * 100) / capacity));
+        } else {
+            pbRegistrations.setProgress(0);
+        }
+
+        if (!TextUtils.isEmpty(event.getThumbnailUrl())) {
+            Glide.with(OrganizerEventDetailActivity.this)
+                    .load(event.getThumbnailUrl())
+                    .placeholder(R.drawable.bg_placeholder_image)
+                    .into(ivBanner);
+        }
     }
 
     private void stopEventListener() {
@@ -254,6 +290,11 @@ public class OrganizerEventDetailActivity extends AppCompatActivity {
     }
 
     private void showAnnouncementDialog() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: announcement was not sent.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (currentEvent == null || TextUtils.isEmpty(currentEvent.getEventId())) {
             return;
         }

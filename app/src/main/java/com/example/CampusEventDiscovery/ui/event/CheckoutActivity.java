@@ -57,7 +57,6 @@ public class CheckoutActivity extends AppCompatActivity {
     private TextView tvCheckoutSubtitle;
     private TextView tvCreditBalance;
     private EditText etFullName;
-    private EditText etLastName;
     private LinearLayout layoutPaymentSection;
     private RadioGroup radioGroupPayment;
     private RadioButton rbInAppCredit;
@@ -115,7 +114,6 @@ public class CheckoutActivity extends AppCompatActivity {
         tvCheckoutSubtitle   = findViewById(R.id.tvCheckoutSubtitle);
         tvCreditBalance      = findViewById(R.id.tvCreditBalance);
         etFullName           = findViewById(R.id.etFirstName);
-        etLastName           = findViewById(R.id.etLastName);
         layoutPaymentSection = findViewById(R.id.layoutPaymentSection);
         radioGroupPayment    = findViewById(R.id.radioGroupPayment);
         rbInAppCredit        = findViewById(R.id.rbInAppCredit);
@@ -271,9 +269,8 @@ public class CheckoutActivity extends AppCompatActivity {
      */
     private boolean validateForm() {
         String fullName = etFullName.getText().toString().trim();
-        String lastName = etLastName.getText().toString().trim();
 
-        if (TextUtils.isEmpty(fullName) || TextUtils.isEmpty(lastName)) {
+        if (TextUtils.isEmpty(fullName)) {
             Toast.makeText(this, getString(R.string.please_fill_all_fields), Toast.LENGTH_SHORT).show();
             return false;
         }
@@ -366,8 +363,7 @@ public class CheckoutActivity extends AppCompatActivity {
             eventShell.setDate(new Timestamp(new java.util.Date(eventDateMillis)));
         }
 
-        String fullName = etFullName.getText().toString().trim()
-                + " " + etLastName.getText().toString().trim();
+        String fullName = etFullName.getText().toString().trim();
 
         eventRepository.rsvpEventWithCredit(effectiveUserId, eventShell, fullName, totalPrice, tierId, tierName, resolveSelectedTierPrice(),
                 new EventRepository.ActionCallback() {
@@ -427,8 +423,7 @@ public class CheckoutActivity extends AppCompatActivity {
             eventShell.setDate(new Timestamp(new java.util.Date(eventDateMillis)));
         }
 
-        String fullName = etFullName.getText().toString().trim()
-                + " " + etLastName.getText().toString().trim();
+        String fullName = etFullName.getText().toString().trim();
 
         eventRepository.rsvpEvent(effectiveUserId, eventShell, fullName, tierId, tierName, resolveSelectedTierPrice(),
                 new EventRepository.ActionCallback() {

@@ -15,16 +15,15 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
+            android:paddingHorizontal="@dimen/spacing_md">
 
             <TextView
                 android:id="@+id/tvFavouritesHeader"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/favourites_header"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="22sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleLarge" />
 
             <TextView
                 android:id="@+id/tvFavouritesBadge"
@@ -36,8 +35,7 @@
                 android:paddingVertical="4dp"
                 android:text="0"
                 android:textColor="@android:color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textAppearance="?attr/textAppearanceLabelSmall" />
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView

@@ -349,11 +349,22 @@ public class MainActivity extends AppCompatActivity {
             case "search":
                 navigateTo("search", R.id.nav_search);
                 break;
+            case "favourites":
+                navigateTo("favourites", R.id.nav_favourites);
+                break;
             case "my_events":
                 navigateTo("my_events", R.id.nav_action);
                 break;
-            case "memories":
             case "profile":
+                navigateTo("profile", R.id.nav_profile);
+                break;
+            case "calendar":
+                openCalendarScreen();
+                break;
+            case "vendors":
+                navigateTo("vendors", R.id.nav_favourites);
+                break;
+            case "memories":
                 navigateTo("profile", R.id.nav_profile);
                 break;
             case "home_admin":

@@ -23,13 +23,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Tier 1"
+                android:text="@string/ticket_tier_number_placeholder"
                 android:textAppearance="?attr/textAppearanceTitleSmall"
-                android:textColor="@color/colorPrimary" />
+                android:textColor="?attr/colorPrimary" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRemoveTier"
-                style="@style/Widget.Material3.Button.TextButton.Icon"
+                style="@style/AppTextButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:icon="@drawable/ic_delete"
@@ -40,7 +40,7 @@
             style="@style/AppTextInputBoxStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Tier Name (e.g., Early Bird)">
+            android:hint="@string/ticket_tier_name_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etTierName"
@@ -61,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/spacing_sm"
                 android:layout_weight="1"
-                android:hint="Price">
+                android:hint="@string/ticket_tier_price_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etTierPrice"
@@ -76,7 +76,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/spacing_sm"
                 android:layout_weight="1"
-                android:hint="Capacity">
+                android:hint="@string/ticket_tier_capacity_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etTierCapacity"
@@ -91,7 +91,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_sm"
-            android:hint="Optional Description">
+            android:hint="@string/ticket_tier_description_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etTierDescription"

@@ -9,7 +9,7 @@
     app:cardBackgroundColor="?attr/colorSurface"
     app:cardCornerRadius="@dimen/event_card_radius"
     app:cardElevation="0dp"
-    app:rippleColor="?attr/colorPrimary"
+    app:rippleColor="?attr/colorControlHighlight"
     app:strokeColor="?attr/colorOutlineVariant"
     app:strokeWidth="1dp">
 

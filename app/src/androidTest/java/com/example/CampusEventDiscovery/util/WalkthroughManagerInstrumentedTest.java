@@ -47,7 +47,8 @@ public class WalkthroughManagerInstrumentedTest {
                 WalkthroughManager.resolveBackButtonLabel(ApplicationProvider.getApplicationContext(), 1)
                         .equals(ApplicationProvider.getApplicationContext().getString(com.example.CampusEventDiscovery.R.string.walkthrough_back)));
         assertTrue(WalkthroughManager.shouldAutoScrollBeforeOverlay("create_event", com.example.CampusEventDiscovery.R.id.btnSubmitEvent));
-        assertFalse(WalkthroughManager.shouldAutoScrollBeforeOverlay("create_event", com.example.CampusEventDiscovery.R.id.etEventTitle));
-        assertFalse(WalkthroughManager.shouldAutoScrollBeforeOverlay("search", com.example.CampusEventDiscovery.R.id.btnSubmitEvent));
+        assertTrue(WalkthroughManager.shouldAutoScrollBeforeOverlay("create_event", com.example.CampusEventDiscovery.R.id.etEventTitle));
+        assertTrue(WalkthroughManager.shouldAutoScrollBeforeOverlay("search", com.example.CampusEventDiscovery.R.id.btnSubmitEvent));
+        assertFalse(WalkthroughManager.shouldAutoScrollBeforeOverlay("search", 0));
     }
 }

@@ -22,6 +22,7 @@ import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.SignupValidator;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -64,6 +65,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
 
     private EventRepository repository;
     private String currentUserId;
+    private boolean walkthroughMode;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -72,6 +74,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_account_settings);
 
         repository = new EventRepository();
+        walkthroughMode = WalkthroughManager.isWalkthroughIntent(getIntent()) || WalkthroughManager.isActive();
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         currentUserId = currentUser != null ? currentUser.getUid() : DevSessionManager.getEffectiveUserId(this);
@@ -82,7 +85,9 @@ public class AccountSettingsActivity extends AppCompatActivity {
         setupDropdowns();
         setupSecurityButtons();
 
-        if (currentUser != null) {
+        if (walkthroughMode) {
+            loadWalkthroughProfile();
+        } else if (currentUser != null) {
             loadUserData();
         } else if (DevSessionManager.shouldUseBypass(this)) {
             loadDevProfile();
@@ -96,6 +101,9 @@ public class AccountSettingsActivity extends AppCompatActivity {
         }
 
         setupSaveButton();
+        if (walkthroughMode) {
+            WalkthroughManager.maybeShow(this, getWindow().getDecorView(), "account_settings");
+        }
     }
 
     private void bindViews() {
@@ -226,6 +234,21 @@ public class AccountSettingsActivity extends AppCompatActivity {
         btnChangePassword.setEnabled(false);
     }
 
+    private void loadWalkthroughProfile() {
+        etFullName.setText("Demo Attendee");
+        etEmail.setText("demo.attendee@campus.edu");
+        etUniversity.setText(getDefaultCampus(), false);
+        etLocation.setText("Main Campus");
+        List<String> interests = new ArrayList<>();
+        interests.add("Music");
+        interests.add("Sports");
+        interests.add("Academic");
+        precheckInterestChips(interests);
+        if (tvUserCreditBalance != null) {
+            tvUserCreditBalance.setText(getString(R.string.credit_balance_format, 1200.0));
+        }
+    }
+
     private void setupSaveButton() {
         btnSaveSettings.setOnClickListener(v -> {
             if (currentUserId == null) {
@@ -237,6 +260,11 @@ public class AccountSettingsActivity extends AppCompatActivity {
     }
 
     private void saveSettings() {
+        if (walkthroughMode) {
+            Toast.makeText(this, "Walkthrough mode: account settings were not saved.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String fullName = etFullName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String university = etUniversity.getText().toString().trim();

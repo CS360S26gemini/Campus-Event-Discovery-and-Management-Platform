@@ -20,6 +20,7 @@ import com.example.CampusEventDiscovery.model.Event;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -77,11 +78,25 @@ public class FavouritesFragment extends Fragment {
         rvFavourites = view.findViewById(R.id.rvFavourites);
 
         setupRecyclerView();
+        if (WalkthroughManager.isActive()) {
+            favouriteEvents.clear();
+            favouriteEvents.addAll(WalkthroughManager.getDemoEvents());
+            savedEventIds.clear();
+            savedEventIds.add(WalkthroughManager.getDemoEvent().getEventId());
+            adapter.updateSavedIds(savedEventIds);
+            adapter.updateData(new ArrayList<>(favouriteEvents));
+            updateUiState();
+            WalkthroughManager.maybeShow(requireActivity(), view, "favourites");
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        if (WalkthroughManager.isActive()) {
+            WalkthroughManager.maybeShow(requireActivity(), getView(), "favourites");
+            return;
+        }
         loadFavourites();
     }
 
@@ -104,6 +119,9 @@ public class FavouritesFragment extends Fragment {
 
                     @Override
                     public void onHeartClick(Event event, boolean isCurrentlySaved) {
+                        if (WalkthroughManager.isActive()) {
+                            return;
+                        }
                         if (currentUserId == null || event == null || event.getEventId() == null || !canUseView()) {
                             return;
                         }

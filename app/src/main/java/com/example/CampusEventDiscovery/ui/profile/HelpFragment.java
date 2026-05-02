@@ -111,6 +111,7 @@ public class HelpFragment extends Fragment {
         card.setRadius(getResources().getDimension(R.dimen.event_card_radius));
         card.setStrokeColor(resolveAttrColor(com.google.android.material.R.attr.colorOutlineVariant));
         card.setCardBackgroundColor(resolveAttrColor(com.google.android.material.R.attr.colorSurface));
+        ThemeManager.applyTouchFeedbackToViewTree(requireContext(), card);
 
         LinearLayout content = new LinearLayout(requireContext());
         content.setOrientation(LinearLayout.VERTICAL);
@@ -147,21 +148,40 @@ public class HelpFragment extends Fragment {
         if (UserRoles.isAdmin(role)) {
             guides.add(new Guide("admin_review", "Review pending proposals", "Walk through the real admin review queue and approval screen."));
             guides.add(new Guide("admin_dashboard", "Use admin dashboard filters", "Highlight pending/rejected filters and the real proposal list."));
+            guides.add(new Guide("admin_events", "Oversee active events", "Review active events, attendee tools, and cancellation controls safely."));
+            guides.add(new Guide("admin_vendors", "Review vendor requests", "Walk through pending, approved, and rejected vendor proposals."));
             guides.add(new Guide("admin_sos", "Monitor SOS alerts", "Open the real SOS dashboard and highlight alert monitoring."));
+            guides.add(new Guide("profile_tools", "Customize profile and theme", "Review avatar/photo, dark mode, accent color, and help controls."));
+            guides.add(new Guide("profile_notifications", "Use notifications", "Open and understand the notification center."));
+            guides.add(new Guide("profile_settings", "Manage account settings", "Review profile, campus, interests, and security controls."));
             return guides;
         }
         if (UserRoles.isOrganizer(role)) {
             guides.add(new Guide("organizer_create", "Create an event proposal", "Walk through the actual proposal form safely."));
             guides.add(new Guide("organizer_manage", "Manage events", "Open the real management screen and explain event sections."));
+            guides.add(new Guide("organizer_event_tools", "Use event management tools", "Review registrations, announcements, payments, and blacklist tools."));
+            guides.add(new Guide("organizer_attendees", "Manage attendees", "Walk through attendee search, QR check-in, manual check-in, and blacklist actions."));
             guides.add(new Guide("organizer_scan", "Scan tickets", "Highlight the real scanner controls."));
+            guides.add(new Guide("organizer_vendors", "Manage vendors", "Submit and monitor vendor requests for approved events."));
+            guides.add(new Guide("organizer_calendar", "Use organizer calendar", "Review approved events by month and day."));
             guides.add(new Guide("organizer_sos", "Monitor event SOS alerts", "Open the real SOS dashboard for organizers."));
+            guides.add(new Guide("profile_tools", "Customize profile and theme", "Review avatar/photo, dark mode, accent color, and help controls."));
+            guides.add(new Guide("profile_notifications", "Use notifications", "Open and understand the notification center."));
+            guides.add(new Guide("profile_settings", "Manage account settings", "Review profile, campus, interests, and security controls."));
             return guides;
         }
         guides.add(new Guide("attendee_register", "Register and RSVP for an event", "Use real Search, Event Detail, and Checkout screens with local demo data."));
         guides.add(new Guide("attendee_search", "Search and filter events", "Highlight the real search field, filters, sort, and result list."));
+        guides.add(new Guide("attendee_event_detail", "Understand event details", "Review event info, sharing, map, and ticket actions."));
         guides.add(new Guide("attendee_ticket", "Find your ticket QR", "Open My Events and the real ticket screen in safe demo mode."));
+        guides.add(new Guide("attendee_favourites", "Use favourites", "Review saved events and how favourites are organized."));
+        guides.add(new Guide("attendee_calendar", "Use event calendar", "Browse events by date and registered-event filters."));
+        guides.add(new Guide("attendee_feedback", "Submit feedback and photos", "Walk through ratings, reviews, and memory photo upload safely."));
         guides.add(new Guide("attendee_memories", "Use memory folders", "Open the real memories page and highlight attended-event folders."));
         guides.add(new Guide("attendee_sos", "Use SOS safely", "Highlight the real SOS button without sending an alert."));
+        guides.add(new Guide("profile_tools", "Customize profile and theme", "Review avatar/photo, dark mode, accent color, and help controls."));
+        guides.add(new Guide("profile_notifications", "Use notifications", "Open and understand the notification center."));
+        guides.add(new Guide("profile_settings", "Manage account settings", "Review profile, campus, interests, and security controls."));
         return guides;
     }
 

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.View;
@@ -38,6 +39,7 @@ public final class ThemeManager {
     private static final int BASE_PURPLE = Color.rgb(123, 47, 190);
     private static final int LIGHT_PURPLE_RIPPLE = Color.argb(0x33, 123, 47, 190);
     private static final int DARK_PURPLE_RIPPLE = Color.argb(0x55, 123, 47, 190);
+    private static boolean touchFeedbackLifecycleInstalled = false;
 
     public static final int ACCENT_PURPLE = 0;
     public static final int ACCENT_BLUE = 1;
@@ -69,8 +71,40 @@ public final class ThemeManager {
     }
 
     public static void installAccentLifecycle(Application application) {
-        // Accent handling is now applied explicitly at known surfaces instead of
-        // walking every activity view tree on each resume.
+        if (application == null || touchFeedbackLifecycleInstalled) {
+            return;
+        }
+        touchFeedbackLifecycleInstalled = true;
+        application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+            @Override
+            public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+            }
+
+            @Override
+            public void onActivityStarted(Activity activity) {
+            }
+
+            @Override
+            public void onActivityResumed(Activity activity) {
+                scheduleTouchFeedbackPass(activity);
+            }
+
+            @Override
+            public void onActivityPaused(Activity activity) {
+            }
+
+            @Override
+            public void onActivityStopped(Activity activity) {
+            }
+
+            @Override
+            public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+            }
+
+            @Override
+            public void onActivityDestroyed(Activity activity) {
+            }
+        });
     }
 
     public static boolean applyThemePreference(Context context, boolean darkMode) {
@@ -183,6 +217,7 @@ public final class ThemeManager {
         ColorStateList accentList = ColorStateList.valueOf(accentColor);
         ColorStateList onAccentList = ColorStateList.valueOf(onAccentColor);
         ColorStateList rippleList = ColorStateList.valueOf(rippleColor);
+        applyTouchFeedback(context, root, rippleList);
 
         if (root instanceof BottomNavigationView) {
             applyAccentToMainNavigation(context, (BottomNavigationView) root, null);
@@ -227,6 +262,74 @@ public final class ThemeManager {
                 applyAccentToViewTree(context, group.getChildAt(i));
             }
         }
+    }
+
+    public static void applyTouchFeedbackToViewTree(Context context, View root) {
+        if (context == null || root == null) {
+            return;
+        }
+        int accentColor = getAccentColor(context);
+        int rippleColor = withAlpha(accentColor, isDarkModeEnabled(context) ? 0x55 : 0x33);
+        applyTouchFeedback(context, root, ColorStateList.valueOf(rippleColor));
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                applyTouchFeedbackToViewTree(context, group.getChildAt(i));
+            }
+        }
+    }
+
+    private static void scheduleTouchFeedbackPass(Activity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+        View root = activity.getWindow().getDecorView();
+        Runnable pass = () -> {
+            if (!activity.isFinishing() && !activity.isDestroyed()) {
+                applyTouchFeedbackToViewTree(activity, root);
+            }
+        };
+        root.post(pass);
+        root.postDelayed(pass, 350L);
+    }
+
+    private static void applyTouchFeedback(Context context, View view, ColorStateList rippleList) {
+        if (view instanceof MaterialCardView) {
+            MaterialCardView cardView = (MaterialCardView) view;
+            if (cardView.isClickable() || cardView.isFocusable()) {
+                cardView.setRippleColor(rippleList);
+            }
+            return;
+        }
+
+        if (!view.isClickable() || shouldKeepNativeTouchFeedback(view)) {
+            return;
+        }
+
+        if (view.getForeground() == null) {
+            Drawable foreground = resolveSelectableForeground(context);
+            if (foreground != null) {
+                view.setForeground(foreground);
+            }
+        }
+    }
+
+    private static boolean shouldKeepNativeTouchFeedback(View view) {
+        return view instanceof MaterialButton
+                || view instanceof Chip
+                || view instanceof BottomNavigationView
+                || view instanceof CompoundButton
+                || view instanceof TextInputLayout
+                || view instanceof android.widget.EditText;
+    }
+
+    private static Drawable resolveSelectableForeground(Context context) {
+        TypedValue value = new TypedValue();
+        if (!context.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, value, true)
+                || value.resourceId == 0) {
+            return null;
+        }
+        return context.getDrawable(value.resourceId);
     }
 
     private static void saveThemePreference(Context context, boolean darkMode) {

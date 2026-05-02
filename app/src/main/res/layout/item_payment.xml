@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
+    android:layout_marginStart="@dimen/spacing_md"
     android:layout_marginTop="8dp"
-    android:layout_marginEnd="16dp"
+    android:layout_marginEnd="@dimen/spacing_md"
     app:cardBackgroundColor="@color/colorSurface"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/spacing_md">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -29,9 +29,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <TextView
                 android:id="@+id/tvStatus"
@@ -43,7 +42,7 @@
                 android:paddingEnd="10dp"
                 android:paddingBottom="4dp"
                 android:textColor="@android:color/white"
-                android:textSize="12sp" />
+                android:textAppearance="?attr/textAppearanceLabelSmall" />
         </LinearLayout>
 
         <TextView
@@ -52,24 +51,24 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:fontFamily="monospace"
-            android:textColor="@color/colorSecondary"
-            android:textSize="12sp" />
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="?attr/textAppearanceLabelSmall" />
 
         <TextView
             android:id="@+id/tvMethod"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textColor="@color/colorSecondary"
-            android:textSize="12sp" />
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="?attr/textAppearanceLabelSmall" />
 
         <TextView
             android:id="@+id/tvWhen"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textColor="@color/colorSecondary"
-            android:textSize="12sp" />
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="?attr/textAppearanceLabelSmall" />
 
         <ImageView
             android:id="@+id/ivProof"

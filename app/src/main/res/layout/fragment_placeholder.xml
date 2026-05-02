@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="Placeholder Fragment"
-        android:textColor="@color/colorOnBackground"
-        android:textSize="18sp" />
+        android:textColor="?attr/colorOnSurface"
+        android:textAppearance="?attr/textAppearanceTitleMedium" />
 
 </FrameLayout>
