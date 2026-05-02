@@ -13,20 +13,23 @@ import java.nio.file.Paths;
 public class CloudinaryUploadContractTest {
 
     @Test
-    public void eventCreationMemoryAlbumsAndFeedback_useCloudinaryHelperForImageUploads() throws Exception {
+    public void eventCreationMemoryAlbumsFeedbackAndProfile_useCloudinaryHelperForImageUploads() throws Exception {
         String createEvent = readJava("ui/organizer/CreateEventActivity.java");
         String memories = readJava("ui/profile/MemoriesActivity.java");
         String feedback = readJava("ui/event/EventFeedbackActivity.java");
+        String profile = readJava("ui/profile/ProfileFragment.java");
 
         assertTrue(createEvent.contains("CloudinaryHelper.uploadImage"));
         assertTrue(memories.contains("CloudinaryHelper.uploadImage"));
         assertTrue(feedback.contains("CloudinaryHelper.uploadImage"));
+        assertTrue(profile.contains("CloudinaryHelper.uploadImage"));
     }
 
     @Test
-    public void memoriesAndFeedback_doNotUploadPhotosThroughFirebaseStorage() throws Exception {
+    public void memoriesFeedbackAndProfile_doNotUploadPhotosThroughFirebaseStorage() throws Exception {
         String memories = readJava("ui/profile/MemoriesActivity.java");
         String feedback = readJava("ui/event/EventFeedbackActivity.java");
+        String profile = readJava("ui/profile/ProfileFragment.java");
 
         assertFalse(memories.contains("FirebaseStorage"));
         assertFalse(memories.contains(".putFile("));
@@ -35,14 +38,21 @@ public class CloudinaryUploadContractTest {
         assertFalse(feedback.contains("FirebaseStorage"));
         assertFalse(feedback.contains(".putFile("));
         assertFalse(feedback.contains("getDownloadUrl()"));
+
+        assertFalse(profile.contains("FirebaseStorage"));
+        assertFalse(profile.contains(".putFile("));
+        assertFalse(profile.contains("getDownloadUrl()"));
     }
 
     @Test
-    public void remainingProfilePictureFirebaseUpload_isExplicitlyOutsideMemoryFlow() throws Exception {
+    public void profilePictureUploadsThroughCloudinaryNotFirebaseStorage() throws Exception {
         String profile = readJava("ui/profile/ProfileFragment.java");
 
         assertTrue(profile.contains("uploadProfilePicture(Uri uri)"));
-        assertTrue(profile.contains("FirebaseStorage.getInstance()"));
+        assertTrue(profile.contains("CloudinaryHelper.uploadImage"));
+        assertFalse(profile.contains("FirebaseStorage"));
+        assertFalse(profile.contains(".putFile("));
+        assertFalse(profile.contains("getDownloadUrl()"));
     }
 
     private static String readJava(String name) throws Exception {

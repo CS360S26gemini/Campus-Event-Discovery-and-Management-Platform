@@ -43,6 +43,7 @@ import com.example.CampusEventDiscovery.ui.organizer.ManageEventsActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
 import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.example.CampusEventDiscovery.util.AvatarRenderer;
+import com.example.CampusEventDiscovery.util.CloudinaryHelper;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.ScrollResettable;
@@ -58,8 +59,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -585,48 +584,51 @@ public class ProfileFragment extends Fragment implements ScrollResettable {
         }
 
         showLoading(true);
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference()
-                .child("profile_pictures")
-                .child(currentUserId + ".jpg");
-
-        storageRef.putFile(uri)
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        throw task.getException();
-                    }
-                    return storageRef.getDownloadUrl();
-                })
-                .addOnSuccessListener(downloadUri -> {
-                    if (!isAdded()) return;
-                    String url = downloadUri.toString();
-                    repository.updateProfilePic(currentUserId, url, new EventRepository.ActionCallback() {
-                        @Override
-                        public void onSuccess() {
-                            if (!isAdded()) return;
-                            showLoading(false);
-                            currentProfilePicUrl = url;
-                            currentAvatarEnabled = false;
-                            Glide.with(requireContext())
-                                    .load(url)
-                                    .placeholder(android.R.drawable.sym_def_app_icon)
-                                    .centerCrop()
-                                    .into(ivProfile);
-                            Toast.makeText(requireContext(), "Profile picture updated", Toast.LENGTH_SHORT).show();
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            if (!isAdded()) return;
-                            showLoading(false);
-                            Toast.makeText(requireContext(), "Failed to update profile picture in database", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                })
-                .addOnFailureListener(e -> {
-                    if (!isAdded()) return;
+        CloudinaryHelper.uploadImage(uri, new CloudinaryHelper.CloudinaryCallback() {
+            @Override
+            public void onSuccess(String url) {
+                if (!isAdded()) return;
+                if (TextUtils.isEmpty(url)) {
                     showLoading(false);
-                    Toast.makeText(requireContext(), "Failed to upload image", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), R.string.profile_image_update_failed, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                repository.updateProfilePic(currentUserId, url, new EventRepository.ActionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        if (!isAdded()) return;
+                        showLoading(false);
+                        currentProfilePicUrl = url;
+                        currentAvatarEnabled = false;
+                        Glide.with(requireContext())
+                                .load(url)
+                                .placeholder(android.R.drawable.sym_def_app_icon)
+                                .centerCrop()
+                                .into(ivProfile);
+                        Toast.makeText(requireContext(), R.string.profile_image_updated, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (!isAdded()) return;
+                        showLoading(false);
+                        Toast.makeText(requireContext(), R.string.profile_image_update_failed, Toast.LENGTH_SHORT).show();
+                    }
                 });
+            }
+
+            @Override
+            public void onError(String error) {
+                if (!isAdded()) return;
+                showLoading(false);
+                Toast.makeText(
+                        requireContext(),
+                        TextUtils.isEmpty(error) ? getString(R.string.profile_image_update_failed) : error,
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+        });
     }
 
     private void setMainProfileImage(boolean useAvatar) {
