@@ -3,6 +3,8 @@ package com.example.CampusEventDiscovery.ui.event;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -23,7 +25,7 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.repository.PaymentRepository;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
-import com.example.CampusEventDiscovery.util.MockPaymentService;
+import com.example.CampusEventDiscovery.util.StripePaymentService;
 import com.example.CampusEventDiscovery.util.UserRoles;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -45,8 +47,8 @@ import java.util.Map;
 /**
  * CheckoutActivity.java
  *
- * Collects attendee payment information, processes a demo payment via
- * MockPaymentService, creates an RSVP with a QR payload, and navigates
+ * Collects attendee payment information, processes paid checkout through
+ * StripePaymentService, creates an RSVP with a QR payload, and navigates
  * to TicketActivity. Enforces one RSVP per user per event — if a valid
  * RSVP already exists, the user is sent directly to their existing ticket.
  */
@@ -61,7 +63,12 @@ public class CheckoutActivity extends AppCompatActivity {
     private RadioGroup radioGroupPayment;
     private RadioButton rbInAppCredit;
     private TextInputLayout tilCardNumber;
+    private TextInputLayout tilCardExpiry;
+    private TextInputLayout tilCardCvv;
     private EditText etCardNumber;
+    private EditText etCardExpiry;
+    private EditText etCardCvv;
+    private LinearLayout layoutCardMeta;
     private TextView tvCheckoutTotal;
     private ProgressBar progressBarCheckout;
     private MaterialButton btnPay;
@@ -118,7 +125,12 @@ public class CheckoutActivity extends AppCompatActivity {
         radioGroupPayment    = findViewById(R.id.radioGroupPayment);
         rbInAppCredit        = findViewById(R.id.rbInAppCredit);
         tilCardNumber        = findViewById(R.id.tilCardNumber);
+        tilCardExpiry        = findViewById(R.id.tilCardExpiry);
+        tilCardCvv           = findViewById(R.id.tilCardCvv);
         etCardNumber         = findViewById(R.id.etCardNumber);
+        etCardExpiry         = findViewById(R.id.etCardExpiry);
+        etCardCvv            = findViewById(R.id.etCardCvv);
+        layoutCardMeta       = findViewById(R.id.layoutCardMeta);
         tvCheckoutTotal      = findViewById(R.id.tvCheckoutTotal);
         progressBarCheckout  = findViewById(R.id.progressBarCheckout);
         btnPay               = findViewById(R.id.btnPay);
@@ -164,7 +176,10 @@ public class CheckoutActivity extends AppCompatActivity {
             }
             radioGroupPayment.clearCheck();
             etCardNumber.setText("");
+            etCardExpiry.setText("");
+            etCardCvv.setText("");
             tilCardNumber.setVisibility(View.GONE);
+            layoutCardMeta.setVisibility(View.GONE);
         } else {
             tvCheckoutTotal.setText(getString(R.string.checkout_total_pkr, totalPrice));
             btnPay.setText(getString(R.string.pay_now));
@@ -187,8 +202,8 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     /**
-     * Shows or hides the card number field based on the selected payment method.
-     * Credit Card and Debit Card require a 16-digit card number.
+     * Shows or hides card-specific fields based on the selected payment method.
+     * Credit Card and Debit Card require card number, expiry, and CVV.
      * JazzCash and Apple Pay do not.
      */
     private void setupPaymentMethodToggle() {
@@ -196,12 +211,51 @@ public class CheckoutActivity extends AppCompatActivity {
             return;
         }
 
+        etCardExpiry.addTextChangedListener(new TextWatcher() {
+            private boolean formatting;
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (formatting) {
+                    return;
+                }
+                formatting = true;
+                String digits = s.toString().replaceAll("[^\\d]", "");
+                if (digits.length() > 4) {
+                    digits = digits.substring(0, 4);
+                }
+                String formatted;
+                if (digits.length() > 2) {
+                    formatted = digits.substring(0, 2) + "/" + digits.substring(2);
+                } else {
+                    formatted = digits;
+                }
+                if (!formatted.equals(s.toString())) {
+                    etCardExpiry.setText(formatted);
+                    etCardExpiry.setSelection(formatted.length());
+                }
+                formatting = false;
+            }
+        });
+
         radioGroupPayment.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rbCreditCard || checkedId == R.id.rbDebitCard) {
                 tilCardNumber.setVisibility(View.VISIBLE);
+                layoutCardMeta.setVisibility(View.VISIBLE);
             } else {
                 tilCardNumber.setVisibility(View.GONE);
+                layoutCardMeta.setVisibility(View.GONE);
                 etCardNumber.setText("");
+                etCardExpiry.setText("");
+                etCardCvv.setText("");
             }
         });
     }
@@ -287,8 +341,18 @@ public class CheckoutActivity extends AppCompatActivity {
         int checkedId = radioGroupPayment.getCheckedRadioButtonId();
         if (checkedId == R.id.rbCreditCard || checkedId == R.id.rbDebitCard) {
             String cardNumber = etCardNumber.getText().toString().trim();
-            if (cardNumber.length() != 16) {
+            String cardExpiry = etCardExpiry.getText().toString().trim();
+            String cardCvv = etCardCvv.getText().toString().trim();
+            if (!cardNumber.matches("\\d{16}")) {
                 Toast.makeText(this, getString(R.string.invalid_card_number), Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            if (!isValidExpiry(cardExpiry)) {
+                Toast.makeText(this, getString(R.string.invalid_card_expiry), Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            if (!cardCvv.matches("\\d{3,4}")) {
+                Toast.makeText(this, getString(R.string.invalid_card_cvv), Toast.LENGTH_SHORT).show();
                 return false;
             }
         }
@@ -319,33 +383,55 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     /**
-     * Processes the demo payment via MockPaymentService, saves the Payment
-     * record, then delegates RSVP creation to EventRepository.rsvpEvent()
-     * which runs an atomic Firestore transaction covering capacity check,
-     * duplicate prevention, attendees subcollection write, and rsvpCount
-     * increment. Payment fields are merged onto the RSVP document afterwards.
+     * Processes the payment via StripePaymentService, saves the Payment record,
+     * then delegates RSVP creation to EventRepository.rsvpEvent() which runs an
+     * atomic Firestore transaction. Payment fields are merged onto the RSVP
+     * document afterwards.
      */
     private void processPayment() {
-        Payment demoPayment = MockPaymentService.processPayment(effectiveUserId, eventId, totalPrice);
-        demoPayment.setPaymentMethod(resolveSelectedPaymentMethod());
-        demoPayment.setProofUrl("");
-        demoPayment.setTierId(tierId);
-        demoPayment.setTierName(tierName);
+        String selectedMethod = resolveSelectedPaymentMethod();
 
-        paymentRepository.savePayment(demoPayment, new FirestoreCallback() {
-            @Override
-            public void onSuccess(Object result) {
-                runRsvpTransaction((Payment) result);
-            }
+        StripePaymentService.processPayment(
+                effectiveUserId,
+                eventId,
+                totalPrice,
+                new StripePaymentService.PaymentCallback() {
+                    @Override
+                    public void onSuccess(Payment stripePayment) {
+                        stripePayment.setPaymentMethod(selectedMethod);
+                        stripePayment.setProofUrl("");
+                        stripePayment.setTierId(tierId);
+                        stripePayment.setTierName(tierName);
 
-            @Override
-            public void onFailure(Exception e) {
-                showLoading(false);
-                Toast.makeText(CheckoutActivity.this,
-                        getString(R.string.payment_failed_message, e.getMessage()),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
+                        paymentRepository.savePayment(stripePayment, new FirestoreCallback() {
+                            @Override
+                            public void onSuccess(Object result) {
+                                runOnUiThread(() -> runRsvpTransaction((Payment) result));
+                            }
+
+                            @Override
+                            public void onFailure(Exception e) {
+                                runOnUiThread(() -> {
+                                    showLoading(false);
+                                    Toast.makeText(CheckoutActivity.this,
+                                            getString(R.string.payment_failed_message, e.getMessage()),
+                                            Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        runOnUiThread(() -> {
+                            showLoading(false);
+                            Toast.makeText(CheckoutActivity.this,
+                                    getString(R.string.payment_failed_message, e.getMessage()),
+                                    Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }
+        );
     }
 
     private void processCreditPayment() {
@@ -580,6 +666,35 @@ public class CheckoutActivity extends AppCompatActivity {
     private void showLoading(boolean isLoading) {
         progressBarCheckout.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         btnPay.setEnabled(!isLoading);
+    }
+
+    private boolean isValidExpiry(String expiry) {
+        if (TextUtils.isEmpty(expiry) || !expiry.matches("\\d{2}/\\d{2}")) {
+            return false;
+        }
+
+        String[] parts = expiry.split("/");
+        if (parts.length != 2) {
+            return false;
+        }
+
+        int month;
+        int year;
+        try {
+            month = Integer.parseInt(parts[0]);
+            year = Integer.parseInt(parts[1]);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+
+        if (month < 1 || month > 12) {
+            return false;
+        }
+
+        java.util.Calendar now = java.util.Calendar.getInstance();
+        int currentYear = now.get(java.util.Calendar.YEAR) % 100;
+        int currentMonth = now.get(java.util.Calendar.MONTH) + 1;
+        return year > currentYear || (year == currentYear && month >= currentMonth);
     }
 
     private Double resolveSelectedTierPrice() {

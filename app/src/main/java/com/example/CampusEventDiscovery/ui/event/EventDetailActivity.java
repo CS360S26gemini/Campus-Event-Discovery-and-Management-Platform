@@ -38,6 +38,7 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -84,6 +85,7 @@ public class EventDetailActivity extends AppCompatActivity {
     private TicketTierOptionAdapter ticketTierPreviewAdapter;
     private final Set<String> savedEventIds = new HashSet<>();
     private boolean walkthroughMode;
+    private ListenerRegistration rsvpListener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -118,8 +120,17 @@ public class EventDetailActivity extends AppCompatActivity {
             loadSavedState();
             loadCurrentUserRole();
             loadEventDetails();
-            checkRsvpStatus();
+            observeRsvpStatus();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (rsvpListener != null) {
+            rsvpListener.remove();
+            rsvpListener = null;
+        }
+        super.onDestroy();
     }
 
     private void bindViews() {
@@ -258,20 +269,29 @@ public class EventDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void checkRsvpStatus() {
+    private void observeRsvpStatus() {
         if (currentUserId == null || eventId == null) return;
+        if (rsvpListener != null) {
+            rsvpListener.remove();
+        }
 
-        FirebaseFirestore.getInstance().collection("users").document(currentUserId)
+        rsvpListener = FirebaseFirestore.getInstance().collection("users").document(currentUserId)
                 .collection("rsvps").document(eventId)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
-                        currentRsvp = doc.toObject(Rsvp.class);
-                        if (currentRsvp != null && !"cancelled".equalsIgnoreCase(currentRsvp.getStatus())) {
-                            showViewTicketButton();
-                        }
-                        updateSosButtonState();
+                .addSnapshotListener((doc, error) -> {
+                    if (isFinishing() || isDestroyed()) {
+                        return;
                     }
+                    if (error != null || doc == null || !doc.exists()) {
+                        currentRsvp = null;
+                        updateSosButtonState();
+                        return;
+                    }
+
+                    currentRsvp = doc.toObject(Rsvp.class);
+                    if (currentRsvp != null && !"cancelled".equalsIgnoreCase(currentRsvp.getStatus())) {
+                        showViewTicketButton();
+                    }
+                    updateSosButtonState();
                 });
     }
 

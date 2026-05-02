@@ -641,6 +641,8 @@
     <string name="checkout_credit_balance">Available credit: PKR %1$.2f</string>
     <string name="checkout_hint_full_name">Full name</string>
     <string name="checkout_hint_card_number">Card / account number (16 digits)</string>
+    <string name="checkout_hint_card_expiry">Expiry (MM/YY)</string>
+    <string name="checkout_hint_card_cvv">CVV</string>
     <string name="checkout_order_total_label">Order total</string>
     <string name="checkout_total_free">Free</string>
     <string name="checkout_total_pkr">PKR %1$.2f</string>
@@ -651,6 +653,8 @@
     <string name="payment_method_in_app_credit">In-App Credit</string>
     <string name="payment_method_in_app_credit_desc">Use your credit balance to cover the full ticket price.</string>
     <string name="invalid_card_number">Card number must be exactly 16 digits</string>
+    <string name="invalid_card_expiry">Enter a valid, non-expired card expiry date</string>
+    <string name="invalid_card_cvv">CVV must be 3 or 4 digits</string>
     <string name="already_registered_for_event">You are already registered for this event. Opening your ticket.</string>
     <string name="checkout_rsvp_check_failed">Could not verify registration status. Please try again.</string>
     <string name="payment_failed_message">Payment failed: %1$s</string>
