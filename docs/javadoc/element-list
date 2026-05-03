@@ -12,4 +12,6 @@ com.example.CampusEventDiscovery.ui.myevents
 com.example.CampusEventDiscovery.ui.organizer
 com.example.CampusEventDiscovery.ui.profile
 com.example.CampusEventDiscovery.ui.search
+com.example.CampusEventDiscovery.ui.sos
+com.example.CampusEventDiscovery.ui.vendors
 com.example.CampusEventDiscovery.util
