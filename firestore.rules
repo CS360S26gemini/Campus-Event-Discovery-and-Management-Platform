@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // Root user documents stay compatibility-friendly for now because the app
+    // uses users/ as both a profile store and a lookup directory.
+    match /users/{uid} {
+      allow read, write: if isSignedIn();
+
+      // Safe first-pass ownership rules.
+      match /saved_events/{eventId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /memories/{memoryId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Keep RSVP permissive for now to avoid breaking checkout, ticket, refund,
+      // check-in, and organizer/admin event flows that still write from clients.
+      match /rsvps/{eventId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    // Event data remains compatibility-friendly in this first pass.
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+
+      match /ticket_tiers/{tierId} {
+        allow read: if true;
+        allow write: if isSignedIn();
+      }
+
+      match /attendees/{uid} {
+        allow read, write: if isSignedIn();
+      }
+
+      match /blacklist/{uid} {
+        allow read, write: if isSignedIn();
+      }
+
+      match /ratings/{uid} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    match /notifications/{uid}/messages/{notificationId} {
+      // Keep creation compatibility-friendly for existing client-side fan-out.
+      allow create: if isSignedIn();
+      allow read, update, delete: if isOwner(uid);
+    }
+
+    match /event_proposals/{proposalId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /vendorProposals/{proposalId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /payments/{paymentId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /credit_transactions/{transactionId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /sos_alerts/{alertId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /reports/{reportId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Safe admin-only rule that should not affect normal attendee flows.
+    match /app_config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Keep reads available to the app; reserve writes for real admins only.
+    match /platform_blacklist/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

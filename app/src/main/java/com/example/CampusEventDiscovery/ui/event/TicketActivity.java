@@ -27,6 +27,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Activity for displaying the generated QR code ticket to the attendee.
  *
@@ -100,13 +103,7 @@ public class TicketActivity extends AppCompatActivity {
         tvEventDate.setText(eventDate);
         tvTxnId.setText("Txn ID: " + transactionId);
         tvRefundStatus.setText(getString(R.string.refund_loading_status));
-
-        if (qrPayload != null) {
-            Bitmap qrBitmap = QRCodeHelper.generateQRCode(qrPayload, 800, 800);
-            if (qrBitmap != null) {
-                ivQrCode.setImageBitmap(qrBitmap);
-            }
-        }
+        renderQrCode();
 
         toolbarTicket.setNavigationOnClickListener(v -> finish());
 
@@ -135,6 +132,13 @@ public class TicketActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     currentRsvp = documentSnapshot.toObject(Rsvp.class);
+                    if (currentRsvp != null && TextUtils.isEmpty(qrPayload)) {
+                        qrPayload = currentRsvp.getQrPayload();
+                        if (TextUtils.isEmpty(qrPayload)) {
+                            qrPayload = buildFallbackQrPayload(currentRsvp);
+                        }
+                        renderQrCode();
+                    }
 
                     Timestamp eventTimestamp = documentSnapshot.getTimestamp("date");
                     cancellationAllowedByEventDate = EventRepository.isAttendeeCancellationAllowed(
@@ -236,5 +240,37 @@ public class TicketActivity extends AppCompatActivity {
         boolean cancelEnabled = !isLoading && refundEligible;
         btnCancelRefund.setEnabled(cancelEnabled);
         btnCancelRefund.setAlpha(cancelEnabled ? 1f : 0.6f);
+    }
+
+    private void renderQrCode() {
+        if (TextUtils.isEmpty(qrPayload)) {
+            ivQrCode.setImageDrawable(null);
+            return;
+        }
+
+        Bitmap qrBitmap = QRCodeHelper.generateQRCode(qrPayload, 800, 800);
+        if (qrBitmap != null) {
+            ivQrCode.setImageBitmap(qrBitmap);
+        } else {
+            ivQrCode.setImageDrawable(null);
+        }
+    }
+
+    private String buildFallbackQrPayload(Rsvp rsvp) {
+        if (rsvp == null || TextUtils.isEmpty(currentUserId) || TextUtils.isEmpty(rsvp.getEventId())
+                || TextUtils.isEmpty(rsvp.getTransactionId())) {
+            return null;
+        }
+
+        JSONObject qrJson = new JSONObject();
+        try {
+            qrJson.put("userId", currentUserId);
+            qrJson.put("eventId", rsvp.getEventId());
+            qrJson.put("transactionId", rsvp.getTransactionId());
+            qrJson.put("timestamp", rsvp.getRsvpAt() != null ? rsvp.getRsvpAt().toDate().getTime() : System.currentTimeMillis());
+            return qrJson.toString();
+        } catch (JSONException ignored) {
+            return null;
+        }
     }
 }

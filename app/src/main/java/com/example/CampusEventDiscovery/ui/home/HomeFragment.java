@@ -36,11 +36,13 @@ import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.adapter.EventAdapter;
 import com.example.CampusEventDiscovery.model.Event;
+import com.example.CampusEventDiscovery.model.Rsvp;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.EventTimeUtils;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.card.MaterialCardView;
@@ -48,6 +50,9 @@ import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -93,6 +98,7 @@ public class HomeFragment extends Fragment {
     private String currentUserId;
     private User currentUser;
     private Event featuredEvent;
+    private Event activeSosEvent;
     private final Handler recommendationCarouselHandler = new Handler(Looper.getMainLooper());
     private final Runnable recommendationCarouselRunnable = new Runnable() {
         @Override
@@ -227,8 +233,11 @@ public class HomeFragment extends Fragment {
             updateEventList(new ArrayList<>());
             tvEmpty.setText(getString(R.string.no_events_found));
             tvEmpty.setVisibility(View.VISIBLE);
+            setHomeSosInactive();
             return;
         }
+
+        resolveHomeSosState();
 
         repository.getSavedEvents(currentUserId, new EventRepository.EventListCallback() {
             @Override
@@ -445,11 +454,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupSosButton() {
-        btnSos.setEnabled(false);
-        applyInactiveSosButtonColors();
-        btnSos.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), getString(R.string.sos_check_in_required), Toast.LENGTH_SHORT).show();
-        });
+        setHomeSosInactive();
     }
 
     private void applyInactiveSosButtonColors() {
@@ -457,6 +462,125 @@ public class HomeFragment extends Fragment {
                 ContextCompat.getColor(requireContext(), R.color.colorOutlineVariant)));
         btnSos.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorOnSurfaceVariant));
         btnSos.setAlpha(1f);
+    }
+
+    private void applyActiveSosButtonColors() {
+        btnSos.setBackgroundTintList(ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), R.color.colorSOS)));
+        btnSos.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
+        btnSos.setAlpha(1f);
+    }
+
+    private void setHomeSosInactive() {
+        activeSosEvent = null;
+        btnSos.setEnabled(false);
+        btnSos.setText(R.string.sos_event_button);
+        applyInactiveSosButtonColors();
+        btnSos.setOnClickListener(v -> Toast.makeText(
+                requireContext(),
+                getString(R.string.sos_check_in_required),
+                Toast.LENGTH_SHORT
+        ).show());
+    }
+
+    private void setHomeSosActive(Event event) {
+        if (event == null || !isAdded()) {
+            setHomeSosInactive();
+            return;
+        }
+
+        activeSosEvent = event;
+        btnSos.setEnabled(true);
+        btnSos.setText(R.string.sos_event_button);
+        applyActiveSosButtonColors();
+        btnSos.setOnClickListener(v -> {
+            if (activeSosEvent == null) {
+                setHomeSosInactive();
+                return;
+            }
+
+            Intent intent = new Intent(requireContext(), com.example.CampusEventDiscovery.ui.sos.SosActivity.class);
+            intent.putExtra("eventId", activeSosEvent.getEventId());
+            intent.putExtra("eventName", safeText(activeSosEvent.getTitle(), getString(R.string.app_name)));
+            intent.putExtra("organizerId", activeSosEvent.getOrganizerId());
+            startActivity(intent);
+        });
+    }
+
+    private void resolveHomeSosState() {
+        if (!isAdded() || TextUtils.isEmpty(currentUserId)) {
+            setHomeSosInactive();
+            return;
+        }
+
+        FirebaseFirestore.getInstance()
+                .collection(Constants.COLLECTION_USERS)
+                .document(currentUserId)
+                .collection(Constants.SUBCOLLECTION_RSVPS)
+                .orderBy("rsvpAt", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(rsvpSnapshots -> {
+                    if (!isAdded()) {
+                        return;
+                    }
+
+                    List<String> candidateEventIds = new ArrayList<>();
+                    for (DocumentSnapshot doc : rsvpSnapshots.getDocuments()) {
+                        Rsvp rsvp = doc.toObject(Rsvp.class);
+                        if (rsvp == null) {
+                            continue;
+                        }
+
+                        boolean checkedIn = rsvp.isCheckedIn() || "attended".equalsIgnoreCase(rsvp.getStatus());
+                        boolean cancelled = "cancelled".equalsIgnoreCase(rsvp.getStatus());
+                        if (!checkedIn || cancelled || TextUtils.isEmpty(rsvp.getEventId())) {
+                            continue;
+                        }
+                        candidateEventIds.add(rsvp.getEventId());
+                    }
+
+                    if (candidateEventIds.isEmpty()) {
+                        setHomeSosInactive();
+                        return;
+                    }
+
+                    repository.getEventsByIds(candidateEventIds, new EventRepository.EventListCallback() {
+                        @Override
+                        public void onSuccess(List<Event> events) {
+                            if (!isAdded()) {
+                                return;
+                            }
+
+                            long now = System.currentTimeMillis();
+                            for (Event event : events) {
+                                if (event == null) {
+                                    continue;
+                                }
+
+                                if (EventTimeUtils.isSosAllowed(true, event.getDate(), event.getEndTime(), now)) {
+                                    setHomeSosActive(event);
+                                    return;
+                                }
+                            }
+
+                            setHomeSosInactive();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            if (!isAdded()) {
+                                return;
+                            }
+                            setHomeSosInactive();
+                        }
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    setHomeSosInactive();
+                });
     }
 
     private void requestLocationAndSendSos() {

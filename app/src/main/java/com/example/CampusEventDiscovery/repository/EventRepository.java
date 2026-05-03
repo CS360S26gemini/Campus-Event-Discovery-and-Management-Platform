@@ -30,6 +30,9 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -2811,6 +2814,7 @@ public class EventRepository {
                     String transactionId = "credit_" + UUID.randomUUID().toString().replace("-", "");
                     String qrToken = UUID.randomUUID().toString();
                     Timestamp now = Timestamp.now();
+                    String qrPayload = buildQrPayload(userId, event.getEventId(), transactionId, now.toDate().getTime());
 
                     Map<String, Object> paymentData = new HashMap<>();
                     paymentData.put("userId", userId);
@@ -2852,6 +2856,7 @@ public class EventRepository {
                     rsvpData.put("paymentRef", transactionId);
                     rsvpData.put("paymentMethod", Constants.PAYMENT_METHOD_IN_APP_CREDIT);
                     rsvpData.put("paymentProofUrl", "");
+                    rsvpData.put("qrPayload", qrPayload);
                     transaction.set(userRsvpRef, rsvpData);
 
                     Map<String, Object> attendeeData = buildAttendeeData(
@@ -2923,6 +2928,19 @@ public class EventRepository {
         attendeeData.put("tierId", tierId);
         attendeeData.put("tierName", tierName);
         return attendeeData;
+    }
+
+    private String buildQrPayload(String userId, String eventId, String transactionId, long timestamp) {
+        JSONObject qrJson = new JSONObject();
+        try {
+            qrJson.put("userId", userId == null ? "" : userId);
+            qrJson.put("eventId", eventId == null ? "" : eventId);
+            qrJson.put("transactionId", transactionId == null ? "" : transactionId);
+            qrJson.put("timestamp", timestamp);
+        } catch (JSONException ignored) {
+            return "";
+        }
+        return qrJson.toString();
     }
 
     private Map<String, Object> buildTierMetadata(EventProposal proposal) {
