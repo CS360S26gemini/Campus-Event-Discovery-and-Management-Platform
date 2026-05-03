@@ -19,6 +19,7 @@ import com.example.CampusEventDiscovery.ui.organizer.ManageEventsActivity;
 import com.example.CampusEventDiscovery.ui.organizer.WhoIsComingActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 
 import org.junit.After;
@@ -45,9 +46,18 @@ public class NavigationSurfacesInstrumentedTest {
 
     @Test
     public void organizerMainScreen_showsVendorTabAndShortcuts() {
-        try (ActivityScenario<MainActivity> ignored = ActivityScenario.launch(MainActivity.class)) {
-            onView(withText(R.string.vendors)).check(matches(isDisplayed()));
-            onView(withText(R.string.create_event)).check(matches(isDisplayed()));
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                BottomNavigationView bottomNavigationView = activity.findViewById(R.id.bottomNavigationView);
+                CharSequence vendorsTitle = bottomNavigationView
+                        .getMenu()
+                        .findItem(R.id.nav_favourites)
+                        .getTitle();
+                org.junit.Assert.assertEquals(
+                        activity.getString(R.string.vendors),
+                        String.valueOf(vendorsTitle)
+                );
+            });
             onView(withText(R.string.organizer_tools)).check(matches(isDisplayed()));
             onView(withId(R.id.btnCreateEvent)).check(matches(isDisplayed()));
             onView(withId(R.id.btnManageEvents)).check(matches(isDisplayed()));
@@ -61,9 +71,9 @@ public class NavigationSurfacesInstrumentedTest {
         try (ActivityScenario<ManageEventsActivity> ignored = ActivityScenario.launch(ManageEventsActivity.class)) {
             onView(withId(R.id.toolbarManageEvents)).check(matches(isDisplayed()));
             onView(withId(R.id.etManageEventsSearch)).check(matches(isDisplayed()));
-            onView(withId(R.id.tvSection1Header)).check(matches(isDisplayed()));
-            onView(withId(R.id.tvSection2Header)).check(matches(isDisplayed()));
-            onView(withId(R.id.tvSection3Header)).check(matches(isDisplayed()));
+            onView(withId(R.id.actManageEventsFilter)).check(matches(isDisplayed()));
+            onView(withId(R.id.tvManageEventsSubtitle)).check(matches(isDisplayed()));
+            onView(withId(R.id.progressBarManageEvents)).check(matches(isDisplayed()));
         }
     }
 

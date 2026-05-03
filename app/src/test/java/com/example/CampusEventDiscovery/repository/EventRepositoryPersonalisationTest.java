@@ -8,6 +8,9 @@ import com.example.CampusEventDiscovery.model.Event;
 import com.google.firebase.Timestamp;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,6 +18,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = {30})
 public class EventRepositoryPersonalisationTest {
 
     private static final long NOW = 1_700_000_000_000L;

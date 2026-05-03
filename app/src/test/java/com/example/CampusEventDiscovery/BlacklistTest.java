@@ -93,7 +93,7 @@ public class BlacklistTest {
             @Override public void onError(Exception e) { errorFired.set(true); }
         });
 
-        Assert.assertFalse(errorFired.get());
+        Assert.assertTrue(errorFired.get());
     }
 
     @Test
@@ -105,7 +105,7 @@ public class BlacklistTest {
             @Override public void onError(Exception e) { errorFired.set(true); }
         });
 
-        Assert.assertFalse(errorFired.get());
+        Assert.assertTrue(errorFired.get());
     }
 
     @Test

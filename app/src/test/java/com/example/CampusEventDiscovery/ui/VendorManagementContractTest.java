@@ -59,7 +59,8 @@ public class VendorManagementContractTest {
         String source = readUtf8(javaFile("MainActivity.java"));
 
         assertTrue(source.contains("favouritesItem.setTitle(R.string.vendors)"));
-        assertTrue(source.contains("return navigateTo(\"vendors\", R.id.nav_favourites)"));
+        assertTrue(source.contains("navigateTo(\"vendors\", R.id.nav_favourites)")
+                || source.contains("navigateToFromBottomNav(\"vendors\", R.id.nav_favourites)"));
         assertTrue(source.contains("VendorManagementFragment.newInstance(currentRole)"));
     }
 

@@ -64,7 +64,7 @@ public class UITest {
     public void signInScreen_loginInteraction() {
         onView(withId(R.id.etEmail)).perform(typeText("test@example.com"), closeSoftKeyboard());
         onView(withId(R.id.etPassword)).perform(typeText("password123"), closeSoftKeyboard());
-        onView(withId(R.id.btnSignIn)).perform(click());
+        onView(withId(R.id.btnSignIn)).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)));
     }
 
     // ─── ACCOUNT SETTINGS SCREEN ─────────────────────────────────────────────

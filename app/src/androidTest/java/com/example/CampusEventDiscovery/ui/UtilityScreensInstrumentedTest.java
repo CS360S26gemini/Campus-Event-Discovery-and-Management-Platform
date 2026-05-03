@@ -16,10 +16,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.ui.event.PaymentConfirmationActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
+import com.example.CampusEventDiscovery.ui.profile.AccountSettingsActivity;
 import com.example.CampusEventDiscovery.ui.profile.MemoryAlbumActivity;
+import com.example.CampusEventDiscovery.ui.profile.MemoriesActivity;
+import com.example.CampusEventDiscovery.ui.profile.NotificationCenterActivity;
 import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.UserRoles;
+import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.firebase.auth.FirebaseAuth;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -92,6 +96,43 @@ public class UtilityScreensInstrumentedTest {
         try (ActivityScenario<MemoryAlbumActivity> ignored = ActivityScenario.launch(intent)) {
             onView(withId(R.id.toolbarMemoryAlbum)).check(matches(isDisplayed()));
             onView(withId(R.id.rvMemoryAlbumPhotos)).check(matches(isAssignableFrom(RecyclerView.class)));
+        }
+    }
+
+    @Test
+    public void notificationCenterWalkthrough_showsToolbarAndNotificationList() {
+        Intent intent = new Intent(context, NotificationCenterActivity.class);
+        intent.putExtra(WalkthroughManager.EXTRA_WALKTHROUGH_MODE, true);
+
+        try (ActivityScenario<NotificationCenterActivity> ignored = ActivityScenario.launch(intent)) {
+            onView(withId(R.id.toolbarNotifications)).check(matches(isDisplayed()));
+            onView(withId(R.id.rvNotifications)).check(matches(isAssignableFrom(RecyclerView.class)));
+        }
+    }
+
+    @Test
+    public void memoriesWalkthrough_showsToolbarCreateButtonAndList() {
+        Intent intent = new Intent(context, MemoriesActivity.class);
+        intent.putExtra(WalkthroughManager.EXTRA_WALKTHROUGH_MODE, true);
+
+        try (ActivityScenario<MemoriesActivity> ignored = ActivityScenario.launch(intent)) {
+            onView(withId(R.id.toolbarMemories)).check(matches(isDisplayed()));
+            onView(withId(R.id.btnCreateMemory)).check(matches(isDisplayed()));
+            onView(withId(R.id.rvMemories)).check(matches(isAssignableFrom(RecyclerView.class)));
+        }
+    }
+
+    @Test
+    public void accountSettingsWalkthrough_showsEditableSectionsAndSaveAction() {
+        Intent intent = new Intent(context, AccountSettingsActivity.class);
+        intent.putExtra(WalkthroughManager.EXTRA_WALKTHROUGH_MODE, true);
+
+        try (ActivityScenario<AccountSettingsActivity> ignored = ActivityScenario.launch(intent)) {
+            onView(withId(R.id.toolbarSettings)).check(matches(isDisplayed()));
+            onView(withId(R.id.etFullName)).check(matches(isDisplayed()));
+            onView(withId(R.id.etUniversity)).check(matches(isDisplayed()));
+            onView(withId(R.id.btnChangePassword)).check(matches(isDisplayed()));
+            onView(withId(R.id.btnSaveSettings)).check(matches(isDisplayed()));
         }
     }
 }
