@@ -13,18 +13,142 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.admin == true;
     }
 
+    function isValidUserCreate(uid) {
+      return isOwner(uid) &&
+        request.resource.data.keys().hasOnly([
+          'uid',
+          'fullName',
+          'email',
+          'role',
+          'university',
+          'location',
+          'profilePicUrl',
+          'avatarEnabled',
+          'avatarConfig',
+          'interests',
+          'darkMode',
+          'fcmToken',
+          'googleCalendarToken',
+          'creditBalance',
+          'createdAt'
+        ]) &&
+        request.resource.data.fullName is string &&
+        request.resource.data.email is string &&
+        request.resource.data.role in ['attendee', 'organizer'] &&
+        (!request.resource.data.keys().hasAny(['uid']) || request.resource.data.uid == uid) &&
+        (!request.resource.data.keys().hasAny(['university']) || request.resource.data.university is string) &&
+        (!request.resource.data.keys().hasAny(['location']) || request.resource.data.location is string) &&
+        (!request.resource.data.keys().hasAny(['profilePicUrl']) || request.resource.data.profilePicUrl is string) &&
+        (!request.resource.data.keys().hasAny(['avatarEnabled']) || request.resource.data.avatarEnabled is bool) &&
+        (!request.resource.data.keys().hasAny(['avatarConfig']) || request.resource.data.avatarConfig is map) &&
+        (!request.resource.data.keys().hasAny(['interests']) || request.resource.data.interests is list) &&
+        (!request.resource.data.keys().hasAny(['darkMode']) || request.resource.data.darkMode is bool) &&
+        (!request.resource.data.keys().hasAny(['fcmToken']) || request.resource.data.fcmToken is string) &&
+        (!request.resource.data.keys().hasAny(['googleCalendarToken']) || request.resource.data.googleCalendarToken is map) &&
+        (!request.resource.data.keys().hasAny(['creditBalance']) ||
+          (request.resource.data.creditBalance is int || request.resource.data.creditBalance is float));
+    }
+
+    function isValidRatingWrite(uid) {
+      return isOwner(uid) &&
+        request.resource.data.keys().hasOnly([
+          'userId',
+          'stars',
+          'review',
+          'ratedAt'
+        ]) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.stars is int &&
+        request.resource.data.stars >= 1 &&
+        request.resource.data.stars <= 5 &&
+        (!request.resource.data.keys().hasAny(['review']) || request.resource.data.review is string);
+    }
+
+    function isValidSavedEvent(eventId) {
+      return request.resource.data.keys().hasOnly([
+        'eventId',
+        'title',
+        'date',
+        'category',
+        'thumbnailUrl',
+        'savedAt'
+      ]) &&
+        request.resource.data.eventId == eventId &&
+        request.resource.data.title is string &&
+        (!request.resource.data.keys().hasAny(['category']) || request.resource.data.category is string) &&
+        (!request.resource.data.keys().hasAny(['thumbnailUrl']) || request.resource.data.thumbnailUrl is string);
+    }
+
+    function isValidMemory(memoryId) {
+      return request.resource.data.keys().hasOnly([
+        'eventId',
+        'eventTitle',
+        'photoUrls',
+        'attendedAt',
+        'updatedAt',
+        'rating'
+      ]) &&
+        request.resource.data.eventId == memoryId &&
+        request.resource.data.eventTitle is string &&
+        (!request.resource.data.keys().hasAny(['photoUrls']) || request.resource.data.photoUrls is list) &&
+        (!request.resource.data.keys().hasAny(['rating']) ||
+          (request.resource.data.rating is int &&
+            request.resource.data.rating >= 0 &&
+            request.resource.data.rating <= 5));
+    }
+
+    function isValidNotificationUpdate(uid) {
+      return isOwner(uid) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']) &&
+        request.resource.data.keys().hasOnly([
+          'title',
+          'body',
+          'type',
+          'eventId',
+          'isRead',
+          'createdAt'
+        ]) &&
+        request.resource.data.title == resource.data.title &&
+        request.resource.data.body == resource.data.body &&
+        request.resource.data.type == resource.data.type &&
+        request.resource.data.eventId == resource.data.eventId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.isRead is bool;
+    }
+
+    function isValidNotificationCreate() {
+      return request.resource.data.keys().hasOnly([
+        'title',
+        'body',
+        'type',
+        'eventId',
+        'isRead',
+        'createdAt'
+      ]) &&
+        request.resource.data.title is string &&
+        request.resource.data.body is string &&
+        request.resource.data.type is string &&
+        (!request.resource.data.keys().hasAny(['eventId']) || request.resource.data.eventId is string) &&
+        (!request.resource.data.keys().hasAny(['isRead']) || request.resource.data.isRead is bool);
+    }
+
     // Root user documents stay compatibility-friendly for now because the app
     // uses users/ as both a profile store and a lookup directory.
     match /users/{uid} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow create: if isValidUserCreate(uid);
+      allow update: if isSignedIn();
+      allow delete: if false;
 
       // Safe first-pass ownership rules.
       match /saved_events/{eventId} {
-        allow read, write: if isOwner(uid);
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidSavedEvent(eventId);
       }
 
       match /memories/{memoryId} {
-        allow read, write: if isOwner(uid);
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidMemory(memoryId);
       }
 
       // Keep RSVP permissive for now to avoid breaking checkout, ticket, refund,
@@ -53,14 +177,16 @@ service cloud.firestore {
       }
 
       match /ratings/{uid} {
-        allow read, write: if isSignedIn();
+        allow read: if true;
+        allow create, update, delete: if isValidRatingWrite(uid);
       }
     }
 
     match /notifications/{uid}/messages/{notificationId} {
       // Keep creation compatibility-friendly for existing client-side fan-out.
-      allow create: if isSignedIn();
-      allow read, update, delete: if isOwner(uid);
+      allow create: if isSignedIn() && isValidNotificationCreate();
+      allow read, delete: if isOwner(uid);
+      allow update: if isValidNotificationUpdate(uid);
     }
 
     match /event_proposals/{proposalId} {
