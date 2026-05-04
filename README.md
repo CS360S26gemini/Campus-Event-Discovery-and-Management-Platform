@@ -294,7 +294,7 @@ flowchart TD
 
 ### 1. Authentication, Startup, and Access Control
 
-Implemented through:
+**Primary files**
 
 - `SplashActivity`
 - `WelcomeActivity`
@@ -302,64 +302,118 @@ Implemented through:
 - `SignUpActivity`
 - `FirebaseAuthRepository`
 - `MockAuthRepository`
+- `SignupValidator`
 - `DevBypassHelper`
 - `DevSessionManager`
 - `UserRoles`
+- `MainActivity`
 
-How it works:
+**End-to-end flow**
 
-- Firebase Authentication handles normal email/password login and signup.
-- `SignupValidator` centralizes email and password validation rules.
-- `SplashActivity` and `MainActivity` determine startup routing.
-- Developer bypass stores a mock role in `SharedPreferences` and allows rapid validation of attendee, organizer, and admin flows without real Firebase accounts.
-- Role-aware navigation updates the bottom navigation and home fragment in `MainActivity`.
+1. The app launches through `SplashActivity`.
+2. `SplashActivity` checks for a real Firebase session and then consults maintenance-mode state from Firestore.
+3. If there is no authenticated user, the app routes to `WelcomeActivity`, then to `SignInActivity` or `SignUpActivity`.
+4. On sign-in, Firebase Auth validates credentials and `EventRepository.getUserData(...)` loads the Firestore profile for role and theme synchronization.
+5. `MainActivity` resolves the effective role and mutates the bottom navigation, home screen, and action behavior accordingly.
+6. For demos and QA, the developer bypass can inject a local attendee, organizer, or admin session without creating a live Firebase account.
 
-### 2. Event Discovery, Search, and Recommendations
+**Implementation details**
 
-Implemented through:
+- `FirebaseAuthRepository` abstracts signup/login so UI classes are not tightly coupled to raw Firebase SDK calls.
+- `SignupValidator` enforces email formatting and strong password policy before network calls.
+- Sign-in includes `Forgot Password`, `Remember Me`, verification handling, and clearer error routing.
+- Role comparisons are centralized in `UserRoles` instead of being scattered as raw string literals.
+- `DevSessionManager` stores bypass state in `SharedPreferences` and only activates it when there is no real Firebase session, avoiding accidental role override.
+
+**Data touched**
+
+- `users/{uid}` for profile, role, interests, dark mode, and device metadata
+- local `SharedPreferences` for developer bypass and remembered email
+
+**Supporting docs**
+
+- [docs/README_AUTH_AND_PERSONALISED_CHANGES.md](docs/README_AUTH_AND_PERSONALISED_CHANGES.md)
+- [docs/phase3_README.md](docs/phase3_README.md)
+
+### 2. Event Discovery, Search, Favourites, and Recommendations
+
+**Primary files**
 
 - `HomeFragment`
 - `SearchFragment`
 - `FavouritesFragment`
+- `MyEventsFragment`
+- `EventDetailActivity`
 - `EventRepository`
-- `Constants`
 
-How it works:
+**End-to-end flow**
 
-- `HomeFragment` loads recent events, featured events, and personalized recommendations.
-- Recommendation scoring uses user interests, recently viewed categories, RSVP popularity, and event timing.
-- Search and filtering are routed through repository-backed Firestore queries plus client-side filtering/sorting where appropriate.
-- Saved events are stored under `users/{uid}/saved_events`.
+1. `HomeFragment` loads active events for the attendee landing experience.
+2. The repository loads featured event IDs from app configuration and resolves full event documents.
+3. Personalized recommendations are computed from user interests, recently viewed categories, event popularity, and event date proximity.
+4. If no personalized score is meaningful, the system falls back to a trending-style feed instead of showing an empty recommendation strip.
+5. `SearchFragment` lets users search and filter active events.
+6. Users can save events to favourites and later revisit them in `FavouritesFragment`.
+7. Opening an event leads to `EventDetailActivity`, which becomes the central handoff point for RSVP, ticketing, maps, feedback, and SOS eligibility.
 
-Related notes:
+**Implementation details**
+
+- Recommendation logic is deterministic and uses only existing app data; no external AI or recommendation API is used.
+- Recently viewed categories are tracked locally and fed back into ranking.
+- Past events are excluded from the recommendation pool.
+- Saved events are denormalized into `users/{uid}/saved_events` for faster user-facing retrieval.
+- `MyEventsFragment` serves both attendee and organizer cases, changing behavior depending on role.
+
+**Data touched**
+
+- `events/{eventId}`
+- `users/{uid}/saved_events`
+- local preferences for recently viewed event IDs/categories
+
+**Supporting docs**
 
 - [docs/README_AUTH_AND_PERSONALISED_CHANGES.md](docs/README_AUTH_AND_PERSONALISED_CHANGES.md)
 - [docs/README_PERSONALISED_RECOMMENDATIONS.md](docs/README_PERSONALISED_RECOMMENDATIONS.md)
 
-### 3. Event Creation, Proposal Review, and Publishing
+### 3. Event Proposal Creation, Admin Review, and Publishing
 
-Implemented through:
+**Primary files**
 
 - `CreateEventActivity`
 - `ManageEventsActivity`
 - `OrganizerProposalDetailActivity`
+- `OrganizerEventDetailActivity`
 - `EventApprovalActivity`
+- `HomeOrganizerFragment`
 - `HomeAdminFragment`
-- `EventRepository.proposeEvent(...)`
-- `EventRepository.approveProposal(...)`
-- `EventRepository.rejectProposal(...)`
+- `EventRepository`
 
-How it works:
+**End-to-end flow**
 
-- Organizers fill proposal data including category, capacity, location, ticket data, and optional media.
-- Images use Cloudinary-backed upload paths where configured.
-- Proposals are written to `event_proposals`.
-- Admin surfaces observe and review pending proposals.
-- Approval creates publishable event data for the attendee-facing catalog.
+1. An organizer creates a proposal in `CreateEventActivity`.
+2. The app validates title, description, category, capacity, date, organizer identity, location, and optional ticket-related inputs.
+3. Media uploads are routed through configured image upload helpers where applicable.
+4. The proposal is written to `event_proposals`.
+5. Organizers can inspect proposal status in their management surfaces.
+6. Admins observe pending proposals in real time and open `EventApprovalActivity` for decision-making.
+7. Approval promotes proposal data into a publishable event record; rejection writes status and note data while notifying the organizer.
 
-### 4. RSVP, Payment, Ticket Tiers, and QR Ticketing
+**Implementation details**
 
-Implemented through:
+- Proposal creation supports category, capacity, tags/interests, map location data, and tier-aware event setup depending on feature slice.
+- `HomeAdminFragment` uses a real-time observation pattern so new pending proposals surface without manual refresh.
+- `ManageEventsActivity` separates approved, pending, and rejected organizer items so workflow state is visible.
+- Proposal approval and rejection logic is centralized in repository methods to keep lifecycle rules out of UI code.
+
+**Data touched**
+
+- `event_proposals/{proposalId}`
+- `events/{eventId}`
+- `notifications/{uid}/messages/{notificationId}`
+
+### 4. RSVP, Payments, Ticket Tiers, Refunds, and QR Ticketing
+
+**Primary files**
 
 - `EventDetailActivity`
 - `BuyTicketActivity`
@@ -369,93 +423,160 @@ Implemented through:
 - `PaymentRepository`
 - `StripePaymentService`
 - `QRCodeHelper`
+- `EventRepository`
 - `supabase/functions/create-payment-intent/index.ts`
 
-How it works:
+**End-to-end flow**
 
-- Attendees enter ticket purchase from the event detail flow.
-- Ticket tiers can be previewed and selected where available.
-- `CheckoutActivity` prevents duplicate purchases by checking existing RSVP state before charging again.
-- Payments are persisted to `payments`.
-- Stripe payment intents are created through a Supabase Edge Function so the Stripe secret key never ships in the Android app.
-- The RSVP document is merged with payment metadata and a QR payload after checkout success.
-- `TicketActivity` renders the pass from the generated QR payload.
+1. The attendee opens `EventDetailActivity`.
+2. If the event is paid or tiered, `BuyTicketActivity` or tier selection UI determines the attendee’s pricing path.
+3. `CheckoutActivity` loads attendee details, selected tier, available in-app credits, and payment options.
+4. Before charging, checkout checks whether the attendee already has a valid RSVP/ticket to prevent duplicate purchases.
+5. For Stripe-backed checkout, the app requests a payment intent through the Supabase Edge Function.
+6. Payment metadata is saved to Firestore via `PaymentRepository`.
+7. RSVP creation is performed through transactional repository logic that checks capacity, blacklist status, and duplicate registration.
+8. After RSVP success, payment metadata and QR payload data are merged onto the RSVP document.
+9. `TicketActivity` generates and displays the QR code pass used later for organizer scanning.
+10. Refund and in-app credit logic handles eligible attendee cancellations and organizer cancellations by returning value as platform credits.
 
-Supporting docs:
+**Implementation details**
+
+- Duplicate RSVP prevention occurs before new charges and again inside repository-level RSVP protection logic.
+- The payment pipeline is intentionally structured like a production checkout even where some demo behaviors remain.
+- `StripePaymentService` keeps secret handling off-device by talking to a Supabase Edge Function instead of directly embedding a secret key in Android.
+- Refund policy is time-sensitive for attendee cancellations and unconditional for organizer-driven event cancellation.
+- In-app credits are atomic: repository transactions deduct credits, create audit records, and prevent overspending.
+- Ticket tiers are surfaced in both organizer creation and attendee purchase flows, with the lowest valid tier often driving summary display.
+
+**Data touched**
+
+- `payments/{paymentId}`
+- `users/{uid}/rsvps/{eventId}`
+- `events/{eventId}/attendees/{uid}`
+- `credit_transactions/{transactionId}`
+- `users/{uid}.creditBalance`
+
+**Supporting docs**
 
 - [docs/STRIPE_SETUP.md](docs/STRIPE_SETUP.md)
 - [docs/README_REMINDERS_AND_REFUNDS.md](docs/README_REMINDERS_AND_REFUNDS.md)
 - [docs/REFUND_FIX_README.md](docs/REFUND_FIX_README.md)
 
-### 5. Organizer Check-In, Attendance, and Blacklisting
+### 5. QR Check-In, Attendance Management, and Blacklisting
 
-Implemented through:
+**Primary files**
 
 - `ScannerActivity`
 - `TicketCaptureActivity`
 - `WhoIsComingActivity`
 - `AttendeeAdapter`
 - `EventRepository.checkInAttendeeByQrToken(...)`
+- `EventRepository.checkInAttendeeByScan(...)`
 - `EventRepository.blacklistAttendees(...)`
 - `EventRepository.isUserBlacklisted(...)`
 
-How it works:
+**End-to-end flow**
 
-- QR scanning uses ZXing embedded capture.
-- Organizers can inspect event attendees, search them, and apply blacklist actions.
-- Check-in updates attendee and RSVP state, including one-time-use behavior for ticket flows.
-- Blacklist data is stored under event-specific collections and checked before sensitive attendee actions.
+1. Organizers open `WhoIsComingActivity` for a specific event.
+2. The attendee list is loaded from `events/{eventId}/attendees` and updated in real time.
+3. Organizers can search attendees, inspect current status, open camera-based scanning, or perform manual token-based check-in.
+4. `ScannerActivity` reads the QR payload, resolves RSVP state, and validates the ticket before marking attendance.
+5. The repository updates both attendee-side and organizer-side attendance records and increments event check-in counts where appropriate.
+6. If a user violates event rules, the organizer can blacklist them from the attendee list.
+7. Blacklisting removes active attendance state and prevents future registration through blacklist checks inside RSVP transactions.
 
-### 6. SOS Incident Response
+**Implementation details**
 
-Implemented through:
+- The camera-based path uses ZXing embedded scanning.
+- The manual path uses QR/token lookup through repository methods.
+- One-time-use behavior is enforced through `checkedIn` and `qrExpired` state so already-used tickets cannot be re-presented as valid entries.
+- `AttendeeAdapter` supports multi-selection, making bulk blacklist operations practical.
+
+**Data touched**
+
+- `events/{eventId}/attendees/{uid}`
+- `users/{uid}/rsvps/{eventId}`
+- `events/{eventId}/blacklist/{uid}`
+- `events/{eventId}.checkedInCount`
+
+### 6. SOS Incident Response and Emergency Escalation
+
+**Primary files**
 
 - `SosActivity`
 - `SOSDashboardActivity`
 - `SOSAlertActivity`
 - `SosRepository`
+- `EventRepository.sendSosReport(...)`
 - `MyFirebaseMessagingService`
 - `functions/index.js`
 
-How it works:
+**End-to-end flow**
 
-- SOS access is gated by event context and check-in status.
-- Location is requested through Play Services location APIs.
-- Alerts are written to `sos_alerts`.
-- Organizer/admin notifications are fanned out through Firestore notification documents and Firebase Functions multicast FCM.
-- `SOSAlertActivity` supports a full-screen emergency alert experience on the receiving side.
+1. An eligible attendee triggers SOS from an event-aware surface such as the event detail flow or other allowed entry point.
+2. The app validates the SOS window and check-in requirements.
+3. `SosActivity` requests location and captures the best available coordinates.
+4. Alert data is written to Firestore with event context, reporter identity, and geo details.
+5. Organizer/admin notification targets are resolved and fan-out begins.
+6. Firebase Functions send high-priority data-only FCM alerts to recipient devices.
+7. Recipient devices receive the payload in `MyFirebaseMessagingService`, which launches the full-screen `SOSAlertActivity`.
+8. Organizers and admins can monitor incident-facing surfaces through dashboard tooling.
 
-Supporting docs:
+**Implementation details**
+
+- SOS is not a generic button; it is governed by event participation and timing constraints.
+- The app supports fallback behavior when location cannot be resolved perfectly.
+- `USE_FULL_SCREEN_INTENT`, notification channel setup, and lock-screen display flags make the alert behave like an emergency escalation rather than a normal passive notification.
+- The repository and cloud-function slices both participate: Firestore persistence lives in the app, while device fan-out lives in backend logic.
+
+**Data touched**
+
+- `sos_alerts/{alertId}`
+- `notifications/{uid}/messages/{notificationId}`
+- `users/{uid}.fcmToken`
+
+**Supporting docs**
 
 - [docs/README_SOS.md](docs/README_SOS.md)
 - [docs/sos_test_plan.md](docs/sos_test_plan.md)
 
 ### 7. Notifications, Event Reminders, and Messaging
 
-Implemented through:
+**Primary files**
 
-- `MyFirebaseMessagingService`
 - `CampusEventDiscoveryApp`
+- `MyFirebaseMessagingService`
 - `NotificationCenterActivity`
+- `MainActivity`
 - `functions/index.js`
 
-How it works:
+**End-to-end flow**
 
-- The app persists user `fcmToken` values to Firestore.
-- Firebase Functions schedule event reminder fan-out for upcoming active events.
-- Reminder notifications route users into the calendar experience through destination-tab intent extras.
-- Notification documents are shown in the in-app notification center.
+1. The app registers messaging channels for reminder and SOS behavior.
+2. On login and token refresh, the device FCM token is written to the user profile.
+3. Reminder logic on the backend queries upcoming active events inside the configured time window.
+4. For each event, attendee tokens are resolved and a reminder payload is sent.
+5. `MyFirebaseMessagingService` receives `EVENT_REMINDER` payloads, builds a notification, and deep-links the user into the calendar tab.
+6. In-app notification documents can also be displayed inside `NotificationCenterActivity` for product-specific messaging.
 
-Supporting docs:
+**Implementation details**
+
+- Reminder payloads include `destinationTab = calendar`, allowing the app to land users in the most relevant post-tap screen.
+- Invalid FCM tokens are pruned on the backend to reduce stale device noise.
+- Notification-center reads remain separate from system notification delivery; one is the app inbox, the other is the OS-level push channel.
+
+**Supporting docs**
 
 - [docs/README_EVENT_REMINDERS_YAHYA.md](docs/README_EVENT_REMINDERS_YAHYA.md)
+- [docs/README_REMINDERS_AND_REFUNDS.md](docs/README_REMINDERS_AND_REFUNDS.md)
 
-### 8. Profile, Memories, Walkthrough, and UI Personalization
+### 8. Profile, Memories, Feedback, Walkthrough, and UI Personalization
 
-Implemented through:
+**Primary files**
 
 - `ProfileFragment`
 - `AccountSettingsActivity`
+- `EventFeedbackActivity`
 - `MemoriesActivity`
 - `MemoryAlbumActivity`
 - `MemoryPhotoViewerActivity`
@@ -463,32 +584,54 @@ Implemented through:
 - `ThemeManager`
 - `AvatarRenderer`
 
-How it works:
+**End-to-end flow**
 
-- Users can update profile data and theme preferences.
-- The app supports memory album creation, post-event photos, and ratings.
-- Walkthrough mode and guided overlays support demoability and usability.
-- Role-aware profile surfaces keep attendee and organizer/admin tools separated.
+1. Users open `ProfileFragment` to access account data and role-specific tools.
+2. `AccountSettingsActivity` lets users update profile details, interests, theme preference, password-related settings, and credit visibility.
+3. After attending events, users can submit ratings and feedback through `EventFeedbackActivity`.
+4. Memory flows let users build albums, attach photos, revisit event memories, and browse them through dedicated screens.
+5. Walkthrough overlays guide users through major product surfaces, improving demoability and onboarding.
 
-Supporting docs:
+**Implementation details**
+
+- Profile surfaces are role-aware so attendee tools do not collide with organizer/admin operations.
+- Theme behavior is synchronized between local state and Firestore-backed preferences.
+- Memory data is not just a UI gallery; it is tied to attended-event flows and repository-backed memory lifecycle methods.
+- Avatar and profile visualization support goes beyond plain text account editing, helping the app feel more polished as a release candidate.
+
+**Data touched**
+
+- `users/{uid}`
+- `users/{uid}/memories/{memoryId}`
+- `events/{eventId}/ratings/{uid}`
+
+**Supporting docs**
 
 - [docs/MEMORY_MAP.md](docs/MEMORY_MAP.md)
 - [docs/FRONTEND_CHANGE_NOTES.md](docs/FRONTEND_CHANGE_NOTES.md)
 
-### 9. Vendor Coordination
+### 9. Vendor Coordination and Event Ecosystem Support
 
-Implemented through:
+**Primary files**
 
 - `VendorManagementFragment`
 - `VendorProposalAdapter`
 - `VendorEventAdapter`
-- vendor methods in `EventRepository`
+- vendor-related methods in `EventRepository`
 
-How it works:
+**End-to-end flow**
 
-- Organizers can add and inspect vendors per event.
-- Admins can review pending vendor requests.
-- Vendor proposal state is managed in Firestore and displayed through role-sensitive surfaces.
+1. Organizers open vendor management from their role-specific surfaces.
+2. Approved events are loaded so vendor actions are always tied to a concrete event context.
+3. Organizers submit vendor proposals or requests for selected events.
+4. Admins review pending vendor requests from their oversight surface.
+5. Approval and rejection update proposal state and feed back into the appropriate list views.
+
+**Implementation details**
+
+- Organizer and admin users see different default states and tool affordances inside the same feature slice.
+- Vendor proposal lists are scoped by event for organizers and by status for admins.
+- Walkthrough support is also wired into this area to make it demo-ready.
 
 ## Firebase, Backend, and Infrastructure
 
