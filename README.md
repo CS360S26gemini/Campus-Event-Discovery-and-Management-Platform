@@ -127,24 +127,41 @@ Additional visual references:
 
 ## User Stories and Backlog Status
 
-The final prototype completes the major product stories carried across earlier checkpoints and sprint breakdowns.
+The backlog section below was expanded by cross-checking the implemented app code against the GitHub board/issues for `CS360S26gemini/Campus-Event-Discovery-and-Management-Platform`. Where the board had duplicates or implementation sub-tasks, related items were consolidated into one reviewer-friendly product story while preserving the original feature intent.
 
-| User Story | Status | Primary Implementation Touchpoints |
-|---|---|---|
-| As a student, I want to sign up and sign in securely so I can access the platform | Done | `SignUpActivity`, `SignInActivity`, `FirebaseAuthRepository`, `SignupValidator` |
-| As a tester, I want a developer bypass so I can validate all role experiences quickly | Done | `DevBypassHelper`, `DevSessionManager`, `MainActivity` |
-| As an attendee, I want to browse featured and recommended events so I can discover relevant events faster | Done | `HomeFragment`, `EventRepository.getScoredRecommendations(...)` |
-| As an attendee, I want search and filtering so I can find events by interest and category | Done | `SearchFragment`, `EventRepository.searchEvents(...)` |
-| As an attendee, I want to save events to favourites and track RSVPs | Done | `FavouritesFragment`, `MyEventsFragment`, `EventRepository.saveEvent(...)`, `EventRepository.getRsvps(...)` |
-| As an attendee, I want to buy a ticket and receive a QR pass | Done | `BuyTicketActivity`, `CheckoutActivity`, `TicketActivity`, `QRCodeHelper` |
-| As an organizer, I want to submit proposals and manage event states | Done | `CreateEventActivity`, `ManageEventsActivity`, `OrganizerProposalDetailActivity` |
-| As an admin, I want to approve or reject event proposals | Done | `HomeAdminFragment`, `EventApprovalActivity`, `EventRepository.approveProposal(...)` |
-| As an organizer, I want to scan QR codes and mark attendees as checked in | Done | `ScannerActivity`, `TicketCaptureActivity`, `EventRepository.checkInAttendeeByQrToken(...)` |
-| As an organizer, I want to blacklist abusive attendees | Done | `WhoIsComingActivity`, `EventRepository.blacklistAttendees(...)` |
-| As a user, I want emergency SOS support during an event | Done | `SosActivity`, `SOSDashboardActivity`, `SOSAlertActivity`, `functions/index.js` |
-| As an attendee, I want reminders and calendar-facing event nudges | Done | `MyFirebaseMessagingService`, `functions/index.js`, `EventCalendarFragment` |
-| As a user, I want post-event memories and feedback | Done | `EventFeedbackActivity`, `MemoriesActivity`, `MemoryAlbumActivity`, `EventRepository.createMemoryAlbum(...)` |
-| As an organizer or admin, I want vendor management workflows | Done | `VendorManagementFragment`, `VendorProposalAdapter`, vendor repository methods in `EventRepository` |
+| User Story / Backlog Item | Status | Primary Implementation Touchpoints | GitHub Board / Issue Origin |
+|---|---|---|---|
+| As a student, I want to browse upcoming campus events so that I can discover what is happening on campus | Done | `HomeFragment`, `EventRepository.getUpcomingEvents(...)`, `EventAdapter` | `US-01` issue `#6` |
+| As a user, I want personalised suggestions based on my interests so that relevant events surface first | Done | `HomeFragment`, `EventRepository.getScoredRecommendations(...)`, `SignupValidator`, `AccountSettingsActivity` | `US-02` issue `#9`, personalization follow-up `#122` |
+| As a user, I want dark mode so the app is easier on the eyes and consistent across screens | Done | `ThemeManager`, `AccountSettingsActivity`, `CampusEventDiscoveryApp` | `US-04` issue `#11` |
+| As a user, I want reminder notifications so I do not miss events I registered for | Done | `MyFirebaseMessagingService`, `functions/index.js`, `MainActivity`, `EventCalendarFragment` | `US-05` issue `#12`, reminder workflow issues `#130`, `#141` |
+| As an organizer, I want to propose events so that they can be reviewed and published to the platform | Done | `CreateEventActivity`, `EventRepository.proposeEvent(...)`, `EventValidator` | `US-07` issue `#14` |
+| As a user attending an event, I want SOS support so that organizers/admins can be alerted in an emergency | Done | `SosActivity`, `SOSDashboardActivity`, `SOSAlertActivity`, `SosRepository`, `functions/index.js` | `US-09` issue `#16`, SOS implementation issue `#84` |
+| As a user, I want to purchase tickets safely and receive proof of registration so I can access paid events | Done | `BuyTicketActivity`, `CheckoutActivity`, `TicketActivity`, `PaymentRepository`, `StripePaymentService` | `US-13` issue `#26`, QR/payment epic `#80` |
+| As a student, I want to sign up for a new account so I can use the platform and personalize my experience | Done | `SignUpActivity`, `FirebaseAuthRepository`, `SignupValidator`, `User` | `US-15` issue `#29` |
+| As a student, I want to unregister from an event so I can free my schedule and release my spot | Done | `MyEventsFragment`, `EventRepository.cancelRsvp(...)` | `US-18` issue `#33`, refund-related follow-up `#87` |
+| As a student, I want to see remaining spots so I know whether an event still has capacity | Done | `EventDetailActivity`, `HomeFragment`, `EventRepository.rsvpEvent(...)` | `US-19` issue `#34`, RSVP issue `#44` |
+| As an organizer, I want to track registrations against capacity so I can manage logistics and popularity | Done | `OrganizerEventDetailActivity`, `WhoIsComingActivity`, `EventRepository.getEventAttendees(...)` | `US-20` issue `#35` |
+| As a student, I want filterable event search so I can narrow results by category and relevance | Done | `SearchFragment`, `EventRepository.searchEvents(...)` | `US-21` issue `#36` |
+| As a user, I want to search events by name so I can quickly find a specific activity | Done | `SearchFragment`, `EventAdapter` | `US-23` issue `#38` |
+| As an attendee, I want RSVP creation to be transactional so duplicates, overbooking, and invalid registrations are prevented | Done | `EventRepository.rsvpEvent(...)`, `EventDetailActivity`, `MyEventsFragment` | RSVP issue `#44`, role-flow issue `#62` |
+| As a user, I want secure login to my existing account so that my profile and preferences persist across sessions | Done | `SignInActivity`, `FirebaseAuthRepository`, `AuthPreferenceManager` | login issue `#28`, auth DB issue `#76` |
+| As an attendee, I want favourites so I can save events and revisit them later without losing sync when events are deleted | Done | `FavouritesFragment`, `EventRepository.saveEvent(...)`, `EventRepository.getSavedEvents(...)` | favourites issues `#121`, `#129`, organizer/admin removal issue `#138` |
+| As an organizer, I want to upload event images/thumbnails so attendees can see richer event listings | Done | `CreateEventActivity`, `CloudinaryHelper`, `EventProposal`, Glide-backed UI surfaces | event image issues `#79`, `#111`, `#112` |
+| As a user, I want QR ticketing so my registration can be validated quickly at the venue | Done | `TicketActivity`, `QRCodeHelper`, `CheckoutActivity`, `Rsvp` | payment + QR epic `#80`, RSVP model issue `#113` |
+| As an organizer, I want to scan and validate tickets so that only valid attendees are checked in once | Done | `ScannerActivity`, `TicketCaptureActivity`, `EventRepository.checkInAttendeeByQrToken(...)`, `EventRepository.checkInAttendeeByScan(...)` | check-in validation issue `#109`, QR epic `#80` |
+| As an organizer, I want to view payments and total revenue so I can verify incoming money for my event | Done | `PaymentConfirmationActivity`, `PaymentRepository.getPaymentsForEvent(...)` | payment verification issue `#81`, organizer payment view issues `#116`, `#117`, `#148`, `#149` |
+| As an attendee, I want multiple payment pathways, including proof-based flows, so checkout is flexible | Done | `CheckoutActivity`, `Payment`, `Rsvp`, `StripePaymentService` | payment proof / gateway issues `#82`, `#102`, `#113`, `#114` |
+| As a user, I want in-app credit refunds so eligible cancellations return value that can be reused later | Done | `EventRepository.cancelRsvp(...)`, `EventRepository.rsvpEventWithCredit(...)`, `AccountSettingsActivity`, `CheckoutActivity` | refund/credit issues `#142`, `#143`, `#144`, `#145`, `#146` |
+| As a user, I want to view the event’s campus location clearly so I can navigate to the venue | Done | `CampusMapActivity`, `EventDetailActivity`, location constants in `Constants` | campus map issue `#118` |
+| As an organizer, I want a dashboard for my event operations so I can monitor proposals, vendors, and event state | Done | `HomeOrganizerFragment`, `ManageEventsActivity`, `OrganizerEventDetailActivity`, `VendorManagementFragment` | organizer dashboard issues `#119`, `#126`, `#127` |
+| As an organizer or admin, I want vendor-management workflows so I can request, review, and track vendors tied to events | Done | `VendorManagementFragment`, `VendorProposalAdapter`, vendor methods in `EventRepository` | vendor/dashboard issues `#119`, `#127`, UI consistency issue `#137` |
+| As a user, I want a better onboarding/auth cross-navigation flow so I can move smoothly between welcome, sign-in, and sign-up | Done | `WelcomeActivity`, `SignInActivity`, `SignUpActivity` | welcome/auth issues `#120`, `#134` |
+| As a user, I want a Help and Support page with guided walkthroughs so I can learn core features by role | Done | `HelpFragment`, `WalkthroughManager`, walkthrough-linked UI surfaces | help issue `#123` |
+| As an attendee, I want a memories system so I can keep albums and revisit attended-event moments | Done | `MemoriesActivity`, `MemoryAlbumActivity`, `MemoryPhotoViewerActivity`, `EventRepository.createMemoryAlbum(...)` | memories issue `#124` |
+| As an organizer, I want ticket tiers and differentiated pricing so different attendee segments can buy appropriate access levels | Done | `CreateEventActivity`, `BuyTicketActivity`, `TicketTierAdapter`, `TicketTierOptionAdapter` | ticket-tier issue `#128` |
+| As a user, I want remembered email and stronger sign-in usability features so repeated sign-in is easier but still secure | Done | `SignInActivity`, `AuthPreferenceManager`, `SignupValidator` | remember-me issue `#139` |
+| As a tester or teammate, I want a developer bypass so I can validate all role-specific flows quickly without creating multiple real accounts | Done | `DevBypassHelper`, `DevSessionManager`, `MainActivity` | implemented product need, reflected in code and sprint integration work |
 
 Backlog and stage-oriented planning references:
 
