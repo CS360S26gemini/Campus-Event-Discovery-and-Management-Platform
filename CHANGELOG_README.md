@@ -22,3 +22,4 @@ This file records implementation changes made from this point forward.
 - Reworded authentication errors so invalid passwords, invalid emails, duplicate emails, and account-update failures show clear user-facing messages, with password rules visible under password creation fields.
 - Updated the calendar event-scope segmented control so its selected state uses the active accent instead of the default grey Material toggle fill.
 - Added organizer names to event/proposal cards and event details, and exposed organizer name plus email on admin proposal review/detail views for pending, approved, and rejected proposals.
+- Replaced the Android launcher icon with the provided Event hub artwork across adaptive and legacy icon resources.
