@@ -1,6 +1,5 @@
 package com.example.CampusEventDiscovery.adapter;
 
-import android.content.Intent;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.text.TextUtils;
@@ -19,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.Event;
+import com.example.CampusEventDiscovery.util.EventShareHelper;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
@@ -174,16 +174,7 @@ public class EventAdapter extends ListAdapter<Event, EventAdapter.EventViewHolde
         });
 
         if (holder.ivShare != null) {
-            holder.ivShare.setOnClickListener(v -> {
-                String shareText = buildShareText(event, v.getContext());
-                Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                shareIntent.setType("text/plain");
-                shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
-                v.getContext().startActivity(Intent.createChooser(
-                        shareIntent,
-                        v.getContext().getString(R.string.share)
-                ));
-            });
+            holder.ivShare.setOnClickListener(v -> EventShareHelper.shareEventLink(v.getContext(), event));
         }
     }
 
@@ -290,14 +281,6 @@ public class EventAdapter extends ListAdapter<Event, EventAdapter.EventViewHolde
 
         target.setText(context.getString(R.string.event_organizer_format, organizerName));
         target.setVisibility(View.VISIBLE);
-    }
-
-    private String buildShareText(Event event, Context context) {
-        String title = safeText(event.getTitle(), "Campus Event");
-        String location = safeText(event.getLocation(), "Venue TBD");
-        String date = formatDateTime(event.getDate(), context);
-
-        return title + "\n" + date + "\n" + location;
     }
 
     public static class EventViewHolder extends RecyclerView.ViewHolder {

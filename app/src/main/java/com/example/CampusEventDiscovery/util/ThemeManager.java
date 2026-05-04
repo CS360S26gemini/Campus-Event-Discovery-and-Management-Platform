@@ -354,8 +354,6 @@ public final class ThemeManager {
                                                     ColorStateList accentList,
                                                     ColorStateList onAccentList,
                                                     ColorStateList rippleList) {
-        button.setRippleColor(rippleList);
-
         if (isSegmentedControlButton(button)) {
             return;
         }
@@ -374,6 +372,10 @@ public final class ThemeManager {
             button.setStrokeColor(accentList);
             button.setTextColor(accentList);
             button.setIconTint(accentList);
+        }
+
+        if (usesPurple(button.getRippleColor())) {
+            button.setRippleColor(rippleList);
         }
 
         if (isPurpleLike(button.getCurrentTextColor())) {

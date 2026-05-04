@@ -42,6 +42,7 @@ import com.example.CampusEventDiscovery.repository.EventRepository;
 import com.example.CampusEventDiscovery.ui.event.EventDetailActivity;
 import com.example.CampusEventDiscovery.util.Constants;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.EventShareHelper;
 import com.example.CampusEventDiscovery.util.EventTimeUtils;
 import com.example.CampusEventDiscovery.util.ThemeManager;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
@@ -399,17 +400,7 @@ public class HomeFragment extends Fragment {
 
         ivBannerHeart.setOnClickListener(v -> toggleSaveEvent(event, isSaved));
 
-        ivBannerShare.setOnClickListener(v -> {
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("text/plain");
-            shareIntent.putExtra(Intent.EXTRA_TEXT,
-                    safeText(event.getTitle(), getString(R.string.app_name))
-                            + "\n"
-                            + formatDateTime(event.getDate())
-                            + "\n"
-                            + safeText(event.getLocation(), getString(R.string.placeholder_venue)));
-            startActivity(Intent.createChooser(shareIntent, getString(R.string.share)));
-        });
+        ivBannerShare.setOnClickListener(v -> EventShareHelper.shareEventLink(requireContext(), event));
     }
 
     private void toggleSaveEvent(Event event, boolean isCurrentlySaved) {

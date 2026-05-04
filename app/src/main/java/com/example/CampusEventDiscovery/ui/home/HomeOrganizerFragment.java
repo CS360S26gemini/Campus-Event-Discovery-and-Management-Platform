@@ -32,6 +32,7 @@ import com.example.CampusEventDiscovery.ui.organizer.ManageEventsActivity;
 import com.example.CampusEventDiscovery.ui.organizer.ScannerActivity;
 import com.example.CampusEventDiscovery.ui.sos.SOSDashboardActivity;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
+import com.example.CampusEventDiscovery.util.EventShareHelper;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.button.MaterialButton;
@@ -353,17 +354,7 @@ public class HomeOrganizerFragment extends Fragment {
 
         cardFeaturedEvent.setOnClickListener(v -> openEventDetail(event));
 
-        ivBannerShare.setOnClickListener(v -> {
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("text/plain");
-            shareIntent.putExtra(Intent.EXTRA_TEXT,
-                    safeText(event.getTitle(), getString(R.string.app_name))
-                            + "\n"
-                            + formatDateTime(event.getDate())
-                            + "\n"
-                            + safeText(event.getLocation(), getString(R.string.placeholder_venue)));
-            startActivity(Intent.createChooser(shareIntent, getString(R.string.share)));
-        });
+        ivBannerShare.setOnClickListener(v -> EventShareHelper.shareEventLink(requireContext(), event));
     }
 
     private void openEventDetail(Event event) {
