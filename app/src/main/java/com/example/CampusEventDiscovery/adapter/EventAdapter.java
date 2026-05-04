@@ -227,6 +227,8 @@ public class EventAdapter extends ListAdapter<Event, EventAdapter.EventViewHolde
         public boolean areContentsTheSame(@NonNull Event oldItem, @NonNull Event newItem) {
             return TextUtils.equals(oldItem.getTitle(), newItem.getTitle())
                     && TextUtils.equals(oldItem.getLocation(), newItem.getLocation())
+                    && TextUtils.equals(oldItem.getOrganizerName(), newItem.getOrganizerName())
+                    && TextUtils.equals(oldItem.getOrganizerEmail(), newItem.getOrganizerEmail())
                     && TextUtils.equals(oldItem.getStatus(), newItem.getStatus())
                     && TextUtils.equals(oldItem.getThumbnailUrl(), newItem.getThumbnailUrl())
                     && oldItem.getRsvpCount() == newItem.getRsvpCount()

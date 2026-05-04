@@ -59,6 +59,7 @@ public class OrganizerPendingAdapter extends ListAdapter<Event, OrganizerPending
         Event event = getItem(position);
 
         holder.tvTitle.setText(safeText(event.getTitle(), holder.itemView.getContext().getString(R.string.app_name)));
+        bindOrganizerText(holder, event);
         holder.tvDateTime.setText(formatDateTime(event.getDate(), holder.itemView));
         holder.tvVenue.setText(safeText(event.getLocation(),
                 holder.itemView.getContext().getString(R.string.placeholder_venue)));
@@ -116,6 +117,19 @@ public class OrganizerPendingAdapter extends ListAdapter<Event, OrganizerPending
 
     private String safeText(String text, String fallback) {
         return TextUtils.isEmpty(text) ? fallback : text;
+    }
+
+    private void bindOrganizerText(PendingViewHolder holder, Event event) {
+        if (holder.tvOrganizer == null) {
+            return;
+        }
+        String organizerName = event == null ? null : event.getOrganizerName();
+        if (TextUtils.isEmpty(organizerName)) {
+            holder.tvOrganizer.setVisibility(View.GONE);
+            return;
+        }
+        holder.tvOrganizer.setText(holder.itemView.getContext().getString(R.string.event_organizer_format, organizerName));
+        holder.tvOrganizer.setVisibility(View.VISIBLE);
     }
 
     private String formatDateTime(Timestamp timestamp, View view) {
@@ -181,6 +195,8 @@ public class OrganizerPendingAdapter extends ListAdapter<Event, OrganizerPending
             return TextUtils.equals(oldItem.getTitle(), newItem.getTitle())
                     && timestampMillis(oldItem.getDate()) == timestampMillis(newItem.getDate())
                     && TextUtils.equals(oldItem.getLocation(), newItem.getLocation())
+                    && TextUtils.equals(oldItem.getOrganizerName(), newItem.getOrganizerName())
+                    && TextUtils.equals(oldItem.getOrganizerEmail(), newItem.getOrganizerEmail())
                     && oldItem.getCapacity() == newItem.getCapacity()
                     && TextUtils.equals(oldItem.getStatus(), newItem.getStatus())
                     && TextUtils.equals(oldItem.getThumbnailUrl(), newItem.getThumbnailUrl())
@@ -201,6 +217,7 @@ public class OrganizerPendingAdapter extends ListAdapter<Event, OrganizerPending
         ImageView ivHeart;
         ImageView ivShare;
         TextView tvTitle;
+        TextView tvOrganizer;
         TextView tvDateTime;
         TextView tvVenue;
         TextView tvSpots;
@@ -218,6 +235,7 @@ public class OrganizerPendingAdapter extends ListAdapter<Event, OrganizerPending
             ivHeart = itemView.findViewById(R.id.ivHeart);
             ivShare = itemView.findViewById(R.id.ivShare);
             tvTitle = itemView.findViewById(R.id.tvTitle);
+            tvOrganizer = itemView.findViewById(R.id.tvOrganizer);
             tvDateTime = itemView.findViewById(R.id.tvDateTime);
             tvVenue = itemView.findViewById(R.id.tvVenue);
             tvSpots = itemView.findViewById(R.id.tvSpots);

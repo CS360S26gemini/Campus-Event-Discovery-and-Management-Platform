@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.CampusEventDiscovery.model.User;
+import com.example.CampusEventDiscovery.util.AuthErrorMessages;
 import com.example.CampusEventDiscovery.util.DevBypassHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.SignupValidator;
@@ -24,8 +25,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -39,6 +40,7 @@ import java.util.ArrayList;
 public class SignUpActivity extends AppCompatActivity {
 
     private EditText etFullName, etEmail, etPassword, etRepeatPassword;
+    private TextInputLayout tilFullName, tilEmail, tilPassword, tilRepeatPassword, tilCampus;
     private AutoCompleteTextView actvCampus;
     private ChipGroup chipGroupInterests;
     private MaterialButtonToggleGroup toggleUserType;
@@ -60,6 +62,11 @@ public class SignUpActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         MaterialToolbar toolbarSignUp = findViewById(R.id.toolbarSignUp);
+        tilFullName = findViewById(R.id.tilFullName);
+        tilEmail = findViewById(R.id.tilEmail);
+        tilPassword = findViewById(R.id.tilPassword);
+        tilRepeatPassword = findViewById(R.id.tilRepeatPassword);
+        tilCampus = findViewById(R.id.tilCampus);
         etFullName = findViewById(R.id.etFullName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
@@ -95,9 +102,10 @@ public class SignUpActivity extends AppCompatActivity {
 
         String fullName = etFullName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
-        String repeatPassword = etRepeatPassword.getText().toString().trim();
+        String password = etPassword.getText().toString();
+        String repeatPassword = etRepeatPassword.getText().toString();
         String campus = actvCampus.getText().toString().trim();
+        clearSignUpErrors();
 
         String role = toggleUserType.getCheckedButtonId() == R.id.btnOrganizer ? "organizer" : "attendee";
 
@@ -118,6 +126,7 @@ public class SignUpActivity extends AppCompatActivity {
             validationError = SignupValidator.validateCampus(campus);
         }
         if (validationError != null) {
+            applySignUpValidationError(validationError);
             Toast.makeText(this, validationError, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -141,7 +150,7 @@ public class SignUpActivity extends AppCompatActivity {
                     FirebaseUser firebaseUser = authResult.getUser();
                     if (firebaseUser == null) {
                         setLoading(false);
-                        Toast.makeText(SignUpActivity.this, "Auth error: User is null", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(SignUpActivity.this, "Account could not be created. Please try again.", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -188,7 +197,9 @@ public class SignUpActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     setLoading(false);
-                    Toast.makeText(SignUpActivity.this, buildAuthErrorMessage(e), Toast.LENGTH_LONG).show();
+                    String message = AuthErrorMessages.forSignUp(e);
+                    applySignUpValidationError(message);
+                    Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_LONG).show();
                 });
     }
 
@@ -246,24 +257,6 @@ public class SignUpActivity extends AppCompatActivity {
         return interests;
     }
 
-    private String buildAuthErrorMessage(Exception exception) {
-        if (exception == null) {
-            return "Auth error: sign up failed.";
-        }
-
-        String message = exception.getMessage();
-        if (message != null && message.contains("CONFIGURATION_NOT_FOUND")) {
-            return "Auth error: Firebase Authentication is not fully configured. Enable Email/Password and finish Auth/App Check setup in Firebase Console.";
-        }
-
-        if (exception instanceof FirebaseAuthException) {
-            FirebaseAuthException authException = (FirebaseAuthException) exception;
-            return "Auth error: " + authException.getErrorCode();
-        }
-
-        return "Auth error: " + message;
-    }
-
     private void setLoading(boolean isLoading) {
         btnSignUp.setEnabled(!isLoading);
         btnDevBypass.setEnabled(!isLoading);
@@ -271,5 +264,36 @@ public class SignUpActivity extends AppCompatActivity {
         toggleUserType.setEnabled(!isLoading);
         actvCampus.setEnabled(!isLoading);
         progressBarSignUp.setVisibility(isLoading ? ProgressBar.VISIBLE : ProgressBar.GONE);
+    }
+
+    private void clearSignUpErrors() {
+        tilFullName.setError(null);
+        tilEmail.setError(null);
+        tilPassword.setError(null);
+        tilRepeatPassword.setError(null);
+        tilCampus.setError(null);
+    }
+
+    private void applySignUpValidationError(String message) {
+        if (message == null) {
+            return;
+        }
+        String lowerMessage = message.toLowerCase();
+        if (lowerMessage.contains("name")) {
+            tilFullName.setError(message);
+            etFullName.requestFocus();
+        } else if (lowerMessage.contains("email")) {
+            tilEmail.setError(message);
+            etEmail.requestFocus();
+        } else if (lowerMessage.contains("confirm") || lowerMessage.contains("match")) {
+            tilRepeatPassword.setError(message);
+            etRepeatPassword.requestFocus();
+        } else if (lowerMessage.contains("password")) {
+            tilPassword.setError(message);
+            etPassword.requestFocus();
+        } else if (lowerMessage.contains("campus")) {
+            tilCampus.setError(message);
+            actvCampus.requestFocus();
+        }
     }
 }

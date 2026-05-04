@@ -77,6 +77,9 @@ public final class WalkthroughManager {
             demoEvent.setDescription("A local walkthrough-only event used to show the app flow safely.");
             demoEvent.setCategory("Music");
             demoEvent.setLocation("Main Auditorium");
+            demoEvent.setOrganizerId("walkthrough_organizer");
+            demoEvent.setOrganizerName("Demo Organizer");
+            demoEvent.setOrganizerEmail("organizer.demo@campus.test");
             demoEvent.setCapacity(100);
             demoEvent.setRsvpCount(24);
             demoEvent.setTicketPrice(500.0);
@@ -95,6 +98,9 @@ public final class WalkthroughManager {
             demoProposal.setTitle("Demo Cultural Night");
             demoProposal.setDescription("A walkthrough-only proposal for admin review training.");
             demoProposal.setLocation("Student Center");
+            demoProposal.setOrganizerId("walkthrough_organizer");
+            demoProposal.setOrganizerName("Demo Organizer");
+            demoProposal.setOrganizerEmail("organizer.demo@campus.test");
             demoProposal.setCapacity(150);
             demoProposal.setTicketPrice(0.0);
             Calendar calendar = Calendar.getInstance();

@@ -600,6 +600,7 @@ public class MyEventsFragment extends Fragment {
         e.setCapacity(p.getCapacity());
         e.setOrganizerId(p.getOrganizerId());
         e.setOrganizerName(p.getOrganizerName());
+        e.setOrganizerEmail(p.getOrganizerEmail());
         e.setStatus(p.getStatus());
         e.setTrailerUrl(p.getTrailerUrl());
         return e;

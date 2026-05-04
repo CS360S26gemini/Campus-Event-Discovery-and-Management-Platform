@@ -26,6 +26,8 @@ public class OrganizerProposalDetailActivity extends AppCompatActivity {
 
     private MaterialToolbar toolbarProposalDetail;
     private TextView tvProposalTitle;
+    private TextView tvProposalOrganizerName;
+    private TextView tvProposalOrganizerEmail;
     private TextView tvProposalStatus;
     private TextView tvProposalSubmittedAt;
     private TextView tvProposalDateTime;
@@ -57,6 +59,8 @@ public class OrganizerProposalDetailActivity extends AppCompatActivity {
     private void bindViews() {
         toolbarProposalDetail = findViewById(R.id.toolbarProposalDetail);
         tvProposalTitle = findViewById(R.id.tvProposalTitle);
+        tvProposalOrganizerName = findViewById(R.id.tvProposalOrganizerName);
+        tvProposalOrganizerEmail = findViewById(R.id.tvProposalOrganizerEmail);
         tvProposalStatus = findViewById(R.id.tvProposalStatus);
         tvProposalSubmittedAt = findViewById(R.id.tvProposalSubmittedAt);
         tvProposalDateTime = findViewById(R.id.tvProposalDateTime);
@@ -107,6 +111,14 @@ public class OrganizerProposalDetailActivity extends AppCompatActivity {
         String status = proposal.getStatus() == null ? "" : proposal.getStatus().trim().toLowerCase(Locale.getDefault());
 
         tvProposalTitle.setText(safeText(proposal.getTitle(), getString(R.string.app_name)));
+        tvProposalOrganizerName.setText(getString(
+                R.string.proposal_organizer_name_format,
+                safeText(proposal.getOrganizerName(), getString(R.string.event_organizer_placeholder))
+        ));
+        tvProposalOrganizerEmail.setText(getString(
+                R.string.proposal_organizer_email_format,
+                safeText(proposal.getOrganizerEmail(), getString(R.string.unknown_email))
+        ));
         tvProposalStatus.setText(formatStatus(status));
         tvProposalSubmittedAt.setText(getString(R.string.proposal_submitted_at, formatDateTime(proposal.getSubmittedAt())));
         tvProposalDateTime.setText(formatDateTime(proposal.getDate()));

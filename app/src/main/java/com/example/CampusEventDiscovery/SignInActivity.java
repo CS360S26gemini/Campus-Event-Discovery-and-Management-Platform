@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.AuthErrorMessages;
 import com.example.CampusEventDiscovery.util.AuthPreferenceManager;
 import com.example.CampusEventDiscovery.util.DevBypassHelper;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
@@ -25,7 +26,6 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 /**
  * SignInActivity.java
@@ -35,6 +35,7 @@ import com.google.firebase.auth.FirebaseUser;
 public class SignInActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword;
+    private TextInputLayout tilEmail, tilPassword;
     private TextView tvForgotPassword, tvCreateAccountLink;
     private com.google.android.material.materialswitch.MaterialSwitch switchRememberMe;
     private MaterialButton btnSignIn, btnDevBypass;
@@ -53,6 +54,8 @@ public class SignInActivity extends AppCompatActivity {
         repository = new EventRepository();
 
         MaterialToolbar toolbarSignIn = findViewById(R.id.toolbarSignIn);
+        tilEmail = findViewById(R.id.tilEmail);
+        tilPassword = findViewById(R.id.tilPassword);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
@@ -168,29 +171,19 @@ public class SignInActivity extends AppCompatActivity {
     }
 
     private String buildPasswordResetErrorMessage(Exception exception) {
-        if (exception instanceof FirebaseAuthException) {
-            String errorCode = ((FirebaseAuthException) exception).getErrorCode();
-            if ("ERROR_INVALID_EMAIL".equals(errorCode)) {
-                return getString(R.string.reset_password_invalid_email);
-            }
-            if ("ERROR_TOO_MANY_REQUESTS".equals(errorCode)) {
-                return getString(R.string.reset_password_too_many_requests);
-            }
+        if (exception instanceof com.google.firebase.auth.FirebaseAuthException) {
+            String errorCode = ((com.google.firebase.auth.FirebaseAuthException) exception).getErrorCode();
             if ("ERROR_USER_NOT_FOUND".equals(errorCode)) {
                 return getString(R.string.reset_password_email_sent);
             }
-            return getString(R.string.reset_password_failed, errorCode);
         }
-
-        String message = exception == null || TextUtils.isEmpty(exception.getMessage())
-                ? getString(R.string.unknown_error)
-                : exception.getMessage();
-        return getString(R.string.reset_password_failed, message);
+        return AuthErrorMessages.forPasswordReset(exception);
     }
 
     private void signInUser() {
         String email = etEmail.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
+        String password = etPassword.getText().toString();
+        clearSignInErrors();
 
         if (email.equals("admin") && password.equals("admin")) {
             DevSessionManager.enableBypass(this, "admin");
@@ -204,8 +197,20 @@ public class SignInActivity extends AppCompatActivity {
 
         DevSessionManager.clearBypass(this);
 
-        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-            Toast.makeText(this, getString(R.string.error_empty_fields), Toast.LENGTH_SHORT).show();
+        if (TextUtils.isEmpty(email)) {
+            tilEmail.setError(getString(R.string.email_required));
+            etEmail.requestFocus();
+            return;
+        }
+        String emailError = SignupValidator.validateEmail(email);
+        if (emailError != null) {
+            tilEmail.setError(emailError);
+            etEmail.requestFocus();
+            return;
+        }
+        if (TextUtils.isEmpty(password)) {
+            tilPassword.setError(getString(R.string.password_required));
+            etPassword.requestFocus();
             return;
         }
 
@@ -216,7 +221,7 @@ public class SignInActivity extends AppCompatActivity {
                     FirebaseUser signedInUser = authResult.getUser();
                     if (signedInUser == null) {
                         setLoading(false);
-                        Toast.makeText(this, "Sign in failed: user is null", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Sign in failed. Please try again.", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -227,7 +232,7 @@ public class SignInActivity extends AppCompatActivity {
                                     setLoading(false);
                                     Toast.makeText(
                                             SignInActivity.this,
-                                            "Sign in failed: account state could not be refreshed.",
+                                            "Could not confirm your account status. Please try signing in again.",
                                             Toast.LENGTH_LONG
                                     ).show();
                                     return;
@@ -265,7 +270,9 @@ public class SignInActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     setLoading(false);
-                    Toast.makeText(this, buildSignInErrorMessage(e), Toast.LENGTH_LONG).show();
+                    String message = AuthErrorMessages.forSignIn(e);
+                    applySignInAuthErrorToField(message);
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show();
                 });
     }
 
@@ -321,21 +328,22 @@ public class SignInActivity extends AppCompatActivity {
         finish();
     }
 
-    private String buildSignInErrorMessage(Exception exception) {
-        if (exception == null) {
-            return getString(R.string.sign_in_failed, "Unknown error");
-        }
+    private void clearSignInErrors() {
+        tilEmail.setError(null);
+        tilPassword.setError(null);
+    }
 
-        String message = exception.getMessage();
-        if (message != null && message.contains("CONFIGURATION_NOT_FOUND")) {
-            return "Sign in failed: Firebase Authentication is not fully configured in Firebase Console.";
+    private void applySignInAuthErrorToField(String message) {
+        if (message == null) {
+            return;
         }
-
-        if (exception instanceof FirebaseAuthException) {
-            FirebaseAuthException authException = (FirebaseAuthException) exception;
-            return getString(R.string.sign_in_failed, authException.getErrorCode());
+        String lowerMessage = message.toLowerCase();
+        if (lowerMessage.contains("password")) {
+            tilPassword.setError(message);
+            etPassword.requestFocus();
+        } else if (lowerMessage.contains("email")) {
+            tilEmail.setError(message);
+            etEmail.requestFocus();
         }
-
-        return getString(R.string.sign_in_failed, message);
     }
 }

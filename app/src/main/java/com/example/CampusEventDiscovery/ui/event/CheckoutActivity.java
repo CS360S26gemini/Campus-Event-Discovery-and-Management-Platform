@@ -6,6 +6,8 @@ import android.text.TextUtils;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -59,6 +61,9 @@ public class CheckoutActivity extends AppCompatActivity {
     private TextView tvCheckoutSubtitle;
     private TextView tvCreditBalance;
     private EditText etFullName;
+    private EditText etCnic;
+    private AutoCompleteTextView actvCountryCode;
+    private EditText etPhoneNumber;
     private LinearLayout layoutPaymentSection;
     private RadioGroup radioGroupPayment;
     private RadioButton rbInAppCredit;
@@ -88,6 +93,7 @@ public class CheckoutActivity extends AppCompatActivity {
     private String effectiveUserId;
     private boolean walkthroughMode;
     private double availableCreditBalance;
+    private static final String DEFAULT_COUNTRY_CODE = "+92";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -105,6 +111,7 @@ public class CheckoutActivity extends AppCompatActivity {
         resolveUserId();
         setupToolbar();
         bindStaticUi();
+        setupCountryCodeDropdown();
         setupPaymentMethodToggle();
         if (!walkthroughMode) {
             enforceAttendeeAccess();
@@ -121,6 +128,9 @@ public class CheckoutActivity extends AppCompatActivity {
         tvCheckoutSubtitle   = findViewById(R.id.tvCheckoutSubtitle);
         tvCreditBalance      = findViewById(R.id.tvCreditBalance);
         etFullName           = findViewById(R.id.etFirstName);
+        etCnic               = findViewById(R.id.etCnic);
+        actvCountryCode      = findViewById(R.id.actvCountryCode);
+        etPhoneNumber        = findViewById(R.id.etPhoneNumber);
         layoutPaymentSection = findViewById(R.id.layoutPaymentSection);
         radioGroupPayment    = findViewById(R.id.radioGroupPayment);
         rbInAppCredit        = findViewById(R.id.rbInAppCredit);
@@ -201,10 +211,27 @@ public class CheckoutActivity extends AppCompatActivity {
         tvCreditBalance.setText(getString(R.string.checkout_credit_balance, availableCreditBalance));
     }
 
+    private void setupCountryCodeDropdown() {
+        String[] countryCodes = {"+92", "+1", "+44", "+971", "+966", "+91"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_dropdown_item_1line,
+                countryCodes
+        );
+        actvCountryCode.setAdapter(adapter);
+        actvCountryCode.setText(DEFAULT_COUNTRY_CODE, false);
+        actvCountryCode.setOnClickListener(v -> actvCountryCode.showDropDown());
+        actvCountryCode.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                actvCountryCode.showDropDown();
+            }
+        });
+    }
+
     /**
      * Shows or hides card-specific fields based on the selected payment method.
-     * Credit Card and Debit Card require card number, expiry, and CVV.
-     * JazzCash and Apple Pay do not.
+     * Credit/debit card requires card number, expiry, and CVV.
+     * In-app credit does not.
      */
     private void setupPaymentMethodToggle() {
         if (isFreeEvent()) {
@@ -247,7 +274,7 @@ public class CheckoutActivity extends AppCompatActivity {
         });
 
         radioGroupPayment.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.rbCreditCard || checkedId == R.id.rbDebitCard) {
+            if (checkedId == R.id.rbCreditCard) {
                 tilCardNumber.setVisibility(View.VISIBLE);
                 layoutCardMeta.setVisibility(View.VISIBLE);
             } else {
@@ -323,9 +350,23 @@ public class CheckoutActivity extends AppCompatActivity {
      */
     private boolean validateForm() {
         String fullName = etFullName.getText().toString().trim();
+        String cnic = normalizeDigits(etCnic.getText().toString());
+        String countryCode = actvCountryCode.getText().toString().trim();
+        String phone = normalizeDigits(etPhoneNumber.getText().toString());
 
         if (TextUtils.isEmpty(fullName)) {
             Toast.makeText(this, getString(R.string.please_fill_all_fields), Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (!cnic.matches("\\d{13}")) {
+            Toast.makeText(this, getString(R.string.invalid_cnic), Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (TextUtils.isEmpty(countryCode) || !countryCode.matches("\\+\\d{1,4}")
+                || !phone.matches("\\d{7,15}")) {
+            Toast.makeText(this, getString(R.string.invalid_phone_number), Toast.LENGTH_SHORT).show();
             return false;
         }
 
@@ -339,7 +380,7 @@ public class CheckoutActivity extends AppCompatActivity {
         }
 
         int checkedId = radioGroupPayment.getCheckedRadioButtonId();
-        if (checkedId == R.id.rbCreditCard || checkedId == R.id.rbDebitCard) {
+        if (checkedId == R.id.rbCreditCard) {
             String cardNumber = etCardNumber.getText().toString().trim();
             String cardExpiry = etCardExpiry.getText().toString().trim();
             String cardCvv = etCardCvv.getText().toString().trim();
@@ -360,6 +401,10 @@ public class CheckoutActivity extends AppCompatActivity {
         return true;
     }
 
+    private String normalizeDigits(String rawValue) {
+        return rawValue == null ? "" : rawValue.replaceAll("[^\\d]", "");
+    }
+
     private boolean isFreeEvent() {
         return totalPrice <= 0.0;
     }
@@ -372,14 +417,10 @@ public class CheckoutActivity extends AppCompatActivity {
         int checkedId = radioGroupPayment.getCheckedRadioButtonId();
         if (checkedId == R.id.rbCreditCard) {
             return Constants.PAYMENT_METHOD_CREDIT_CARD;
-        } else if (checkedId == R.id.rbDebitCard) {
-            return Constants.PAYMENT_METHOD_DEBIT_CARD;
-        } else if (checkedId == R.id.rbApplePay) {
-            return Constants.PAYMENT_METHOD_APPLE_PAY;
         } else if (checkedId == R.id.rbInAppCredit) {
             return Constants.PAYMENT_METHOD_IN_APP_CREDIT;
         }
-        return Constants.PAYMENT_METHOD_JAZZCASH;
+        return Constants.PAYMENT_METHOD_CREDIT_CARD;
     }
 
     /**
@@ -450,8 +491,11 @@ public class CheckoutActivity extends AppCompatActivity {
         }
 
         String fullName = etFullName.getText().toString().trim();
+        String cnic = normalizeDigits(etCnic.getText().toString());
+        String countryCode = actvCountryCode.getText().toString().trim();
+        String phone = normalizeDigits(etPhoneNumber.getText().toString());
 
-        eventRepository.rsvpEventWithCredit(effectiveUserId, eventShell, fullName, totalPrice, tierId, tierName, resolveSelectedTierPrice(),
+        eventRepository.rsvpEventWithCredit(effectiveUserId, eventShell, fullName, cnic, countryCode, phone, totalPrice, tierId, tierName, resolveSelectedTierPrice(),
                 new EventRepository.ActionCallback() {
                     @Override
                     public void onSuccess() {
@@ -510,8 +554,11 @@ public class CheckoutActivity extends AppCompatActivity {
         }
 
         String fullName = etFullName.getText().toString().trim();
+        String cnic = normalizeDigits(etCnic.getText().toString());
+        String countryCode = actvCountryCode.getText().toString().trim();
+        String phone = normalizeDigits(etPhoneNumber.getText().toString());
 
-        eventRepository.rsvpEvent(effectiveUserId, eventShell, fullName, tierId, tierName, resolveSelectedTierPrice(),
+        eventRepository.rsvpEvent(effectiveUserId, eventShell, fullName, cnic, countryCode, phone, tierId, tierName, resolveSelectedTierPrice(),
                 new EventRepository.ActionCallback() {
                     @Override
                     public void onSuccess() {
@@ -595,6 +642,11 @@ public class CheckoutActivity extends AppCompatActivity {
                     rsvp.setPaymentRef(payment.getTransactionId());
                     rsvp.setPaymentMethod(payment.getPaymentMethod());
                     rsvp.setPaymentProofUrl(payment.getProofUrl());
+                    rsvp.setAttendeeCnic(normalizeDigits(etCnic.getText().toString()));
+                    rsvp.setAttendeeCountryCode(actvCountryCode.getText().toString().trim());
+                    rsvp.setAttendeePhone(normalizeDigits(etPhoneNumber.getText().toString()));
+                    rsvp.setAttendeePhoneNumber(actvCountryCode.getText().toString().trim()
+                            + normalizeDigits(etPhoneNumber.getText().toString()));
                     rsvp.setTierId(tierId);
                     rsvp.setTierName(tierName);
                     rsvp.setTierPrice(resolveSelectedTierPrice() != null ? resolveSelectedTierPrice() : 0.0);

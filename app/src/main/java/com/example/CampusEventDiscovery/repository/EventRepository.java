@@ -476,6 +476,19 @@ public class EventRepository {
                           String tierName,
                           Double tierPrice,
                           ActionCallback cb) {
+        rsvpEvent(userId, event, fullName, "", "", "", tierId, tierName, tierPrice, cb);
+    }
+
+    public void rsvpEvent(String userId,
+                          Event event,
+                          String fullName,
+                          String cnic,
+                          String countryCode,
+                          String phone,
+                          String tierId,
+                          String tierName,
+                          Double tierPrice,
+                          ActionCallback cb) {
         if (userId == null || event == null || event.getEventId() == null) {
             if (cb != null) cb.onError(new Exception("Invalid data"));
             return;
@@ -560,11 +573,16 @@ public class EventRepository {
                             effectiveTierPrice,
                             Timestamp.now()
                     );
+                    addContactData(rsvpData, cnic, countryCode, phone);
+                    addRefundPolicyData(rsvpData, eventSnap);
                     transaction.set(userRsvpRef, rsvpData);
 
                     Map<String, Object> attendeeData = buildAttendeeData(
                             userId,
                             fullName,
+                            cnic,
+                            countryCode,
+                            phone,
                             qrToken,
                             effectiveTierId,
                             effectiveTierName
@@ -879,7 +897,17 @@ public class EventRepository {
                         return;
                     }
                     proposal.setProposalId(documentSnapshot.getId());
-                    cb.onSuccess(proposal);
+                    enrichProposalWithOrganizerContact(proposal, new ProposalCallback() {
+                        @Override
+                        public void onSuccess(EventProposal enrichedProposal) {
+                            cb.onSuccess(enrichedProposal);
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            cb.onSuccess(proposal);
+                        }
+                    });
                 })
                 .addOnFailureListener(cb::onError);
     }
@@ -1001,7 +1029,7 @@ public class EventRepository {
                         }
                     }
                     sortProposalsBySubmittedAtDescending(proposals);
-                    cb.onSuccess(proposals);
+                    enrichProposalsWithOrganizerContact(proposals, () -> cb.onSuccess(proposals));
                 })
                 .addOnFailureListener(cb::onError);
     }
@@ -1026,7 +1054,7 @@ public class EventRepository {
                             }
                         }
                     }
-                    cb.onSuccess(proposals);
+                    enrichProposalsWithOrganizerContact(proposals, () -> cb.onSuccess(proposals));
                 });
     }
 
@@ -1044,7 +1072,7 @@ public class EventRepository {
                         }
                     }
                     sortProposalsBySubmittedAtAscending(proposals);
-                    cb.onSuccess(proposals);
+                    enrichProposalsWithOrganizerContact(proposals, () -> cb.onSuccess(proposals));
                 })
                 .addOnFailureListener(cb::onError);
     }
@@ -1063,7 +1091,7 @@ public class EventRepository {
                         }
                     }
                     sortProposalsBySubmittedAtDescending(proposals);
-                    cb.onSuccess(proposals);
+                    enrichProposalsWithOrganizerContact(proposals, () -> cb.onSuccess(proposals));
                 })
                 .addOnFailureListener(cb::onError);
     }
@@ -1979,12 +2007,15 @@ public class EventRepository {
         event.setFoodStalls(proposal.getFoodStalls() != null ? proposal.getFoodStalls() : new ArrayList<>());
         event.setOrganizerId(proposal.getOrganizerId());
         event.setOrganizerName(proposal.getOrganizerName());
+        event.setOrganizerEmail(proposal.getOrganizerEmail());
         event.setVerified(true);
         event.setAverageRating(0.0);
         event.setRatingCount(0L);
         event.setStatus("active");
         event.setCreatedAt(proposal.getSubmittedAt() != null ? proposal.getSubmittedAt() : Timestamp.now());
         event.setTicketPrice(resolveEventSummaryTicketPrice(proposal, normalizedTiers));
+        event.setRefundsEnabled(proposal.isRefundsEnabled());
+        event.setRefundPenaltyPercent(sanitizeRefundPenaltyPercent(proposal.getRefundPenaltyPercent()));
         return event;
     }
 
@@ -2107,6 +2138,83 @@ public class EventRepository {
                 EventProposal::getSubmittedAt,
                 Comparator.nullsLast(Comparator.naturalOrder())
         ));
+    }
+
+    private void enrichProposalsWithOrganizerContact(List<EventProposal> proposals, Runnable onComplete) {
+        if (proposals == null || proposals.isEmpty()) {
+            runIfNotNull(onComplete);
+            return;
+        }
+
+        List<Task<DocumentSnapshot>> tasks = new ArrayList<>();
+        List<EventProposal> pending = new ArrayList<>();
+        for (EventProposal proposal : proposals) {
+            if (proposal == null
+                    || TextUtils.isEmpty(proposal.getOrganizerId())
+                    || (!TextUtils.isEmpty(proposal.getOrganizerName())
+                    && !TextUtils.isEmpty(proposal.getOrganizerEmail()))) {
+                continue;
+            }
+            pending.add(proposal);
+            tasks.add(db.collection(COLLECTION_USERS).document(proposal.getOrganizerId()).get());
+        }
+
+        if (tasks.isEmpty()) {
+            runIfNotNull(onComplete);
+            return;
+        }
+
+        Tasks.whenAllComplete(tasks)
+                .addOnCompleteListener(task -> {
+                    for (int i = 0; i < tasks.size(); i++) {
+                        Task<DocumentSnapshot> userTask = tasks.get(i);
+                        EventProposal proposal = pending.get(i);
+                        if (userTask.isSuccessful()
+                                && userTask.getResult() != null
+                                && userTask.getResult().exists()) {
+                            applyOrganizerContact(proposal, userTask.getResult());
+                        }
+                    }
+                    runIfNotNull(onComplete);
+                });
+    }
+
+    private void enrichProposalWithOrganizerContact(EventProposal proposal, ProposalCallback callback) {
+        if (proposal == null
+                || TextUtils.isEmpty(proposal.getOrganizerId())
+                || (!TextUtils.isEmpty(proposal.getOrganizerName())
+                && !TextUtils.isEmpty(proposal.getOrganizerEmail()))) {
+            callback.onSuccess(proposal);
+            return;
+        }
+
+        db.collection(COLLECTION_USERS)
+                .document(proposal.getOrganizerId())
+                .get()
+                .addOnSuccessListener(userSnapshot -> {
+                    if (userSnapshot != null && userSnapshot.exists()) {
+                        applyOrganizerContact(proposal, userSnapshot);
+                    }
+                    callback.onSuccess(proposal);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
+    private void applyOrganizerContact(EventProposal proposal, DocumentSnapshot userSnapshot) {
+        if (proposal == null || userSnapshot == null) {
+            return;
+        }
+
+        String fullName = userSnapshot.getString("fullName");
+        String email = userSnapshot.getString("email");
+        if (TextUtils.isEmpty(proposal.getOrganizerName())) {
+            proposal.setOrganizerName(!TextUtils.isEmpty(fullName)
+                    ? fullName
+                    : (!TextUtils.isEmpty(email) ? email : "Organizer"));
+        }
+        if (TextUtils.isEmpty(proposal.getOrganizerEmail())) {
+            proposal.setOrganizerEmail(TextUtils.isEmpty(email) ? "" : email);
+        }
     }
 
     private void runIfNotNull(Runnable r) { if (r != null) r.run(); }
@@ -2417,6 +2525,19 @@ public class EventRepository {
         return Math.max(0.0, amount);
     }
 
+    public static double sanitizeRefundPenaltyPercent(Double penaltyPercent) {
+        if (penaltyPercent == null) {
+            return 0.0;
+        }
+        return Math.max(0.0, Math.min(50.0, penaltyPercent));
+    }
+
+    public static double applyRefundPenalty(double amount, double penaltyPercent) {
+        double safeAmount = normalizeRefundAmount(amount);
+        double safePenalty = sanitizeRefundPenaltyPercent(penaltyPercent);
+        return normalizeRefundAmount(safeAmount * (100.0 - safePenalty) / 100.0);
+    }
+
     public static double resolveRefundAmount(Double tierPrice, Double amount, Double ticketPrice) {
         Double storedAmount = tierPrice;
         if (storedAmount == null) {
@@ -2429,13 +2550,23 @@ public class EventRepository {
     }
 
     private double resolveCancellationAmount(DocumentSnapshot eventSnap, DocumentSnapshot userRsvpSnap) {
+        boolean refundsEnabled = eventSnap == null
+                || !eventSnap.exists()
+                || !Boolean.FALSE.equals(eventSnap.getBoolean("refundsEnabled"));
+        if (!refundsEnabled) {
+            return 0.0;
+        }
         Double tierPrice = userRsvpSnap != null ? userRsvpSnap.getDouble("tierPrice") : null;
         Double amount = userRsvpSnap != null ? userRsvpSnap.getDouble("amount") : null;
         Double ticketPrice = userRsvpSnap != null ? userRsvpSnap.getDouble("ticketPrice") : null;
         if (ticketPrice == null && eventSnap != null) {
             ticketPrice = eventSnap.getDouble("ticketPrice");
         }
-        return resolveRefundAmount(tierPrice, amount, ticketPrice);
+        Double penaltyPercent = eventSnap != null && eventSnap.exists()
+                ? eventSnap.getDouble("refundPenaltyPercent")
+                : null;
+        return applyRefundPenalty(resolveRefundAmount(tierPrice, amount, ticketPrice),
+                sanitizeRefundPenaltyPercent(penaltyPercent));
     }
 
     private Timestamp resolveEventDate(DocumentSnapshot eventSnap, DocumentSnapshot userRsvpSnap) {
@@ -2724,6 +2855,20 @@ public class EventRepository {
                                     String tierName,
                                     Double tierPrice,
                                     ActionCallback cb) {
+        rsvpEventWithCredit(userId, event, fullName, "", "", "", amount, tierId, tierName, tierPrice, cb);
+    }
+
+    public void rsvpEventWithCredit(String userId,
+                                    Event event,
+                                    String fullName,
+                                    String cnic,
+                                    String countryCode,
+                                    String phone,
+                                    double amount,
+                                    String tierId,
+                                    String tierName,
+                                    Double tierPrice,
+                                    ActionCallback cb) {
         if (userId == null || event == null || event.getEventId() == null) {
             if (cb != null) cb.onError(new Exception("Invalid data"));
             return;
@@ -2851,6 +2996,8 @@ public class EventRepository {
                             effectiveTierPrice,
                             now
                     );
+                    addContactData(rsvpData, cnic, countryCode, phone);
+                    addRefundPolicyData(rsvpData, eventSnap);
                     rsvpData.put("paymentStatus", Constants.PAYMENT_CONFIRMED);
                     rsvpData.put("transactionId", transactionId);
                     rsvpData.put("paymentRef", transactionId);
@@ -2862,6 +3009,9 @@ public class EventRepository {
                     Map<String, Object> attendeeData = buildAttendeeData(
                             userId,
                             fullName,
+                            cnic,
+                            countryCode,
+                            phone,
                             qrToken,
                             effectiveTierId,
                             effectiveTierName
@@ -2916,18 +3066,50 @@ public class EventRepository {
 
     private Map<String, Object> buildAttendeeData(String userId,
                                                   String fullName,
+                                                  String cnic,
+                                                  String countryCode,
+                                                  String phone,
                                                   String qrToken,
                                                   String tierId,
                                                   String tierName) {
         Map<String, Object> attendeeData = new HashMap<>();
         attendeeData.put("userId", userId);
         attendeeData.put("fullName", TextUtils.isEmpty(fullName) ? "Attendee" : fullName);
+        addContactData(attendeeData, cnic, countryCode, phone);
         attendeeData.put("qrToken", qrToken);
         attendeeData.put("checkedIn", false);
         attendeeData.put("checkedInAt", null);
         attendeeData.put("tierId", tierId);
         attendeeData.put("tierName", tierName);
         return attendeeData;
+    }
+
+    private void addContactData(Map<String, Object> data,
+                                String cnic,
+                                String countryCode,
+                                String phone) {
+        String safeCnic = cnic == null ? "" : cnic.replaceAll("[^\\d]", "");
+        String safeCountryCode = TextUtils.isEmpty(countryCode) ? "" : countryCode.trim();
+        String safePhone = phone == null ? "" : phone.replaceAll("[^\\d]", "");
+        data.put("attendeeCnic", safeCnic);
+        data.put("cnic", safeCnic);
+        data.put("attendeeCountryCode", safeCountryCode);
+        data.put("countryCode", safeCountryCode);
+        data.put("attendeePhone", safePhone);
+        data.put("phone", safePhone);
+        data.put("attendeePhoneNumber", safeCountryCode + safePhone);
+        data.put("phoneNumber", safeCountryCode + safePhone);
+    }
+
+    private void addRefundPolicyData(Map<String, Object> data, DocumentSnapshot eventSnap) {
+        boolean refundsEnabled = eventSnap == null
+                || !eventSnap.exists()
+                || !Boolean.FALSE.equals(eventSnap.getBoolean("refundsEnabled"));
+        Double penalty = eventSnap != null && eventSnap.exists()
+                ? eventSnap.getDouble("refundPenaltyPercent")
+                : null;
+        data.put("refundsEnabled", refundsEnabled);
+        data.put("refundPenaltyPercent", sanitizeRefundPenaltyPercent(penalty));
     }
 
     private String buildQrPayload(String userId, String eventId, String transactionId, long timestamp) {

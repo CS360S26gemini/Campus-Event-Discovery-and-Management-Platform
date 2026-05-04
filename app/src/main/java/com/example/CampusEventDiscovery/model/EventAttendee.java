@@ -11,6 +11,10 @@ public class EventAttendee {
 
     private String userId;
     private String fullName;
+    private String cnic;
+    private String countryCode;
+    private String phone;
+    private String phoneNumber;
     private String qrToken;
     private boolean checkedIn;
     private Timestamp checkedInAt;
@@ -35,6 +39,18 @@ public class EventAttendee {
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
+
+    public String getCnic() { return cnic; }
+    public void setCnic(String cnic) { this.cnic = cnic; }
+
+    public String getCountryCode() { return countryCode; }
+    public void setCountryCode(String countryCode) { this.countryCode = countryCode; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
     public String getQrToken() {
         return qrToken;

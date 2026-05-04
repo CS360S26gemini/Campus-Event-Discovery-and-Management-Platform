@@ -86,6 +86,9 @@ public class CreateEventActivity extends AppCompatActivity {
     private LinearLayout layoutTierSection;
     private LinearLayout layoutTierContainer;
     private MaterialButton btnAddTier;
+    private MaterialSwitch switchRefundsEnabled;
+    private TextInputLayout tilRefundPenalty;
+    private EditText etRefundPenalty;
     private EditText etTags;
     private EditText etSponsors;
     private EditText etFoodStalls;
@@ -106,6 +109,7 @@ public class CreateEventActivity extends AppCompatActivity {
 
     private String currentUserId;
     private String currentOrganizerName = "";
+    private String currentOrganizerEmail = "";
     private boolean walkthroughMode;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher =
@@ -153,6 +157,7 @@ public class CreateEventActivity extends AppCompatActivity {
         setupCategoryDropdown();
         setupBuildingDropdown();
         setupTierControls();
+        setupRefundControls();
         setupDatePicker();
         setupTimePicker();
         setupEndDatePicker();
@@ -193,6 +198,9 @@ public class CreateEventActivity extends AppCompatActivity {
         layoutTierSection = findViewById(R.id.layoutTierSection);
         layoutTierContainer = findViewById(R.id.layoutTierContainer);
         btnAddTier = findViewById(R.id.btnAddTier);
+        switchRefundsEnabled = findViewById(R.id.switchRefundsEnabled);
+        tilRefundPenalty = findViewById(R.id.tilRefundPenalty);
+        etRefundPenalty = findViewById(R.id.etRefundPenalty);
         etTags = findViewById(R.id.etTags);
         etSponsors = findViewById(R.id.etSponsors);
         etFoodStalls = findViewById(R.id.etFoodStalls);
@@ -274,6 +282,16 @@ public class CreateEventActivity extends AppCompatActivity {
     private void setupTierControls() {
         switchUseTicketTiers.setOnCheckedChangeListener((buttonView, isChecked) -> toggleTierMode(isChecked));
         btnAddTier.setOnClickListener(v -> addTierRow(null));
+    }
+
+    private void setupRefundControls() {
+        switchRefundsEnabled.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            tilRefundPenalty.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            if (!isChecked) {
+                etRefundPenalty.setText("");
+            }
+        });
+        tilRefundPenalty.setVisibility(switchRefundsEnabled.isChecked() ? View.VISIBLE : View.GONE);
     }
 
     private void toggleTierMode(boolean enabled) {
@@ -491,12 +509,19 @@ public class CreateEventActivity extends AppCompatActivity {
     private void preloadOrganizerName() {
         if (DevSessionManager.shouldUseBypass(this)) {
             currentOrganizerName = DevSessionManager.getDisplayName(this);
+            currentOrganizerEmail = DevSessionManager.getDisplayEmail(this);
             return;
         }
 
         if (currentUserId == null) {
             currentOrganizerName = "Organizer";
+            currentOrganizerEmail = "";
             return;
+        }
+
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser != null && !TextUtils.isEmpty(firebaseUser.getEmail())) {
+            currentOrganizerEmail = firebaseUser.getEmail();
         }
 
         repository.getUserData(currentUserId, new EventRepository.UserCallback() {
@@ -509,15 +534,20 @@ public class CreateEventActivity extends AppCompatActivity {
                 } else {
                     currentOrganizerName = "Organizer";
                 }
+                if (user != null && !TextUtils.isEmpty(user.getEmail())) {
+                    currentOrganizerEmail = user.getEmail();
+                }
             }
 
             @Override
             public void onError(Exception e) {
                 FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
                 if (currentUser != null && !TextUtils.isEmpty(currentUser.getEmail())) {
+                    currentOrganizerEmail = currentUser.getEmail();
                     currentOrganizerName = currentUser.getEmail();
                 } else {
                     currentOrganizerName = "Organizer";
+                    currentOrganizerEmail = "";
                 }
             }
         });
@@ -547,6 +577,8 @@ public class CreateEventActivity extends AppCompatActivity {
         String sponsorsText = etSponsors.getText().toString().trim();
         String foodStallsText = etFoodStalls.getText().toString().trim();
         String trailerUrl = etTrailerUrl.getText().toString().trim();
+        boolean refundsEnabled = switchRefundsEnabled.isChecked();
+        String refundPenaltyText = etRefundPenalty.getText().toString().trim();
 
         if (!hasSelectedDate || !hasSelectedTime || selectedTimestamp == null) {
             Toast.makeText(this, getString(R.string.date_and_time_required), Toast.LENGTH_SHORT).show();
@@ -603,6 +635,24 @@ public class CreateEventActivity extends AppCompatActivity {
             ticketPrice = resolveLowestTierPrice(tiers);
         }
 
+        double refundPenaltyPercent = 0.0;
+        if (refundsEnabled) {
+            if (TextUtils.isEmpty(refundPenaltyText)) {
+                Toast.makeText(this, getString(R.string.refund_penalty_required), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try {
+                refundPenaltyPercent = Double.parseDouble(refundPenaltyText);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, getString(R.string.invalid_refund_penalty), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (refundPenaltyPercent < 0.0 || refundPenaltyPercent > 50.0) {
+                Toast.makeText(this, getString(R.string.invalid_refund_penalty), Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
         // Using buildingKey as the main location string for validation
         String validationError = EventValidator.validate(
                 title,
@@ -637,11 +687,14 @@ public class CreateEventActivity extends AppCompatActivity {
         proposal.setCapacity(capacity);
         proposal.setTicketPrice(ticketPrice);
         proposal.setTiers(tiers);
+        proposal.setRefundsEnabled(refundsEnabled);
+        proposal.setRefundPenaltyPercent(refundPenaltyPercent);
         proposal.setSponsors(parseCommaSeparated(sponsorsText, false));
         proposal.setFoodStalls(parseCommaSeparated(foodStallsText, false));
         proposal.setTrailerUrl(trailerUrl);
         proposal.setOrganizerId(currentUserId);
         proposal.setOrganizerName(TextUtils.isEmpty(currentOrganizerName) ? "Organizer" : currentOrganizerName);
+        proposal.setOrganizerEmail(TextUtils.isEmpty(currentOrganizerEmail) ? "" : currentOrganizerEmail);
         proposal.setStatus("pending");
         proposal.setAdminNote("");
         proposal.setSubmittedAt(Timestamp.now());

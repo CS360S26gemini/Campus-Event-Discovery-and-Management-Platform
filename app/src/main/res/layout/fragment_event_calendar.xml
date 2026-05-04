@@ -209,14 +209,14 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCalendarFilterAll"
-                style="@style/AppOutlinedButtonStyle"
+                style="@style/AppSegmentToggleButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/calendar_filter_all" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCalendarFilterPersonal"
-                style="@style/AppOutlinedButtonStyle"
+                style="@style/AppSegmentToggleButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/calendar_filter_registered" />

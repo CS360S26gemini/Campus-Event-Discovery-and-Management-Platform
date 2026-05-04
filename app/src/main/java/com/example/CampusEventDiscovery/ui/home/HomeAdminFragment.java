@@ -218,6 +218,9 @@ public class HomeAdminFragment extends Fragment {
                     e.setTitle(p.getTitle());
                     e.setDate(p.getDate());
                     e.setLocation(p.getLocation());
+                    e.setOrganizerId(p.getOrganizerId());
+                    e.setOrganizerName(p.getOrganizerName());
+                    e.setOrganizerEmail(p.getOrganizerEmail());
                     e.setStatus(p.getStatus());
                     String imageUrl = p.getThumbnailUrl();
                     if (imageUrl == null || imageUrl.trim().isEmpty()) {

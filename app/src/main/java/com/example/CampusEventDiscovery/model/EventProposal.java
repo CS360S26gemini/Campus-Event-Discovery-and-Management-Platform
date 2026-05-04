@@ -32,11 +32,14 @@ public class EventProposal {
     private String imageUrl; // Added for Cloudinary integration
     private String organizerId;
     private String organizerName;
+    private String organizerEmail;
     private String status;
     private String adminNote;
     private Timestamp submittedAt;
     private Timestamp reviewedAt;
     private double ticketPrice;
+    private boolean refundsEnabled = true;
+    private double refundPenaltyPercent;
 
     /**
      * Required empty constructor for Firestore deserialization.
@@ -137,6 +140,9 @@ public class EventProposal {
     public String getOrganizerName() { return organizerName; }
     public void setOrganizerName(String organizerName) { this.organizerName = organizerName; }
 
+    public String getOrganizerEmail() { return organizerEmail; }
+    public void setOrganizerEmail(String organizerEmail) { this.organizerEmail = organizerEmail; }
+
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
@@ -151,6 +157,12 @@ public class EventProposal {
 
     public double getTicketPrice() { return ticketPrice; }
     public void setTicketPrice(double ticketPrice) { this.ticketPrice = ticketPrice; }
+
+    public boolean isRefundsEnabled() { return refundsEnabled; }
+    public void setRefundsEnabled(boolean refundsEnabled) { this.refundsEnabled = refundsEnabled; }
+
+    public double getRefundPenaltyPercent() { return refundPenaltyPercent; }
+    public void setRefundPenaltyPercent(double refundPenaltyPercent) { this.refundPenaltyPercent = refundPenaltyPercent; }
 
     // ─── CAMPUS LOCATION + TICKET TIERS (Nausher) ───────────────────────────
     private String locationKey;

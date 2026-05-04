@@ -269,9 +269,10 @@
                     style="@style/AppTextInputBoxStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_md"
-                    android:hint="@string/new_password_label"
-                    app:endIconMode="password_toggle">
+                android:layout_marginTop="@dimen/spacing_md"
+                android:hint="@string/new_password_label"
+                app:endIconMode="password_toggle"
+                app:helperText="@string/password_requirements_helper">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etNewPassword"

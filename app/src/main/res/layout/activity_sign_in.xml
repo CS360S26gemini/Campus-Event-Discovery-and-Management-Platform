@@ -41,6 +41,7 @@
                 android:textColor="?attr/colorOnSurface" />
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilEmail"
                 style="@style/AppTextInputBoxStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -56,6 +57,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPassword"
                 style="@style/AppTextInputBoxStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

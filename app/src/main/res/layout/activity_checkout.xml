@@ -79,7 +79,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/checkout_hint_full_name"
                 style="@style/AppTextInputBoxStyle"
-                android:layout_marginBottom="@dimen/spacing_lg">
+                android:layout_marginBottom="@dimen/spacing_md">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etFirstName"
@@ -89,6 +89,61 @@
                     android:imeOptions="actionDone" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/checkout_hint_cnic"
+                android:layout_marginBottom="@dimen/spacing_md">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etCnic"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="number"
+                    android:maxLength="13" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_lg"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/AppTextInputDropdownStyle"
+                    android:layout_width="104dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:hint="@string/checkout_hint_country_code">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/actvCountryCode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:textColor="?attr/colorOnSurface" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/AppTextInputBoxStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:hint="@string/checkout_hint_phone">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etPhoneNumber"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:imeOptions="actionNext"
+                        android:inputType="phone"
+                        android:maxLength="15" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/layoutPaymentSection"
@@ -121,66 +176,17 @@
                     android:padding="8dp">
 
                     <RadioButton
-                        android:id="@+id/rbJazzCash"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:text="@string/payment_method_jazzcash"
-                        android:paddingStart="12dp"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:button="@null"
-                        android:drawableEnd="@null"
-                        android:background="?attr/selectableItemBackground" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="?attr/colorOutlineVariant"
-                        android:layout_marginStart="12dp" />
-
-                    <RadioButton
                         android:id="@+id/rbCreditCard"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:text="@string/payment_method_credit_card"
+                        android:text="@string/payment_method_credit_debit_card"
                         android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
                         android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="@color/payment_method_option_text"
                         android:button="@null"
                         android:drawableEnd="@null"
-                        android:background="?attr/selectableItemBackground" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="?attr/colorOutlineVariant"
-                        android:layout_marginStart="12dp" />
-
-                    <RadioButton
-                        android:id="@+id/rbDebitCard"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:text="@string/payment_method_debit_card"
-                        android:paddingStart="12dp"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:button="@null"
-                        android:drawableEnd="@null"
-                        android:background="?attr/selectableItemBackground" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="?attr/colorOutlineVariant"
-                        android:layout_marginStart="12dp" />
-
-                    <RadioButton
-                        android:id="@+id/rbApplePay"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:text="@string/payment_method_apple_pay"
-                        android:paddingStart="12dp"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:button="@null"
-                        android:drawableEnd="@null"
-                        android:background="?attr/selectableItemBackground" />
+                        android:background="@drawable/bg_payment_method_option" />
 
                     <View
                         android:layout_width="match_parent"
@@ -194,10 +200,12 @@
                         android:layout_height="48dp"
                         android:text="@string/payment_method_in_app_credit"
                         android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
                         android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="@color/payment_method_option_text"
                         android:button="@null"
                         android:drawableEnd="@null"
-                        android:background="?attr/selectableItemBackground" />
+                        android:background="@drawable/bg_payment_method_option" />
 
                 </RadioGroup>
 

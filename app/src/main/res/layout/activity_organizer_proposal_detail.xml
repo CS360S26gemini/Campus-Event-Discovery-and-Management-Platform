@@ -40,6 +40,24 @@
                     android:textAppearance="?attr/textAppearanceHeadlineSmall" />
 
                 <TextView
+                    android:id="@+id/tvProposalOrganizerName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/proposal_organizer_name_placeholder"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+                <TextView
+                    android:id="@+id/tvProposalOrganizerEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/proposal_organizer_email_placeholder"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+                <TextView
                     android:id="@+id/tvProposalStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

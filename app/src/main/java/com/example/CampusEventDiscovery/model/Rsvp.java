@@ -30,6 +30,12 @@ public class Rsvp {
     private boolean qrExpired;
     private Timestamp rsvpAt;
     private Timestamp checkedInAt;
+    private String attendeeCnic;
+    private String attendeeCountryCode;
+    private String attendeePhone;
+    private String attendeePhoneNumber;
+    private boolean refundsEnabled = true;
+    private double refundPenaltyPercent;
 
     // Ticket Tier Fields (Nausher)
     private String tierId;
@@ -116,6 +122,24 @@ public class Rsvp {
 
     public Timestamp getCheckedInAt() { return checkedInAt; }
     public void setCheckedInAt(Timestamp checkedInAt) { this.checkedInAt = checkedInAt; }
+
+    public String getAttendeeCnic() { return attendeeCnic; }
+    public void setAttendeeCnic(String attendeeCnic) { this.attendeeCnic = attendeeCnic; }
+
+    public String getAttendeeCountryCode() { return attendeeCountryCode; }
+    public void setAttendeeCountryCode(String attendeeCountryCode) { this.attendeeCountryCode = attendeeCountryCode; }
+
+    public String getAttendeePhone() { return attendeePhone; }
+    public void setAttendeePhone(String attendeePhone) { this.attendeePhone = attendeePhone; }
+
+    public String getAttendeePhoneNumber() { return attendeePhoneNumber; }
+    public void setAttendeePhoneNumber(String attendeePhoneNumber) { this.attendeePhoneNumber = attendeePhoneNumber; }
+
+    public boolean isRefundsEnabled() { return refundsEnabled; }
+    public void setRefundsEnabled(boolean refundsEnabled) { this.refundsEnabled = refundsEnabled; }
+
+    public double getRefundPenaltyPercent() { return refundPenaltyPercent; }
+    public void setRefundPenaltyPercent(double refundPenaltyPercent) { this.refundPenaltyPercent = refundPenaltyPercent; }
 
     @Exclude
     public long getCheckInTimestamp() {

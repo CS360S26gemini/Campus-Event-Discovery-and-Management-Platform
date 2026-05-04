@@ -393,6 +393,31 @@
                     android:text="@string/add_ticket_tier" />
             </LinearLayout>
 
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchRefundsEnabled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:checked="true"
+                android:text="@string/refunds_enabled_label" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilRefundPenalty"
+                style="@style/AppTextInputBoxStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_sm"
+                android:hint="@string/refund_penalty_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRefundPenalty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="numberDecimal"
+                    android:text="0" />
+            </com.google.android.material.textfield.TextInputLayout>
+
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/AppTextInputBoxStyle"
                 android:layout_width="match_parent"

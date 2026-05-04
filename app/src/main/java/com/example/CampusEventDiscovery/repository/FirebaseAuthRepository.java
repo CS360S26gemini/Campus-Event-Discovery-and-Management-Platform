@@ -2,6 +2,7 @@ package com.example.CampusEventDiscovery.repository;
 
 import com.example.CampusEventDiscovery.callback.AuthCallback;
 import com.example.CampusEventDiscovery.model.User;
+import com.example.CampusEventDiscovery.util.AuthErrorMessages;
 import com.example.CampusEventDiscovery.util.SignupValidator;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -50,7 +51,7 @@ public class FirebaseAuthRepository implements AuthRepository {
                                     callback.onFailure("Failed to save user profile: " + e.getMessage()));
                 })
                 .addOnFailureListener(e ->
-                        callback.onFailure("Registration failed: " + e.getMessage()));
+                        callback.onFailure(AuthErrorMessages.forSignUp(e)));
     }
 
     @Override
@@ -78,7 +79,7 @@ public class FirebaseAuthRepository implements AuthRepository {
                                     callback.onFailure("Failed to fetch user profile: " + e.getMessage()));
                 })
                 .addOnFailureListener(e ->
-                        callback.onFailure("Login failed: " + e.getMessage()));
+                        callback.onFailure(AuthErrorMessages.forSignIn(e)));
     }
 
     @Override

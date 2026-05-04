@@ -31,6 +31,7 @@ public class Event {
     private List<String> foodStalls = new ArrayList<>();
     private String organizerId;
     private String organizerName;
+    private String organizerEmail;
     private boolean verified;
     private double averageRating;
     private long ratingCount;
@@ -38,6 +39,8 @@ public class Event {
     private Timestamp createdAt;
     private double ticketPrice;
     private String imageUrl; // Cloudinary upload URL — mirrors thumbnailUrl for compatibility
+    private boolean refundsEnabled = true;
+    private double refundPenaltyPercent;
 
     // ─── CAMPUS LOCATION (Nausher) ───────────────────────────
     private String locationKey;
@@ -110,6 +113,9 @@ public class Event {
     public String getOrganizerName() { return organizerName; }
     public void setOrganizerName(String organizerName) { this.organizerName = organizerName; }
 
+    public String getOrganizerEmail() { return organizerEmail; }
+    public void setOrganizerEmail(String organizerEmail) { this.organizerEmail = organizerEmail; }
+
     public boolean isVerified() { return verified; }
     public void setVerified(boolean verified) { this.verified = verified; }
 
@@ -127,6 +133,12 @@ public class Event {
 
     public double getTicketPrice() { return ticketPrice; }
     public void setTicketPrice(double ticketPrice) { this.ticketPrice = ticketPrice; }
+
+    public boolean isRefundsEnabled() { return refundsEnabled; }
+    public void setRefundsEnabled(boolean refundsEnabled) { this.refundsEnabled = refundsEnabled; }
+
+    public double getRefundPenaltyPercent() { return refundPenaltyPercent; }
+    public void setRefundPenaltyPercent(double refundPenaltyPercent) { this.refundPenaltyPercent = refundPenaltyPercent; }
 
     public String getLocationKey() { return locationKey; }
     public void setLocationKey(String locationKey) { this.locationKey = locationKey; }

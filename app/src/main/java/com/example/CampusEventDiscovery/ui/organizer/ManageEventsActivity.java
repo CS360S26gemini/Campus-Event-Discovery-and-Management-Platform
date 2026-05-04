@@ -415,6 +415,9 @@ public class ManageEventsActivity extends AppCompatActivity {
         event.setLocation(proposal.getLocation());
         event.setCapacity(proposal.getCapacity());
         event.setStatus(proposal.getStatus());
+        event.setOrganizerId(proposal.getOrganizerId());
+        event.setOrganizerName(proposal.getOrganizerName());
+        event.setOrganizerEmail(proposal.getOrganizerEmail());
         event.setThumbnailUrl(proposal.getThumbnailUrl());
         event.setCreatedAt(proposal.getSubmittedAt());
         return event;

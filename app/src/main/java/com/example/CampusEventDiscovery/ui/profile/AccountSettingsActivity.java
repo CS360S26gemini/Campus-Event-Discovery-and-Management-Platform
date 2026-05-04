@@ -20,6 +20,7 @@ import com.example.CampusEventDiscovery.MainActivity;
 import com.example.CampusEventDiscovery.R;
 import com.example.CampusEventDiscovery.model.User;
 import com.example.CampusEventDiscovery.repository.EventRepository;
+import com.example.CampusEventDiscovery.util.AuthErrorMessages;
 import com.example.CampusEventDiscovery.util.DevSessionManager;
 import com.example.CampusEventDiscovery.util.SignupValidator;
 import com.example.CampusEventDiscovery.util.WalkthroughManager;
@@ -336,7 +337,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     showLoading(false);
                     Toast.makeText(AccountSettingsActivity.this,
-                            getString(R.string.reauthentication_failed, safeMessage(e.getMessage())),
+                            getString(R.string.reauthentication_failed, AuthErrorMessages.forAccountUpdate(e)),
                             Toast.LENGTH_LONG).show();
                 });
     }
@@ -368,7 +369,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
                             university,
                             location,
                             interests,
-                            e.getMessage()
+                            AuthErrorMessages.forAccountUpdate(e)
                     ));
             return;
         }
@@ -413,7 +414,7 @@ public class AccountSettingsActivity extends AppCompatActivity {
                         university,
                         location,
                         interests,
-                        e.getMessage()
+                        AuthErrorMessages.forAccountUpdate(e)
                 ));
     }
 

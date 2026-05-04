@@ -49,6 +49,7 @@ public class VendorEventAdapter extends ListAdapter<Event, VendorEventAdapter.Ev
     public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
         Event event = getItem(position);
         holder.tvTitle.setText(TextUtils.isEmpty(event.getTitle()) ? holder.itemView.getContext().getString(R.string.app_name) : event.getTitle());
+        bindOrganizer(holder, event);
         holder.tvDateTime.setText(formatDateTime(event.getDate()));
         holder.tvVenue.setText(TextUtils.isEmpty(event.getLocation()) ? holder.itemView.getContext().getString(R.string.placeholder_venue) : event.getLocation());
         holder.tvSpots.setText(holder.itemView.getContext().getString(R.string.spots_ratio, event.getRsvpCount(), event.getCapacity()));
@@ -128,6 +129,19 @@ public class VendorEventAdapter extends ListAdapter<Event, VendorEventAdapter.Ev
         return new SimpleDateFormat("EEE, dd MMM - hh:mm a", Locale.getDefault()).format(date);
     }
 
+    private void bindOrganizer(EventViewHolder holder, Event event) {
+        if (holder.tvOrganizer == null) {
+            return;
+        }
+        String organizerName = event == null ? null : event.getOrganizerName();
+        if (TextUtils.isEmpty(organizerName)) {
+            holder.tvOrganizer.setVisibility(View.GONE);
+            return;
+        }
+        holder.tvOrganizer.setText(holder.itemView.getContext().getString(R.string.event_organizer_format, organizerName));
+        holder.tvOrganizer.setVisibility(View.VISIBLE);
+    }
+
     private static final DiffUtil.ItemCallback<Event> DIFF_CALLBACK = new DiffUtil.ItemCallback<Event>() {
         @Override
         public boolean areItemsTheSame(@NonNull Event oldItem, @NonNull Event newItem) {
@@ -139,6 +153,8 @@ public class VendorEventAdapter extends ListAdapter<Event, VendorEventAdapter.Ev
             return TextUtils.equals(oldItem.getTitle(), newItem.getTitle())
                     && eventDateMillis(oldItem.getDate()) == eventDateMillis(newItem.getDate())
                     && TextUtils.equals(oldItem.getLocation(), newItem.getLocation())
+                    && TextUtils.equals(oldItem.getOrganizerName(), newItem.getOrganizerName())
+                    && TextUtils.equals(oldItem.getOrganizerEmail(), newItem.getOrganizerEmail())
                     && oldItem.getRsvpCount() == newItem.getRsvpCount()
                     && oldItem.getCapacity() == newItem.getCapacity()
                     && TextUtils.equals(oldItem.getThumbnailUrl(), newItem.getThumbnailUrl())
@@ -157,6 +173,7 @@ public class VendorEventAdapter extends ListAdapter<Event, VendorEventAdapter.Ev
         ImageView ivVerified;
         ImageView ivHeart;
         TextView tvTitle;
+        TextView tvOrganizer;
         TextView tvDateTime;
         TextView tvVenue;
         TextView tvSpots;
@@ -169,6 +186,7 @@ public class VendorEventAdapter extends ListAdapter<Event, VendorEventAdapter.Ev
             ivVerified = itemView.findViewById(R.id.ivVerified);
             ivHeart = itemView.findViewById(R.id.ivHeart);
             tvTitle = itemView.findViewById(R.id.tvTitle);
+            tvOrganizer = itemView.findViewById(R.id.tvOrganizer);
             tvDateTime = itemView.findViewById(R.id.tvDateTime);
             tvVenue = itemView.findViewById(R.id.tvVenue);
             tvSpots = itemView.findViewById(R.id.tvSpots);

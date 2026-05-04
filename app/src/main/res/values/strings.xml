@@ -7,6 +7,9 @@
     <string name="action_sign_in">Sign In</string>
     <string name="dev_login_note">Choose a temporary role to enter the app without Firebase sign-in.</string>
     <string name="error_empty_fields">Please enter both email and password.</string>
+    <string name="email_required">Email is required.</string>
+    <string name="password_required">Password is required.</string>
+    <string name="password_requirements_helper">Password must be at least 8 characters and include uppercase letter, number, and special character.</string>
     <string name="sign_in_success">Sign in successful.</string>
     <string name="sign_in_failed">Sign in failed: %1$s</string>
 
@@ -517,6 +520,10 @@
     <string name="proposal_status_rejected">Rejected</string>
     <string name="proposal_status_approved">Approved</string>
     <string name="proposal_status_unknown">Unknown</string>
+    <string name="proposal_organizer_name_format">Organizer: %1$s</string>
+    <string name="proposal_organizer_email_format">Email: %1$s</string>
+    <string name="proposal_organizer_name_placeholder">Organizer: -</string>
+    <string name="proposal_organizer_email_placeholder">Email: -</string>
 
     <!-- Organizer Registrations -->
     <string name="who_is_coming">Who\'s Coming</string>
@@ -648,6 +655,7 @@
     <string name="checkout_total_pkr">PKR %1$.2f</string>
     <string name="payment_method_jazzcash">JazzCash</string>
     <string name="payment_method_credit_card">Credit Card</string>
+    <string name="payment_method_credit_debit_card">Credit/Debit Card</string>
     <string name="payment_method_debit_card">Debit Card</string>
     <string name="payment_method_apple_pay">Apple Pay</string>
     <string name="payment_method_in_app_credit">In-App Credit</string>
@@ -743,6 +751,15 @@
     <string name="ticket_tier_not_required">Standard admission</string>
     <string name="ticket_tier_sold_out_message">All ticket tiers are sold out</string>
     <string name="ticket_tier_missing">Please choose a ticket tier</string>
+    <string name="refunds_enabled_label">Allow attendee refunds</string>
+    <string name="refund_penalty_hint">Refund penalty (% of ticket price, 0-50)</string>
+    <string name="refund_penalty_required">Enter a refund penalty from 0 to 50%.</string>
+    <string name="invalid_refund_penalty">Refund penalty must be between 0 and 50%.</string>
+    <string name="checkout_hint_cnic">CNIC (13 digits)</string>
+    <string name="checkout_hint_country_code">Code</string>
+    <string name="checkout_hint_phone">Phone number</string>
+    <string name="invalid_cnic">CNIC must be exactly 13 digits.</string>
+    <string name="invalid_phone_number">Enter a valid phone number.</string>
 
     <!-- Campus Map (Nausher) -->
     <string name="campus_building_label">Campus Building</string>

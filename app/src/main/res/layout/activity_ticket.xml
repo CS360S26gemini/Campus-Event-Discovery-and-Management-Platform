@@ -120,6 +120,33 @@
             android:padding="14dp"
             android:text="@string/cancel_ticket_refund" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTicketAddToCalendar"
+                style="@style/AppSecondaryButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:padding="14dp"
+                android:text="@string/add_to_calendar" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTicketViewOnMap"
+                style="@style/AppSecondaryButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:padding="14dp"
+                android:text="@string/view_on_map" />
+        </LinearLayout>
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnTicketDone"
             style="@style/AppButtonStyle"

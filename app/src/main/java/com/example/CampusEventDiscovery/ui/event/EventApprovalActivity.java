@@ -32,7 +32,7 @@ public class EventApprovalActivity extends AppCompatActivity {
 
     private ImageView ivBanner;
     private MaterialToolbar toolbarEventApproval;
-    private TextView tvTitle, tvDateTime, tvVenue, tvDescription, tvPriceInfo;
+    private TextView tvTitle, tvOrganizerName, tvOrganizerEmail, tvDateTime, tvVenue, tvDescription, tvPriceInfo;
     private com.google.android.material.button.MaterialButton btnApprove, btnReject;
     private ProgressBar progressBarEventApproval;
 
@@ -66,6 +66,8 @@ public class EventApprovalActivity extends AppCompatActivity {
         ivBanner = findViewById(R.id.ivBanner);
         toolbarEventApproval = findViewById(R.id.toolbarEventApproval);
         tvTitle = findViewById(R.id.tvTitle);
+        tvOrganizerName = findViewById(R.id.tvOrganizerName);
+        tvOrganizerEmail = findViewById(R.id.tvOrganizerEmail);
         tvDateTime = findViewById(R.id.tvDateTime);
         tvVenue = findViewById(R.id.tvVenue);
         tvDescription = findViewById(R.id.tvDescription);
@@ -149,6 +151,14 @@ public class EventApprovalActivity extends AppCompatActivity {
 
     private void bindProposal(EventProposal proposal) {
         tvTitle.setText(proposal.getTitle());
+        tvOrganizerName.setText(getString(
+                R.string.proposal_organizer_name_format,
+                safeText(proposal.getOrganizerName(), getString(R.string.event_organizer_placeholder))
+        ));
+        tvOrganizerEmail.setText(getString(
+                R.string.proposal_organizer_email_format,
+                safeText(proposal.getOrganizerEmail(), getString(R.string.unknown_email))
+        ));
         tvDateTime.setText(formatDateTime(proposal.getDate()));
         
         // Format location as "Room, Building"
@@ -219,6 +229,10 @@ public class EventApprovalActivity extends AppCompatActivity {
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
+    }
+
+    private String safeText(String value, String fallback) {
+        return TextUtils.isEmpty(value) ? fallback : value;
     }
 
     private String formatDateTime(Timestamp timestamp) {

@@ -61,6 +61,7 @@ public class EventDetailActivity extends AppCompatActivity {
     private ImageButton btnHeart;
     private ImageButton btnShare;
     private TextView tvTitle;
+    private TextView tvOrganizer;
     private TextView tvDateTime;
     private TextView tvAddToCalendar;
     private TextView tvVenue;
@@ -139,6 +140,7 @@ public class EventDetailActivity extends AppCompatActivity {
         btnHeart = findViewById(R.id.btnHeart);
         btnShare = findViewById(R.id.btnShare);
         tvTitle = findViewById(R.id.tvTitle);
+        tvOrganizer = findViewById(R.id.tvOrganizer);
         tvDateTime = findViewById(R.id.tvDateTime);
         tvAddToCalendar = findViewById(R.id.tvAddToCalendar);
         tvVenue = findViewById(R.id.tvVenue);
@@ -391,6 +393,7 @@ public class EventDetailActivity extends AppCompatActivity {
 
     private void bindEvent(Event event) {
         tvTitle.setText(safeText(event.getTitle(), getString(R.string.app_name)));
+        bindOrganizerText(event);
         tvDateTime.setText(formatDateTime(event.getDate()));
         tvVenue.setText(resolveDisplayLocation(event));
         tvRefundPolicy.setText(getString(R.string.refund_policy_body));
@@ -687,6 +690,19 @@ public class EventDetailActivity extends AppCompatActivity {
 
     private String safeText(String text, String fallback) {
         return TextUtils.isEmpty(text) ? fallback : text;
+    }
+
+    private void bindOrganizerText(Event event) {
+        if (tvOrganizer == null) {
+            return;
+        }
+        String organizerName = event == null ? null : event.getOrganizerName();
+        if (TextUtils.isEmpty(organizerName)) {
+            tvOrganizer.setVisibility(View.GONE);
+            return;
+        }
+        tvOrganizer.setText(getString(R.string.event_organizer_format, organizerName));
+        tvOrganizer.setVisibility(View.VISIBLE);
     }
 
     private String resolveEventId(Intent intent) {

@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -36,12 +37,6 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
-        <!-- Cloudinary Upload Service -->
-        <service
-            android:name="com.cloudinary.android.uploadwidget.UploadWidgetService"
-            android:enabled="true"
-            android:exported="false" />
 
         <activity
             android:name=".ui.sos.SOSAlertActivity"

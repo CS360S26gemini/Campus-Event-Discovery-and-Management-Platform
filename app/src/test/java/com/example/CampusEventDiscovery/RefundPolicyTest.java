@@ -66,4 +66,15 @@ public class RefundPolicyTest {
         assertTrue(fromAmount == 1200.0);
         assertTrue(fromTicketPrice == 900.0);
     }
+
+    @Test
+    public void applyRefundPenalty_reducesRefundByConfiguredPercent() {
+        assertTrue(EventRepository.applyRefundPenalty(2000.0, 25.0) == 1500.0);
+    }
+
+    @Test
+    public void sanitizeRefundPenalty_clampsToAllowedRange() {
+        assertTrue(EventRepository.sanitizeRefundPenaltyPercent(-5.0) == 0.0);
+        assertTrue(EventRepository.sanitizeRefundPenaltyPercent(75.0) == 50.0);
+    }
 }

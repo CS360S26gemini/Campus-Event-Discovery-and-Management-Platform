@@ -98,7 +98,8 @@ public class PaymentConfirmationActivity extends AppCompatActivity {
         }
 
         tvPaymentCount.setText(getString(R.string.payment_count_label, payments.size()));
-        tvTotalRevenue.setText(getString(R.string.payment_total_revenue, total));
+        tvTotalRevenue.setText(getString(R.string.payment_total_revenue,
+                getString(R.string.checkout_total_pkr, total)));
 
         if (payments.isEmpty()) {
             tvEmpty.setVisibility(View.VISIBLE);

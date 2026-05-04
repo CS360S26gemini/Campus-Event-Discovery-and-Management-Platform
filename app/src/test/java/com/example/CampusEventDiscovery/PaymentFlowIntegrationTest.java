@@ -153,6 +153,20 @@ public class PaymentFlowIntegrationTest {
         assertEquals(rsvp.getTransactionId(), rsvp.getPaymentRef());
     }
 
+    @Test
+    public void rsvpStoresRequiredAttendeeIdentityFields() {
+        Rsvp rsvp = new Rsvp();
+        rsvp.setAttendeeCnic("3520212345678");
+        rsvp.setAttendeeCountryCode("+92");
+        rsvp.setAttendeePhone("3001234567");
+        rsvp.setAttendeePhoneNumber("+923001234567");
+
+        assertEquals("3520212345678", rsvp.getAttendeeCnic());
+        assertEquals("+92", rsvp.getAttendeeCountryCode());
+        assertEquals("3001234567", rsvp.getAttendeePhone());
+        assertEquals("+923001234567", rsvp.getAttendeePhoneNumber());
+    }
+
     private static Payment mk(String userId, double amount) {
         return new Payment(null, userId, "e1", amount,
                 Constants.PAYMENT_CONFIRMED,
